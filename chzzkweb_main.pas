@@ -99,7 +99,7 @@ implementation
 uses
   uWVLoader,
   Windows, uWebsockSimple, uChecksumList, ShellApi, DateUtils, StrUtils,
-  regexpr;
+  regexpr, ActiveX;
 
 
 {$R *.lfm}
@@ -406,10 +406,10 @@ var
   res: PWideChar;
   buf: UnicodeString;
 begin
-  aArgs.Get_webMessageAsJson(res);
+  if Failed(aArgs.TryGetWebMessageAsString(res)) then
+    exit;
   buf:=res;
-  buf:=Copy(buf,2,Length(buf)-2);
-  buf:=StringReplace(buf,'\"','"',[rfReplaceAll]);
+  CoTaskMemFree(res);
   if buf='!Observer Start!' then
   begin
     observer_started:=True;

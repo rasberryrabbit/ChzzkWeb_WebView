@@ -1,0 +1,12 @@
+backup/
+cache/
+lib/
+locales/
+CustomCache/
+*.pak
+*.dat
+*.bin
+*.json
+*.lib
+*.log
+*.dbg

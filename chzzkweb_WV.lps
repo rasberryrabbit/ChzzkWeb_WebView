@@ -392,7 +392,7 @@
         <UsageCount Value="10"/>
       </Unit>
     </Units>
-    <JumpHistory HistoryIndex="29">
+    <JumpHistory HistoryIndex="28">
       <Position>
         <Filename Value="chzzkweb_main.pas"/>
         <Caret Line="693" Column="75" TopLine="684"/>
@@ -432,10 +432,6 @@
       <Position>
         <Filename Value="chzzkweb_main.pas"/>
         <Caret Line="347" Column="25" TopLine="347"/>
-      </Position>
-      <Position>
-        <Filename Value="chzzkweb_main.pas"/>
-        <Caret Line="403" Column="27" TopLine="458"/>
       </Position>
       <Position>
         <Filename Value="chzzkweb_main.pas"/>

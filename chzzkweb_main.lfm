@@ -108,6 +108,7 @@ object FormChzzkWeb: TFormChzzkWeb
     object ActionOpenChatFull: TAction
       Caption = '채팅 리스트 열기'
       OnExecute = ActionOpenChatFullExecute
+      OnUpdate = ActionOpenChatFullUpdate
     end
     object ActionWSockUnique: TAction
       Caption = '단일 웹소켓 사용'
@@ -132,12 +133,14 @@ object FormChzzkWeb: TFormChzzkWeb
       object MenuItem9: TMenuItem
         Action = ActionOpenChatFull
       end
+      object MenuItem7: TMenuItem
+        Action = ActionOpenNotify
+      end
     end
     object MenuItem5: TMenuItem
       Caption = '기타'
       object MenuItem6: TMenuItem
         Action = ActionWSockUnique
-        Checked = True
       end
     end
   end

@@ -38,6 +38,7 @@ type
     MenuItem4: TMenuItem;
     MenuItem5: TMenuItem;
     MenuItem6: TMenuItem;
+    MenuItem7: TMenuItem;
     MenuItem9: TMenuItem;
     RxVersionInfo1: TRxVersionInfo;
     Timer1: TTimer;
@@ -50,6 +51,7 @@ type
     procedure ActionDebugLogExecute(Sender: TObject);
     procedure ActionOpenChatExecute(Sender: TObject);
     procedure ActionOpenChatFullExecute(Sender: TObject);
+    procedure ActionOpenChatFullUpdate(Sender: TObject);
     procedure ActionOpenNotifyExecute(Sender: TObject);
     procedure ActionWSockUniqueExecute(Sender: TObject);
     procedure ActionWSockUniqueUpdate(Sender: TObject);
@@ -128,13 +130,14 @@ const
              '}';
 
   syschat_str = '0SGhw live_chatting_list';
+  syschat_guide = 'live_chatting_guide_';
 
 
 
 var
   WSPortChat: string = '65002';
   WSPortSys: string = '65003';
-  WSPortUnique: Boolean = True;
+  WSPortUnique: Boolean = False;
   SockServerChat: TSimpleWebsocketServer;
   SockServerSys: TSimpleWebsocketServer;
   ProcessSysChat: Boolean = False;
@@ -191,6 +194,11 @@ end;
 procedure TFormChzzkWeb.ActionOpenChatFullExecute(Sender: TObject);
 begin
   ShellExecuteW(0,'open',pwidechar(ExtractFilePath(Application.ExeName)+UTF8Decode(chatlog_full)),nil,nil,SW_SHOWNORMAL);
+end;
+
+procedure TFormChzzkWeb.ActionOpenChatFullUpdate(Sender: TObject);
+begin
+  ActionOpenChatFull.Enabled:=not WSPortUnique;
 end;
 
 procedure TFormChzzkWeb.ActionDebugLogExecute(Sender: TObject);
@@ -315,7 +323,7 @@ begin
   IncludeChatTime:=XMLConfig1.GetValue('IncludeTime',False);
   WSPortChat:=XMLConfig1.GetValue('WS/PORT','65002');
   WSPortSys:=XMLConfig1.GetValue('WS/PORTSYS','65003');
-  WSPortUnique:=XMLConfig1.GetValue('WS/UNIQUE',True);
+  WSPortUnique:=XMLConfig1.GetValue('WS/UNIQUE',WSPortUnique);
   ActionChatTime.Checked:=IncludeChatTime;
   ActionWSockUnique.Checked:=WSPortUnique;
 
@@ -426,11 +434,15 @@ begin
   end
   else
   begin
-    if (not WSPortUnique) and
-       (Pos(UTF8Decode(syschat_str),buf)>0) then
-      SockServerSys.BroadcastMsg(UTF8Encode(buf))
-      else
+    if (Pos(UTF8Decode(syschat_str),buf)>0) and
+       (Pos(UTF8Decode(syschat_guide),buf)=0) then
+    begin
+      SockServerSys.BroadcastMsg(UTF8Encode(buf));
+      if WSPortUnique then
         SockServerChat.BroadcastMsg(UTF8Encode(buf));
+    end
+    else
+      SockServerChat.BroadcastMsg(UTF8Encode(buf));
   end;
 end;
 

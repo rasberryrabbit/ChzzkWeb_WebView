@@ -36,6 +36,8 @@ type
     MenuItem2: TMenuItem;
     MenuItem3: TMenuItem;
     MenuItem4: TMenuItem;
+    MenuItem5: TMenuItem;
+    MenuItem6: TMenuItem;
     MenuItem9: TMenuItem;
     RxVersionInfo1: TRxVersionInfo;
     Timer1: TTimer;
@@ -50,6 +52,7 @@ type
     procedure ActionOpenChatFullExecute(Sender: TObject);
     procedure ActionOpenNotifyExecute(Sender: TObject);
     procedure ActionWSockUniqueExecute(Sender: TObject);
+    procedure ActionWSockUniqueUpdate(Sender: TObject);
     procedure ActionWSPortExecute(Sender: TObject);
     procedure ButtonHomeClick(Sender: TObject);
     procedure ButtonRunClick(Sender: TObject);
@@ -97,8 +100,7 @@ var
 implementation
 
 uses
-  uWVLoader,
-  Windows, uWebsockSimple, uChecksumList, ShellApi, DateUtils, StrUtils,
+  uWVLoader, Windows, uWebsockSimple, ShellApi, DateUtils, StrUtils,
   regexpr, ActiveX;
 
 
@@ -125,19 +127,21 @@ const
              '    observer.start();'+
              '}';
 
+  syschat_str = '0SGhw live_chatting_list';
+
 
 
 var
   WSPortChat: string = '65002';
   WSPortSys: string = '65003';
-  WSPortUnique: Boolean = False;
+  WSPortUnique: Boolean = True;
   SockServerChat: TSimpleWebsocketServer;
-  //SockServerSys: TSimpleWebsocketServer;
+  SockServerSys: TSimpleWebsocketServer;
   ProcessSysChat: Boolean = False;
   iCountVisit: Integer = 0;
   IncludeChatTime: Boolean = False;
   chatlog_full: string = 'doc\webchatlog_list.html';
-  chatlog_donation: string = '\doc\도네_구독_메시지.html';
+  chatlog_donation: string = 'doc\도네_구독_메시지.html';
   chatlog_chatonly: string = 'doc\채팅.html';
   stripusertooltip: TRegExpr;
   PageLoaded: Boolean = False;
@@ -168,13 +172,13 @@ begin
     begin
       SockServerChat.Free;
       SockServerChat:=TSimpleWebsocketServer.Create(WSPortChat);
-      //SockServerSys.Free;
-      //i:=StrToIntDef(WSPortChat,65002);
-      //Inc(i);
-      //WSPortSys:=IntToStr(i);
-      //SockServerSys:=TSimpleWebsocketServer.Create(WSPortSys); }
+      SockServerSys.Free;
+      i:=StrToIntDef(WSPortChat,65002);
+      Inc(i);
+      WSPortSys:=IntToStr(i);
+      SockServerSys:=TSimpleWebsocketServer.Create(WSPortSys);
       XMLConfig1.SetValue('WS/PORT',WSPortChat);
-      //XMLConfig1.SetValue('WS/PORTSYS',WSPortSys);
+      XMLConfig1.SetValue('WS/PORTSYS',WSPortSys);
       SetFormCaption;
     end;
 end;
@@ -211,6 +215,11 @@ begin
   ActionWSockUnique.Checked:=not ActionWSockUnique.Checked;
   WSPortUnique:=ActionWSockUnique.Checked;
   XMLConfig1.SetValue('WS/UNIQUE',WSPortUnique);
+end;
+
+procedure TFormChzzkWeb.ActionWSockUniqueUpdate(Sender: TObject);
+begin
+  ActionWSockUnique.Checked:=WSPortUnique;
 end;
 
 procedure TFormChzzkWeb.ButtonRunClick(Sender: TObject);
@@ -287,12 +296,13 @@ procedure TFormChzzkWeb.FormDestroy(Sender: TObject);
 begin
   stripusertooltip.Free;
   SockServerChat.Free;
-  //SockServerSys.Free;
+  SockServerSys.Free;
   XMLConfig1.SetValue('CHAT/FULL',UTF8Decode(chatlog_full));
   XMLConfig1.SetValue('CHAT/CHAT',UTF8Decode(chatlog_chatonly));
   XMLConfig1.SetValue('CHAT/DONATION',UTF8Decode(chatlog_donation));
   if XMLConfig1.Modified then
     XMLConfig1.SaveToFile('config.xml');
+  Sleep(200);
 end;
 
 procedure TFormChzzkWeb.FormShow(Sender: TObject);
@@ -305,7 +315,7 @@ begin
   IncludeChatTime:=XMLConfig1.GetValue('IncludeTime',False);
   WSPortChat:=XMLConfig1.GetValue('WS/PORT','65002');
   WSPortSys:=XMLConfig1.GetValue('WS/PORTSYS','65003');
-  WSPortUnique:=XMLConfig1.GetValue('WS/UNIQUE',False);
+  WSPortUnique:=XMLConfig1.GetValue('WS/UNIQUE',True);
   ActionChatTime.Checked:=IncludeChatTime;
   ActionWSockUnique.Checked:=WSPortUnique;
 
@@ -315,7 +325,7 @@ begin
 
   // start websocket server
   SockServerChat:=TSimpleWebsocketServer.Create(WSPortChat);
-  //SockServerSys:=TSimpleWebsocketServer.Create(WSPortSys);
+  SockServerSys:=TSimpleWebsocketServer.Create(WSPortSys);
 
   SetFormCaption;
 
@@ -416,9 +426,11 @@ begin
   end
   else
   begin
-    //if WSPortUnique then
-    //  SockServerSys.BroadcastMsg(UTF8Encode(buf));
-    SockServerChat.BroadcastMsg(UTF8Encode(buf));
+    if (not WSPortUnique) and
+       (Pos(UTF8Decode(syschat_str),buf)>0) then
+      SockServerSys.BroadcastMsg(UTF8Encode(buf))
+      else
+        SockServerChat.BroadcastMsg(UTF8Encode(buf));
   end;
 end;
 
@@ -470,8 +482,6 @@ initialization
   //GlobalWebView2Loader.DebugLogLevel  := TWV2DebugLogLevel.dllInfo;
 
   GlobalWebView2Loader.StartWebView2;
-
-finalization
 
 
 end.

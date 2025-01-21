@@ -112,6 +112,7 @@ object FormChzzkWeb: TFormChzzkWeb
     object ActionWSockUnique: TAction
       Caption = '단일 웹소켓 사용'
       OnExecute = ActionWSockUniqueExecute
+      OnUpdate = ActionWSockUniqueUpdate
     end
   end
   object MainMenu1: TMainMenu
@@ -130,6 +131,13 @@ object FormChzzkWeb: TFormChzzkWeb
       end
       object MenuItem9: TMenuItem
         Action = ActionOpenChatFull
+      end
+    end
+    object MenuItem5: TMenuItem
+      Caption = '기타'
+      object MenuItem6: TMenuItem
+        Action = ActionWSockUnique
+        Checked = True
       end
     end
   end

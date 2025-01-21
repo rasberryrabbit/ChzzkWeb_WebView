@@ -51,7 +51,6 @@ type
     procedure ActionDebugLogExecute(Sender: TObject);
     procedure ActionOpenChatExecute(Sender: TObject);
     procedure ActionOpenChatFullExecute(Sender: TObject);
-    procedure ActionOpenChatFullUpdate(Sender: TObject);
     procedure ActionOpenNotifyExecute(Sender: TObject);
     procedure ActionWSockUniqueExecute(Sender: TObject);
     procedure ActionWSockUniqueUpdate(Sender: TObject);
@@ -144,6 +143,7 @@ var
   iCountVisit: Integer = 0;
   IncludeChatTime: Boolean = False;
   chatlog_full: string = 'doc\webchatlog_list.html';
+  chatlog_full_unique: string = 'doc\webchatlog_list_unique.html';
   chatlog_donation: string = 'doc\도네_구독_메시지.html';
   chatlog_chatonly: string = 'doc\채팅.html';
   stripusertooltip: TRegExpr;
@@ -193,12 +193,10 @@ end;
 
 procedure TFormChzzkWeb.ActionOpenChatFullExecute(Sender: TObject);
 begin
-  ShellExecuteW(0,'open',pwidechar(ExtractFilePath(Application.ExeName)+UTF8Decode(chatlog_full)),nil,nil,SW_SHOWNORMAL);
-end;
-
-procedure TFormChzzkWeb.ActionOpenChatFullUpdate(Sender: TObject);
-begin
-  ActionOpenChatFull.Enabled:=not WSPortUnique;
+  if not WSPortUnique then
+   ShellExecuteW(0,'open',pwidechar(ExtractFilePath(Application.ExeName)+UTF8Decode(chatlog_full)),nil,nil,SW_SHOWNORMAL)
+   else
+    ShellExecuteW(0,'open',pwidechar(ExtractFilePath(Application.ExeName)+UTF8Decode(chatlog_full_unique)),nil,nil,SW_SHOWNORMAL)
 end;
 
 procedure TFormChzzkWeb.ActionDebugLogExecute(Sender: TObject);
@@ -306,6 +304,7 @@ begin
   SockServerChat.Free;
   SockServerSys.Free;
   XMLConfig1.SetValue('CHAT/FULL',UTF8Decode(chatlog_full));
+  XMLConfig1.SetValue('CHAT/FULLUNIQUE',UTF8Decode(chatlog_full_unique));
   XMLConfig1.SetValue('CHAT/CHAT',UTF8Decode(chatlog_chatonly));
   XMLConfig1.SetValue('CHAT/DONATION',UTF8Decode(chatlog_donation));
   if XMLConfig1.Modified then
@@ -328,6 +327,7 @@ begin
   ActionWSockUnique.Checked:=WSPortUnique;
 
   chatlog_full:=UTF8Encode(XMLConfig1.GetValue('CHAT/FULL',UTF8Decode(chatlog_full)));
+  chatlog_full_unique:=UTF8Encode(XMLConfig1.GetValue('CHAT/FULLUNIQUE',UTF8Decode(chatlog_full_unique)));
   chatlog_chatonly:=UTF8Encode(XMLConfig1.GetValue('CHAT/CHAT',UTF8Decode(chatlog_chatonly)));
   chatlog_donation:=UTF8Encode(XMLConfig1.GetValue('CHAT/DONATION',UTF8Decode(chatlog_donation)));
 

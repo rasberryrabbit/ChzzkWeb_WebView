@@ -17,6 +17,9 @@ if(obser) {
     });
 
     observer.start();
+    window.addEventListener('unload', function() {
+      observer.disconnect();
+    });
 }
 
 var obserlive=document.querySelector("button.live_chatting_scroll_button_chatting__kqgzN");
@@ -38,4 +41,7 @@ if(obserlive) {
     });
 
     observerlive.start();
+    window.addEventListener('unload', function() {
+      observerlive.disconnect();
+    });
 }

@@ -71,7 +71,7 @@ object FormChzzkWeb: TFormChzzkWeb
     Top = 144
   end
   object Timer2: TTimer
-    Interval = 500
+    Interval = 300
     OnTimer = Timer2Timer
     Left = 112
     Top = 144

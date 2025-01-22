@@ -125,7 +125,10 @@ const
              '    childList: true,'+
              '    characterData: false,'+
              '    });'+
-             '    observer.start();'+
+             'observer.start();'+
+             'window.addEventListener(''unload'', function() {'+
+             '  observer.disconnect();'+
+             '});'+
              '}';
 
   syschat_str = '0SGhw live_chatting_list';

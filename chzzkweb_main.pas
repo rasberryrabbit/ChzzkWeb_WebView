@@ -6,8 +6,9 @@ interface
 
 uses
   Classes, SysUtils, XMLConf, Forms, Controls, Graphics, Dialogs, StdCtrls,
-  LMessages, ExtCtrls, ActnList, Menus, UniqueInstance, uWVWindowParent,
-  uWVBrowser, JvXPButtons, RxVersInfo, Messages, uWVTypeLibrary, uWVEvents, uWVTypes;
+  LMessages, ExtCtrls, ActnList, Menus, XMLPropStorage, UniqueInstance,
+  uWVWindowParent, uWVBrowser, JvXPButtons, RxVersInfo, Messages,
+  uWVTypeLibrary, uWVEvents, uWVTypes;
 
 
 const
@@ -47,6 +48,7 @@ type
     WVBrowser1: TWVBrowser;
     WVWindowParent1: TWVWindowParent;
     XMLConfig1: TXMLConfig;
+    XMLPropStorage1: TXMLPropStorage;
     procedure ActionChatTimeExecute(Sender: TObject);
     procedure ActionDebugLogExecute(Sender: TObject);
     procedure ActionOpenChatExecute(Sender: TObject);
@@ -84,6 +86,7 @@ type
     procedure WVBrowser1WebMessageReceived(Sender: TObject;
       const aWebView: ICoreWebView2;
       const aArgs: ICoreWebView2WebMessageReceivedEventArgs);
+    procedure XMLPropStorage1SaveProperties(Sender: TObject);
   private
     procedure CheckChatting(var Msg:TLMessage); message MSGVISITDOM;
 
@@ -449,6 +452,11 @@ begin
   end;
 end;
 
+procedure TFormChzzkWeb.XMLPropStorage1SaveProperties(Sender: TObject);
+begin
+
+end;
+
 procedure TFormChzzkWeb.CheckChatting(var Msg: TLMessage);
 const
   ChzzkURL ='chzzk.naver.com/live/';
@@ -484,6 +492,7 @@ begin
   cefVer:=GetFileVersion('WebView2Loader');
   Caption:='ChzzkWeb_WebView2 '+RxVersionInfo1.FileVersion+' '+IntToHex(cefVer,8)+' @'+WSPortChat;
 end;
+
 
 initialization
   GlobalWebView2Loader                := TWVLoader.Create(nil);

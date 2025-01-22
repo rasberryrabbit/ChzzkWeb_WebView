@@ -7,6 +7,7 @@ object FormChzzkWeb: TFormChzzkWeb
   ClientHeight = 691
   ClientWidth = 1027
   Menu = MainMenu1
+  SessionProperties = 'WindowState;Width;Height;Top;Left'
   LCLVersion = '4.99.0.0'
   OnClose = FormClose
   OnDestroy = FormDestroy
@@ -166,5 +167,11 @@ object FormChzzkWeb: TFormChzzkWeb
     OnExecuteScriptWithResultCompleted = WVBrowser1ExecuteScriptWithResultCompleted
     Left = 24
     Top = 80
+  end
+  object XMLPropStorage1: TXMLPropStorage
+    StoredValues = <>
+    OnSaveProperties = XMLPropStorage1SaveProperties
+    Left = 288
+    Top = 88
   end
 end

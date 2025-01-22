@@ -21,8 +21,8 @@
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="ChzzkWeb_Main"/>
         <IsVisibleTab Value="True"/>
-        <TopLine Value="109"/>
-        <CursorPos X="20" Y="131"/>
+        <TopLine Value="483"/>
+        <CursorPos Y="497"/>
         <UsageCount Value="142"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -428,83 +428,31 @@
         <CursorPos X="35" Y="5822"/>
         <UsageCount Value="10"/>
       </Unit>
+      <Unit>
+        <Filename Value="C:\fpcupdeluxe\lazarus\lcl\xmlpropstorage.pas"/>
+        <UnitName Value="XMLPropStorage"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="37"/>
+        <CursorPos X="43" Y="38"/>
+        <UsageCount Value="10"/>
+      </Unit>
+      <Unit>
+        <Filename Value="C:\fpcupdeluxe\lazarus\lcl\forms.pp"/>
+        <UnitName Value="Forms"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="1918"/>
+        <CursorPos X="15" Y="1931"/>
+        <UsageCount Value="10"/>
+      </Unit>
+      <Unit>
+        <Filename Value="C:\fpcupdeluxe\lazarus\lcl\include\customform.inc"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="3317"/>
+        <CursorPos X="3" Y="3319"/>
+        <UsageCount Value="10"/>
+      </Unit>
     </Units>
-    <JumpHistory HistoryIndex="29">
-      <Position>
-        <Filename Value="chzzkweb_main.pas"/>
-        <Caret Line="477" TopLine="452"/>
-      </Position>
-      <Position>
-        <Filename Value="chzzkweb_main.pas"/>
-        <Caret Line="422" Column="16" TopLine="405"/>
-      </Position>
-      <Position>
-        <Filename Value="chzzkweb_main.pas"/>
-        <Caret Line="136" Column="32" TopLine="123"/>
-      </Position>
-      <Position>
-        <Filename Value="chzzkweb_main.pas"/>
-        <Caret Line="215" Column="10" TopLine="200"/>
-      </Position>
-      <Position>
-        <Filename Value="chzzkweb_main.pas"/>
-        <Caret Line="136" Column="45" TopLine="130"/>
-      </Position>
-      <Position>
-        <Filename Value="chzzkweb_main.pas"/>
-        <Caret Line="432" Column="54" TopLine="420"/>
-      </Position>
-      <Position>
-        <Filename Value="chzzkweb_main.pas"/>
-        <Caret Line="312" Column="14" TopLine="312"/>
-      </Position>
-      <Position>
-        <Filename Value="chzzkweb_main.pas"/>
-        <Caret Line="132" Column="12" TopLine="116"/>
-      </Position>
-      <Position>
-        <Filename Value="chzzkweb_main.pas"/>
-        <Caret Line="55" TopLine="48"/>
-      </Position>
-      <Position>
-        <Filename Value="chzzkweb_main.pas"/>
-        <Caret Line="221" TopLine="209"/>
-      </Position>
-      <Position>
-        <Filename Value="chzzkweb_main.pas"/>
-        <Caret Line="326" Column="59" TopLine="307"/>
-      </Position>
-      <Position>
-        <Filename Value="chzzkweb_main.pas"/>
-        <Caret Line="328" Column="42" TopLine="307"/>
-      </Position>
-      <Position>
-        <Filename Value="chzzkweb_main.pas"/>
-      </Position>
-      <Position>
-        <Filename Value="chzzkweb_main.pas"/>
-        <Caret Line="330" Column="9" TopLine="312"/>
-      </Position>
-      <Position>
-        <Filename Value="chzzkweb_main.pas"/>
-        <Caret Line="146" Column="11" TopLine="133"/>
-      </Position>
-      <Position>
-        <Filename Value="chzzkweb_main.pas"/>
-        <Caret Line="147" Column="15" TopLine="133"/>
-      </Position>
-      <Position>
-        <Filename Value="chzzkweb_main.pas"/>
-        <Caret Line="200" Column="98" TopLine="184"/>
-      </Position>
-      <Position>
-        <Filename Value="chzzkweb_main.pas"/>
-        <Caret Line="313" Column="64" TopLine="298"/>
-      </Position>
-      <Position>
-        <Filename Value="chzzkweb_main.pas"/>
-        <Caret Line="336" Column="90" TopLine="324"/>
-      </Position>
+    <JumpHistory HistoryIndex="16">
       <Position>
         <Filename Value="chzzkweb_main.pas"/>
         <Caret Line="146" TopLine="133"/>
@@ -548,6 +496,30 @@
       <Position>
         <Filename Value="chzzkweb_main.pas"/>
         <Caret Line="330" Column="103" TopLine="309"/>
+      </Position>
+      <Position>
+        <Filename Value="chzzkweb_main.pas"/>
+        <Caret Line="132" Column="20" TopLine="110"/>
+      </Position>
+      <Position>
+        <Filename Value="chzzkweb_main.pas"/>
+        <Caret Line="99" Column="31" TopLine="76"/>
+      </Position>
+      <Position>
+        <Filename Value="chzzkweb_main.pas"/>
+        <Caret Line="501" Column="3" TopLine="498"/>
+      </Position>
+      <Position>
+        <Filename Value="chzzkweb_main.pas"/>
+        <Caret Line="458" Column="36" TopLine="449"/>
+      </Position>
+      <Position>
+        <Filename Value="chzzkweb_main.pas"/>
+        <Caret Line="51" Column="29" TopLine="35"/>
+      </Position>
+      <Position>
+        <Filename Value="chzzkweb_main.pas"/>
+        <Caret Line="98" TopLine="100"/>
       </Position>
     </JumpHistory>
     <RunParams>

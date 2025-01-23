@@ -265,6 +265,8 @@ end;
 
 procedure TFormChzzkWeb.ButtonGoClick(Sender: TObject);
 begin
+  if Editurl.Text='' then
+    Editurl.Text:='https://chzzk.naver.com';
   WVBrowser1.Navigate(UTF8Decode(Editurl.Text));
 end;
 

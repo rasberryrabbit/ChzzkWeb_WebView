@@ -69,23 +69,24 @@ chatsock1.onmessage = function (event) {
     } else {
       div.append(chatline);
       idlist[username]=1;
-    }
-    var user=$("#usercount");
-    user.html(Object.values(idlist).length);
-    if (doscroll==1) {
-        if (div.children('div').length>itemmax) {
-          div.children('div')[0].remove();
-        }      
-        // scroll
-        var height = div.height();
-        var pageHeight = $(window).height();
-        if (height > pageHeight) {
-          window.scrollTo(0, height - pageHeight + 30);
-        }
-    } else {
-        if (div.children('div').length>itemlimit) {
-          div.children('div')[0].remove();
-        }
+      
+      var user=$("#usercount");
+      user.html(Object.values(idlist).length);
+      if (doscroll==1) {
+          if (div.children('div').length>itemmax) {
+            div.children('div')[0].remove();
+          }      
+          // scroll
+          var height = div.height();
+          var pageHeight = $(window).height();
+          if (height+30 > pageHeight) {
+            window.scrollTo(0, height - pageHeight + 30);
+          }
+      } else {
+          if (div.children('div').length>itemlimit) {
+            div.children('div')[0].remove();
+          }
+      }
     }
 }
 

@@ -19,6 +19,7 @@ type
   { TFormChzzkWeb }
 
   TFormChzzkWeb = class(TForm)
+    ActionOpenUserList: TAction;
     ActionWSockUnique: TAction;
     ActionOpenChatFull: TAction;
     ActionChatTime: TAction;
@@ -40,6 +41,7 @@ type
     MenuItem5: TMenuItem;
     MenuItem6: TMenuItem;
     MenuItem7: TMenuItem;
+    MenuItem8: TMenuItem;
     MenuItem9: TMenuItem;
     RxVersionInfo1: TRxVersionInfo;
     Timer1: TTimer;
@@ -54,6 +56,7 @@ type
     procedure ActionOpenChatExecute(Sender: TObject);
     procedure ActionOpenChatFullExecute(Sender: TObject);
     procedure ActionOpenNotifyExecute(Sender: TObject);
+    procedure ActionOpenUserListExecute(Sender: TObject);
     procedure ActionWSockUniqueExecute(Sender: TObject);
     procedure ActionWSockUniqueUpdate(Sender: TObject);
     procedure ActionWSPortExecute(Sender: TObject);
@@ -152,6 +155,7 @@ var
   chatlog_full_unique: string = 'doc\webchatlog_list_unique.html';
   chatlog_donation: string = 'doc\도네_구독_메시지.html';
   chatlog_chatonly: string = 'doc\채팅.html';
+  chatlog_userid: string = 'doc\webchatlog_user_unique.html';
   stripusertooltip: TRegExpr;
   PageLoaded: Boolean = False;
   observer_started: Boolean = False;
@@ -220,6 +224,11 @@ end;
 procedure TFormChzzkWeb.ActionOpenNotifyExecute(Sender: TObject);
 begin
   ShellExecuteW(0,'open',pwidechar(ExtractFilePath(Application.ExeName)+UTF8Decode(chatlog_donation)),nil,nil,SW_SHOWNORMAL);
+end;
+
+procedure TFormChzzkWeb.ActionOpenUserListExecute(Sender: TObject);
+begin
+  ShellExecuteW(0,'open',pwidechar(ExtractFilePath(Application.ExeName)+UTF8Decode(chatlog_userid)),nil,nil,SW_SHOWNORMAL);
 end;
 
 procedure TFormChzzkWeb.ActionWSockUniqueExecute(Sender: TObject);
@@ -313,6 +322,7 @@ begin
   XMLConfig1.SetValue('CHAT/FULLUNIQUE',UTF8Decode(chatlog_full_unique));
   XMLConfig1.SetValue('CHAT/CHAT',UTF8Decode(chatlog_chatonly));
   XMLConfig1.SetValue('CHAT/DONATION',UTF8Decode(chatlog_donation));
+  XMLConfig1.SetValue('CHAT/USERID',UTF8Decode(chatlog_userid));
   if XMLConfig1.Modified then
     XMLConfig1.SaveToFile('config.xml');
   Sleep(200);
@@ -336,6 +346,7 @@ begin
   chatlog_full_unique:=UTF8Encode(XMLConfig1.GetValue('CHAT/FULLUNIQUE',UTF8Decode(chatlog_full_unique)));
   chatlog_chatonly:=UTF8Encode(XMLConfig1.GetValue('CHAT/CHAT',UTF8Decode(chatlog_chatonly)));
   chatlog_donation:=UTF8Encode(XMLConfig1.GetValue('CHAT/DONATION',UTF8Decode(chatlog_donation)));
+  chatlog_userid:=UTF8Encode(XMLConfig1.GetValue('CHAT/USERID',UTF8Decode(chatlog_userid)));
 
   // start websocket server
   SockServerChat:=TSimpleWebsocketServer.Create(WSPortChat);

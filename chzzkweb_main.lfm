@@ -115,6 +115,10 @@ object FormChzzkWeb: TFormChzzkWeb
       OnExecute = ActionWSockUniqueExecute
       OnUpdate = ActionWSockUniqueUpdate
     end
+    object ActionOpenUserList: TAction
+      Caption = '채팅 유저'
+      OnExecute = ActionOpenUserListExecute
+    end
   end
   object MainMenu1: TMainMenu
     Left = 200
@@ -135,6 +139,9 @@ object FormChzzkWeb: TFormChzzkWeb
       end
       object MenuItem7: TMenuItem
         Action = ActionOpenNotify
+      end
+      object MenuItem8: TMenuItem
+        Action = ActionOpenUserList
       end
     end
     object MenuItem5: TMenuItem

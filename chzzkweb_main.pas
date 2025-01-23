@@ -103,6 +103,8 @@ type
   public
     procedure SetFormCaption;
 
+    procedure SetUpWebSocketPort;
+
   end;
 
 var
@@ -185,21 +187,15 @@ var
 begin
   ir:=InputCombo('웹소켓 포트','웹소켓 포트를 지정',['65002','65010','65020','65030','65040']);
   case ir of
-  1: WSPortChat:='65002';
-  2: WSPortChat:='65010';
-  3: WSPortChat:='65020';
-  4: WSPortChat:='65030';
-  5: WSPortChat:='65040';
+  0: WSPortChat:='65002';
+  1: WSPortChat:='65010';
+  2: WSPortChat:='65020';
+  3: WSPortChat:='65030';
+  4: WSPortChat:='65040';
   end;
   if ir<>-1 then
     begin
-      SockServerChat.Free;
-      SockServerChat:=TSimpleWebsocketServer.Create(WSPortChat);
-      SockServerSys.Free;
-      i:=StrToIntDef(WSPortChat,65002);
-      Inc(i);
-      WSPortSys:=IntToStr(i);
-      SockServerSys:=TSimpleWebsocketServer.Create(WSPortSys);
+      SetUpWebSocketPort;
       XMLConfig1.SetValue('WS/PORT',WSPortChat);
       XMLConfig1.SetValue('WS/PORTSYS',WSPortSys);
       SetFormCaption;
@@ -367,12 +363,8 @@ begin
   chatlog_donation:=UTF8Encode(XMLConfig1.GetValue('CHAT/DONATION',UTF8Decode(chatlog_donation)));
   chatlog_userid:=UTF8Encode(XMLConfig1.GetValue('CHAT/USERID',UTF8Decode(chatlog_userid)));
 
-  // start websocket server
-  SockServerChat:=TSimpleWebsocketServer.Create(WSPortChat);
-  SockServerSys:=TSimpleWebsocketServer.Create(WSPortSys);
-
+  SetUpWebSocketPort;
   SetFormCaption;
-
 
   if GlobalWebView2Loader.InitializationError then
     showmessage(UTF8Encode(GlobalWebView2Loader.ErrorMessage))
@@ -520,6 +512,40 @@ var
 begin
   cefVer:=GetFileVersion('WebView2Loader');
   Caption:='ChzzkWeb_WebView2 '+RxVersionInfo1.FileVersion+' '+IntToHex(cefVer,8)+' @'+WSPortChat;
+end;
+
+procedure TFormChzzkWeb.SetUpWebSocketPort;
+var
+  i, j: Integer;
+begin
+  // start websocket server
+  if Assigned(SockServerChat) then
+    SockServerChat.Free;
+  if Assigned(SockServerSys) then
+    SockServerSys.Free;
+  j:=0;
+  if not TryStrToInt(WSPortChat,i) then
+  begin
+    WSPortChat:='65002';
+    i:=65002;
+  end;
+  while j<8 do begin
+    try
+      SockServerChat:=TSimpleWebsocketServer.Create(WSPortChat);
+      try
+        WSPortSys:=IntToStr(i+1);
+        SockServerSys:=TSimpleWebsocketServer.Create(WSPortSys);
+        break;
+      except
+        SockServerChat.Free;
+        raise;
+      end;
+    except
+      Inc(j,2);
+      Inc(i,j);
+      WSPortChat:=IntToStr(i);
+    end;
+  end;
 end;
 
 

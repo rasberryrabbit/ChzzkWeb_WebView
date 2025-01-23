@@ -9,8 +9,7 @@
         <Filename Value="chzzkweb_WV.lpr"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
-        <TopLine Value="4"/>
-        <CursorPos Y="28"/>
+        <CursorPos X="18" Y="14"/>
         <UsageCount Value="142"/>
       </Unit>
       <Unit>
@@ -519,7 +518,7 @@
       </Position>
       <Position>
         <Filename Value="chzzkweb_main.pas"/>
-        <Caret Line="98" TopLine="100"/>
+        <Caret Line="497" TopLine="483"/>
       </Position>
     </JumpHistory>
     <RunParams>

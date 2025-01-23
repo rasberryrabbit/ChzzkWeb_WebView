@@ -31,10 +31,10 @@ object FormChzzkWeb: TFormChzzkWeb
     WordWrap = True
   end
   object Editurl: TEdit
-    Left = 96
+    Left = 128
     Height = 23
     Top = 40
-    Width = 857
+    Width = 825
     Anchors = [akTop, akLeft, akRight]
     TabOrder = 2
     OnKeyPress = EditurlKeyPress
@@ -64,6 +64,15 @@ object FormChzzkWeb: TFormChzzkWeb
     Anchors = [akTop, akLeft, akRight, akBottom]
     TabOrder = 4
     Browser = WVBrowser1
+  end
+  object ButtonReload: TButton
+    Left = 88
+    Height = 25
+    Top = 40
+    Width = 32
+    Caption = '@'
+    TabOrder = 5
+    OnClick = ButtonReloadClick
   end
   object Timer1: TTimer
     Interval = 100

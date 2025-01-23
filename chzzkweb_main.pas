@@ -30,6 +30,7 @@ type
     ActionList1: TActionList;
     ButtonHome: TButton;
     ButtonGo: TButton;
+    ButtonReload: TButton;
     Editurl: TEdit;
     JvXPButton1: TJvXPButton;
     Label1: TLabel;
@@ -61,6 +62,7 @@ type
     procedure ActionWSockUniqueUpdate(Sender: TObject);
     procedure ActionWSPortExecute(Sender: TObject);
     procedure ButtonHomeClick(Sender: TObject);
+    procedure ButtonReloadClick(Sender: TObject);
     procedure ButtonRunClick(Sender: TObject);
     procedure ButtonGoClick(Sender: TObject);
     procedure EditurlKeyPress(Sender: TObject; var Key: char);
@@ -166,6 +168,11 @@ var
 procedure TFormChzzkWeb.ButtonHomeClick(Sender: TObject);
 begin
   WVBrowser1.Navigate('https://chzzk.naver.com');
+end;
+
+procedure TFormChzzkWeb.ButtonReloadClick(Sender: TObject);
+begin
+  WVBrowser1.Refresh;
 end;
 
 procedure TFormChzzkWeb.ActionWSPortExecute(Sender: TObject);

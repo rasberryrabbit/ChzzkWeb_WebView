@@ -37,8 +37,8 @@ $(document).ready(function(){
 </div>
 <script type="text/javascript" src="reconnecting-websocket.min.js"></script>
 <script type="text/javascript">
-var itemmax=200;
-var itemlimit=700;
+var itemmax=3000;
+var itemlimit=3000;
 var doscroll=1;
 //
 $(window).on('scroll', function(){
@@ -47,7 +47,7 @@ $(window).on('scroll', function(){
   var pageHeight = $(window).height();
   doscroll=1;
   if (height > pageHeight) {
-      if (curpos + pageHeight + 30 >= height) {
+      if (curpos + pageHeight+60 >= height) {
         doscroll=1;
       } else {
         doscroll=0;

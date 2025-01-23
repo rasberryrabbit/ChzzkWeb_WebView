@@ -28,6 +28,7 @@ type
     ActionOpenChat: TAction;
     ActionWSPort: TAction;
     ActionList1: TActionList;
+    ButtonGoChat: TButton;
     ButtonHome: TButton;
     ButtonGo: TButton;
     ButtonReload: TButton;
@@ -61,6 +62,7 @@ type
     procedure ActionWSockUniqueExecute(Sender: TObject);
     procedure ActionWSockUniqueUpdate(Sender: TObject);
     procedure ActionWSPortExecute(Sender: TObject);
+    procedure ButtonGoChatClick(Sender: TObject);
     procedure ButtonHomeClick(Sender: TObject);
     procedure ButtonReloadClick(Sender: TObject);
     procedure ButtonRunClick(Sender: TObject);
@@ -142,6 +144,7 @@ const
   syschat_str = '0SGhw live_chatting_list';
   syschat_guide = 'live_chatting_guide_';
 
+  ChzzkURL ='chzzk.naver.com/live/';
 
 
 var
@@ -201,6 +204,15 @@ begin
       XMLConfig1.SetValue('WS/PORTSYS',WSPortSys);
       SetFormCaption;
     end;
+end;
+
+procedure TFormChzzkWeb.ButtonGoChatClick(Sender: TObject);
+begin
+  if (Pos(ChzzkURL,Editurl.Text)>0) and (Pos('/chat',Editurl.Text)=0) then
+  begin
+    Editurl.Text:=Editurl.Text+'/chat';
+    ButtonGo.Click;
+  end;
 end;
 
 procedure TFormChzzkWeb.ActionOpenChatExecute(Sender: TObject);
@@ -361,6 +373,7 @@ begin
 
   SetFormCaption;
 
+
   if GlobalWebView2Loader.InitializationError then
     showmessage(UTF8Encode(GlobalWebView2Loader.ErrorMessage))
    else
@@ -406,7 +419,7 @@ end;
 procedure TFormChzzkWeb.WVBrowser1AfterCreated(Sender: TObject);
 begin
   WVWindowParent1.UpdateSize;
-  ButtonHome.Click;
+  ButtonGo.Click;
   // We need to a filter to enable the TWVBrowser.OnWebResourceRequested event
   //WVBrowser1.AddWebResourceRequestedFilter('*', COREWEBVIEW2_WEB_RESOURCE_CONTEXT_IMAGE);
 end;
@@ -476,8 +489,6 @@ begin
 end;
 
 procedure TFormChzzkWeb.CheckChatting(var Msg: TLMessage);
-const
-  ChzzkURL ='chzzk.naver.com/live/';
 begin
   if not PageLoaded then
     exit;

@@ -7,7 +7,7 @@ object FormChzzkWeb: TFormChzzkWeb
   ClientHeight = 691
   ClientWidth = 1027
   Menu = MainMenu1
-  SessionProperties = 'WindowState;Width;Height;Top;Left'
+  SessionProperties = 'Height;Left;Top;Width;WindowState;Editurl.Text'
   LCLVersion = '4.99.0.0'
   OnClose = FormClose
   OnDestroy = FormDestroy
@@ -34,19 +34,19 @@ object FormChzzkWeb: TFormChzzkWeb
     Left = 128
     Height = 23
     Top = 40
-    Width = 825
+    Width = 753
     Anchors = [akTop, akLeft, akRight]
-    TabOrder = 2
+    TabOrder = 3
     OnKeyPress = EditurlKeyPress
   end
   object ButtonGo: TButton
-    Left = 961
+    Left = 888
     Height = 25
-    Top = 38
+    Top = 40
     Width = 56
     Anchors = [akTop, akRight]
     Caption = 'Go'
-    TabOrder = 3
+    TabOrder = 4
     OnClick = ButtonGoClick
   end
   object JvXPButton1: TJvXPButton
@@ -62,7 +62,7 @@ object FormChzzkWeb: TFormChzzkWeb
     Top = 72
     Width = 1010
     Anchors = [akTop, akLeft, akRight, akBottom]
-    TabOrder = 4
+    TabOrder = 6
     Browser = WVBrowser1
   end
   object ButtonReload: TButton
@@ -71,8 +71,18 @@ object FormChzzkWeb: TFormChzzkWeb
     Top = 40
     Width = 32
     Caption = '@'
-    TabOrder = 5
+    TabOrder = 2
     OnClick = ButtonReloadClick
+  end
+  object ButtonGoChat: TButton
+    Left = 952
+    Height = 25
+    Top = 40
+    Width = 56
+    Anchors = [akTop, akRight]
+    Caption = 'Go Chat'
+    TabOrder = 5
+    OnClick = ButtonGoChatClick
   end
   object Timer1: TTimer
     Interval = 100

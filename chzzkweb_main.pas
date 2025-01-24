@@ -19,6 +19,7 @@ type
   { TFormChzzkWeb }
 
   TFormChzzkWeb = class(TForm)
+    ActionLogging: TAction;
     ActionOpenUserList: TAction;
     ActionWSockUnique: TAction;
     ActionOpenChatFull: TAction;
@@ -28,15 +29,16 @@ type
     ActionOpenChat: TAction;
     ActionWSPort: TAction;
     ActionList1: TActionList;
+    ButtonBack: TButton;
     ButtonGoChat: TButton;
     ButtonHome: TButton;
     ButtonGo: TButton;
     ButtonReload: TButton;
     Editurl: TEdit;
-    JvXPButton1: TJvXPButton;
     Label1: TLabel;
     MainMenu1: TMainMenu;
     MenuItem1: TMenuItem;
+    MenuItem10: TMenuItem;
     MenuItem2: TMenuItem;
     MenuItem3: TMenuItem;
     MenuItem4: TMenuItem;
@@ -55,6 +57,7 @@ type
     XMLPropStorage1: TXMLPropStorage;
     procedure ActionChatTimeExecute(Sender: TObject);
     procedure ActionDebugLogExecute(Sender: TObject);
+    procedure ActionLoggingExecute(Sender: TObject);
     procedure ActionOpenChatExecute(Sender: TObject);
     procedure ActionOpenChatFullExecute(Sender: TObject);
     procedure ActionOpenNotifyExecute(Sender: TObject);
@@ -62,6 +65,7 @@ type
     procedure ActionWSockUniqueExecute(Sender: TObject);
     procedure ActionWSockUniqueUpdate(Sender: TObject);
     procedure ActionWSPortExecute(Sender: TObject);
+    procedure ButtonBackClick(Sender: TObject);
     procedure ButtonGoChatClick(Sender: TObject);
     procedure ButtonHomeClick(Sender: TObject);
     procedure ButtonReloadClick(Sender: TObject);
@@ -202,6 +206,11 @@ begin
     end;
 end;
 
+procedure TFormChzzkWeb.ButtonBackClick(Sender: TObject);
+begin
+  WVBrowser1.GoBack;
+end;
+
 procedure TFormChzzkWeb.ButtonGoChatClick(Sender: TObject);
 begin
   if (Pos(ChzzkURL,Editurl.Text)>0) and (Pos('/chat',Editurl.Text)=0) then
@@ -227,6 +236,12 @@ end;
 procedure TFormChzzkWeb.ActionDebugLogExecute(Sender: TObject);
 begin
   ActionDebugLog.Checked:=not ActionDebugLog.Checked;
+end;
+
+procedure TFormChzzkWeb.ActionLoggingExecute(Sender: TObject);
+begin
+  ActionLogging.Checked:=not ActionLogging.Checked;
+  Timer2.Enabled:=ActionLogging.Checked;
 end;
 
 procedure TFormChzzkWeb.ActionChatTimeExecute(Sender: TObject);
@@ -379,11 +394,6 @@ end;
 
 procedure TFormChzzkWeb.JvXPButton1Click(Sender: TObject);
 begin
-  Timer2.Enabled:=not Timer2.Enabled;
-  if Timer2.Enabled then
-    JvXPButton1.Caption:='로깅'
-    else
-      JvXPButton1.Caption:='대기';
 end;
 
 procedure TFormChzzkWeb.Timer1Timer(Sender: TObject);
@@ -446,6 +456,7 @@ procedure TFormChzzkWeb.WVBrowser1SourceChanged(Sender: TObject;
 begin
   observer_started:=False;
   Editurl.Text:=UTF8Encode(WVBrowser1.Source);
+  ButtonBack.Enabled:=WVBrowser1.CanGoBack;
 end;
 
 procedure TFormChzzkWeb.WVBrowser1WebMessageReceived(Sender: TObject;

@@ -15,51 +15,44 @@ object FormChzzkWeb: TFormChzzkWeb
   object ButtonHome: TButton
     Left = 8
     Height = 25
-    Top = 40
+    Top = 18
     Width = 75
     Caption = '치지직 홈'
-    TabOrder = 1
+    TabOrder = 0
     OnClick = ButtonHomeClick
   end
   object Label1: TLabel
-    Left = 96
-    Height = 32
-    Top = 8
-    Width = 480
+    Left = 8
+    Height = 16
+    Top = 2
+    Width = 641
     AutoSize = False
-    Caption = '19금 상태는 지원 안됨(로그인 필요). 채팅을 스크롤하면 작동하지 않음. 웹소켓 서버 때문에 하나만 실행할 수 있음.'
+    Caption = '로깅 : 19금 상태는 지원 안됨(로그인 필요). 채팅을 스크롤하면 작동하지 않음. 웹소켓 서버 때문에 하나만 실행 가능.'
     WordWrap = True
   end
   object Editurl: TEdit
     Left = 128
     Height = 23
-    Top = 40
-    Width = 753
+    Top = 18
+    Width = 696
     Anchors = [akTop, akLeft, akRight]
-    TabOrder = 3
+    TabOrder = 2
     OnKeyPress = EditurlKeyPress
   end
   object ButtonGo: TButton
-    Left = 888
+    Left = 832
     Height = 25
-    Top = 40
+    Top = 18
     Width = 56
     Anchors = [akTop, akRight]
     Caption = 'Go'
-    TabOrder = 4
+    TabOrder = 3
     OnClick = ButtonGoClick
-  end
-  object JvXPButton1: TJvXPButton
-    Left = 8
-    Top = 8
-    Caption = '로깅'
-    TabOrder = 0
-    OnClick = JvXPButton1Click
   end
   object WVWindowParent1: TWVWindowParent
     Left = 8
-    Height = 616
-    Top = 72
+    Height = 632
+    Top = 56
     Width = 1010
     Anchors = [akTop, akLeft, akRight, akBottom]
     TabOrder = 6
@@ -68,21 +61,31 @@ object FormChzzkWeb: TFormChzzkWeb
   object ButtonReload: TButton
     Left = 88
     Height = 25
-    Top = 40
+    Top = 18
     Width = 32
     Caption = '@'
-    TabOrder = 2
+    TabOrder = 1
     OnClick = ButtonReloadClick
   end
   object ButtonGoChat: TButton
-    Left = 952
+    Left = 896
     Height = 25
-    Top = 40
+    Top = 18
     Width = 56
     Anchors = [akTop, akRight]
     Caption = 'Go Chat'
-    TabOrder = 5
+    TabOrder = 4
     OnClick = ButtonGoChatClick
+  end
+  object ButtonBack: TButton
+    Left = 962
+    Height = 25
+    Top = 18
+    Width = 56
+    Anchors = [akTop, akRight]
+    Caption = 'Back'
+    TabOrder = 5
+    OnClick = ButtonBackClick
   end
   object Timer1: TTimer
     Interval = 100
@@ -138,12 +141,20 @@ object FormChzzkWeb: TFormChzzkWeb
       Caption = '채팅 유저'
       OnExecute = ActionOpenUserListExecute
     end
+    object ActionLogging: TAction
+      Caption = '로깅'
+      Checked = True
+      OnExecute = ActionLoggingExecute
+    end
   end
   object MainMenu1: TMainMenu
     Left = 200
     Top = 83
     object MenuItem1: TMenuItem
       Caption = '웹소켓(&W)'
+      object MenuItem10: TMenuItem
+        Action = ActionLogging
+      end
       object MenuItem2: TMenuItem
         Action = ActionWSPort
       end

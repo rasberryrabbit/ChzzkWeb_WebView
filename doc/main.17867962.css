@@ -30479,3 +30479,20 @@ a.twitchzzk_footer_item__CRJWN:hover {
   max-width:2060px;
   width:100%
 }
+
+.live_chatting_subscription_channel_gift_message_container__v4WvS 
+{
+    word-wrap: break-word;
+    background-color: var(--Ref-Color-Violet-60);
+    border-radius: 8px;
+    margin-top: 12px;
+    padding: 10px 13px;
+    position: relative;
+    word-break: break-all
+}
+
+.live_chatting_subscription_channel_gift_message_container__v4WvS {
+  display:-ms-flexbox;
+  display:flex;
+  overflow:hidden    
+}

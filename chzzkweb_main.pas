@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, XMLConf, Forms, Controls, Graphics, Dialogs, StdCtrls,
-  LMessages, ExtCtrls, ActnList, Menus, XMLPropStorage, UniqueInstance,
+  LMessages, ExtCtrls, ActnList, Menus, XMLPropStorage, Buttons, UniqueInstance,
   uWVWindowParent, uWVBrowser, JvXPButtons, RxVersInfo, Messages,
   uWVTypeLibrary, uWVEvents, uWVTypes;
 
@@ -29,13 +29,12 @@ type
     ActionOpenChat: TAction;
     ActionWSPort: TAction;
     ActionList1: TActionList;
-    ButtonBack: TButton;
+    ButtonBack: TBitBtn;
+    ButtonReload: TBitBtn;
     ButtonGoChat: TButton;
     ButtonHome: TButton;
     ButtonGo: TButton;
-    ButtonReload: TButton;
     Editurl: TEdit;
-    Label1: TLabel;
     MainMenu1: TMainMenu;
     MenuItem1: TMenuItem;
     MenuItem10: TMenuItem;

@@ -6094,7 +6094,8 @@ input {
 .name_ellipsis__Hu9B\+ .name_text__yQG50 {
   overflow:hidden;
   text-overflow:ellipsis;
-  white-space:nowrap
+  white-space:nowrap;
+  color: #eeeeee
 }
 .name_ellipsis__Hu9B\+ .name_icon__zdbVH {
   -ms-flex:none;

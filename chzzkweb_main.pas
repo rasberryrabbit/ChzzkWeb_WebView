@@ -107,6 +107,7 @@ type
     procedure SetFormCaption;
 
     procedure SetUpWebSocketPort;
+    procedure ReplaceWSPortHTML(const fname, port1, port2: string);
 
   end;
 
@@ -198,10 +199,20 @@ begin
   end;
   if ir<>-1 then
     begin
-      SetUpWebSocketPort;
-      XMLConfig1.SetValue('WS/PORT',WSPortChat);
-      XMLConfig1.SetValue('WS/PORTSYS',WSPortSys);
-      SetFormCaption;
+      try
+        SetUpWebSocketPort;
+        ReplaceWSPortHTML(chatlog_chatonly,WSPortChat,'');
+        ReplaceWSPortHTML(chatlog_donation,WSPortSys,'');
+        ReplaceWSPortHTML(chatlog_userid,WSPortChat,'');
+        ReplaceWSPortHTML(chatlog_full_unique,WSPortChat,'');
+        ReplaceWSPortHTML(chatlog_full,WSPortChat,WSPortSys);
+        XMLConfig1.SetValue('WS/PORT',WSPortChat);
+        XMLConfig1.SetValue('WS/PORTSYS',WSPortSys);
+        SetFormCaption;
+      except
+        on e:exception do
+          ShowMessage(e.Message);
+      end;
     end;
 end;
 
@@ -557,6 +568,49 @@ begin
       Inc(i,j);
       WSPortChat:=IntToStr(i);
     end;
+  end;
+end;
+
+procedure TFormChzzkWeb.ReplaceWSPortHTML(const fname, port1, port2: string);
+const
+  rport = '(?-s)(WebSocket\(\"ws\:.+)(\:\d+)(\",\"chat\"\);)';
+var
+  fs: TStringStream;
+  regport: TRegExpr;
+  res: string;
+  i, j: Integer;
+begin
+  res:='';
+  i:=1;
+  fs := TStringStream.Create('');
+  try
+    fs.LoadFromFile(fname);
+    regport:=TRegExpr.Create(rport);
+    try
+      // first item
+      if (port1<>'') and regport.Exec(fs.DataString) then
+      begin
+        j:=regport.MatchPos[2];
+        res:=res+Copy(fs.DataString,i,j-i+1)+port1;
+        i:=regport.MatchPos[3];
+      end;
+      // second item
+      if (port2<>'') and regport.ExecNext then
+      begin
+        j:=regport.MatchPos[2];
+        res:=res+Copy(fs.DataString,i,j-i+1)+port2;
+        i:=regport.MatchPos[3];
+      end;
+      res:=res+Copy(fs.DataString,i);
+      // save to file
+      fs.Clear;
+      fs.WriteString(res);
+      fs.SaveToFile(fname);
+    finally
+      regport.Free;
+    end;
+  finally
+    fs.Free;
   end;
 end;
 

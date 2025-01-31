@@ -30495,3 +30495,41 @@ a.twitchzzk_footer_item__CRJWN:hover {
   display:flex;
   overflow:hidden    
 }
+
+.live_chatting_popup_gift_container__H6sxN {
+  word-wrap:break-word;
+  bottom:calc(100% - 3px);
+  left:20px;
+  letter-spacing:-.3px;
+  line-height:18px;
+  position:absolute;
+  right:20px;
+  text-align:center;
+  word-break:break-all;
+  z-index:10
+}
+
+.live_chatting_popup_gift_title__qHcza{
+  color:var(--color-content-03);
+  font-size:16px;
+  font-weight:700
+}
+
+.live_chatting_popup_gift_title__qHcza.live_chatting_popup_gift_highlight__9yvhE{
+  color:var(--color-content-red-02)
+}
+
+.live_chatting_popup_gift_text__7iy29{
+  color:var(--color-content-04);
+  font-size:13px;
+  font-weight:500;
+  margin-top:8px
+}
+
+.live_chatting_popup_gift_text__7iy29+.live_chatting_popup_gift_text__7iy29{
+  margin-top:2px
+}
+
+.live_chatting_popup_gift_text__7iy29 em{
+  color:var(--color-content-chzzk-04)
+}

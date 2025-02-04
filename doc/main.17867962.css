@@ -30479,15 +30479,22 @@ a.twitchzzk_footer_item__CRJWN:hover {
   width:100%
 }
 
-.live_chatting_subscription_channel_gift_message_container__v4WvS 
-{
+.live_chatting_subscription_viewer_gift_message_container__BNe6X {
+    border-radius: 10px;
+    margin_top: 10px;
+    position: relative;
+    padding: 10px;
+    background-color: #3e34af;
+}
+
+.live_chatting_subscription_channel_gift_message_container__v4WvS {
     word-wrap: break-word;
-    background-color: var(--Ref-Color-Violet-60);
+    background-color: #3e34af;
     border-radius: 8px;
     margin-top: 12px;
     padding: 10px 13px;
     position: relative;
-    word-break: break-all
+    word-break: break-all;
 }
 
 .live_chatting_subscription_channel_gift_message_container__v4WvS {
@@ -30507,29 +30514,4 @@ a.twitchzzk_footer_item__CRJWN:hover {
   text-align:center;
   word-break:break-all;
   z-index:10
-}
-
-.live_chatting_popup_gift_title__qHcza{
-  color:var(--color-content-03);
-  font-size:16px;
-  font-weight:700
-}
-
-.live_chatting_popup_gift_title__qHcza.live_chatting_popup_gift_highlight__9yvhE{
-  color:var(--color-content-red-02)
-}
-
-.live_chatting_popup_gift_text__7iy29{
-  color:var(--color-content-04);
-  font-size:13px;
-  font-weight:500;
-  margin-top:8px
-}
-
-.live_chatting_popup_gift_text__7iy29+.live_chatting_popup_gift_text__7iy29{
-  margin-top:2px
-}
-
-.live_chatting_popup_gift_text__7iy29 em{
-  color:var(--color-content-chzzk-04)
 }

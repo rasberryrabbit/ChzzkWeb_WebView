@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, XMLConf, Forms, Controls, Graphics, Dialogs, StdCtrls,
   LMessages, ExtCtrls, ActnList, Menus, XMLPropStorage, Buttons, UniqueInstance,
-  uWVWindowParent, uWVBrowser, JvXPButtons, RxVersInfo, Messages,
+  uWVWindowParent, uWVBrowser, RxVersInfo, Messages,
   uWVTypeLibrary, uWVEvents, uWVTypes;
 
 
@@ -75,7 +75,6 @@ type
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
-    procedure JvXPButton1Click(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
     procedure Timer2Timer(Sender: TObject);
     procedure WVBrowser1AddScriptToExecuteOnDocumentCreatedCompleted(
@@ -400,10 +399,6 @@ begin
       WVBrowser1.CreateBrowser(WVWindowParent1.Handle)
      else
       Timer1.Enabled := True;
-end;
-
-procedure TFormChzzkWeb.JvXPButton1Click(Sender: TObject);
-begin
 end;
 
 procedure TFormChzzkWeb.Timer1Timer(Sender: TObject);

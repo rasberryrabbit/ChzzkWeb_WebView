@@ -1,0 +1,46 @@
+object FormCssTable: TFormCssTable
+  Left = 306
+  Height = 412
+  Top = 160
+  Width = 546
+  Caption = 'FormCssTable'
+  ClientHeight = 412
+  ClientWidth = 546
+  LCLVersion = '4.99.0.0'
+  object CSSTable: TValueListEditor
+    Left = 8
+    Height = 392
+    Top = 8
+    Width = 401
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    DefaultColWidth = 180
+    FixedCols = 0
+    RowCount = 2
+    TabOrder = 0
+    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goColSizing, goAlwaysShowEditor, goThumbTracking]
+    ColWidths = (
+      180
+      217
+    )
+  end
+  object Button1: TButton
+    Left = 441
+    Height = 25
+    Top = 24
+    Width = 75
+    Anchors = [akTop, akRight]
+    Caption = 'Read Table'
+    TabOrder = 1
+    OnClick = Button1Click
+  end
+  object Button2: TButton
+    Left = 441
+    Height = 25
+    Top = 72
+    Width = 75
+    Anchors = [akTop, akRight]
+    Caption = 'Patch'
+    TabOrder = 2
+    OnClick = Button2Click
+  end
+end

@@ -56,19 +56,33 @@ $(window).on('scroll', function(){
 })
 
 var idlist={};
+var sublist={};
 //
 var chatsock1 = new ReconnectingWebSocket("ws://localhost:65002","chat");
 chatsock1.reconnectInterval=1000;
 chatsock1.onmessage = function (event) {
     var div = $("#chatbox");
-    chatline=$(event.data).find("span.live_chatting_username_container__m1-i5");
+    chatline=$(event.data).find("button").children();
     username=$(chatline).find("span.name_text__yQG50").text();
-    if(idlist[username]) {
-      idlist[username]+=1;
-      //console.log(username,idlist[username]);
-    } else {
+    if(idlist[username]==undefined) {
       div.append(chatline);
-      idlist[username]=1;
+      idlist[username]=chatline;
+      // subscriber
+      iconinfo=$(chatline).find("span.live_chatting_username_wrapper__iJpJB");
+      if(iconinfo) {
+        sub=$(iconinfo).find("span.badge_container__a64XB");
+        if(sub) {
+          $(sub).each(function (index, item) {
+            ipos=$(item).children("img").attr("src").indexOf("/subscription/");
+            if(ipos>-1) {
+              if(sublist[username]==undefined) {
+                sublist[username]=1;
+                //console.log(username);
+              }
+            }
+          });
+        }
+      }
       
       var user=$("#usercount");
       user.html(Object.values(idlist).length);
@@ -93,6 +107,7 @@ chatsock1.onmessage = function (event) {
 document.getElementById("btnclear").addEventListener('click',clearuser);
 function clearuser(){
   idlist={};
+  sublist={};
   var div = $("#chatbox");
   $(div).empty();
   var user=$("#usercount");

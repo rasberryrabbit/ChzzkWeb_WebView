@@ -103,7 +103,7 @@ begin
         if CSSTable.Values[regport.Match[2]]<>'' then
           res:=res+Copy(fs.DataString,i,j-i)+CSSTable.Values[regport.Match[2]]
           else
-            res:=res+Copy(fs.DataString,i,j-i)+regport.Match[2];
+            res:=res+Copy(fs.DataString,i,j-i)+regport.Match[0];
         i:=regport.MatchPos[3]+1;
       end;
 
@@ -114,7 +114,7 @@ begin
         if CSSTable.Values[regport.Match[2]]<>'' then
           res:=res+Copy(fs.DataString,i,j-i)+CSSTable.Values[regport.Match[2]]
           else
-            res:=res+Copy(fs.DataString,i,j-i)+regport.Match[2];
+            res:=res+Copy(fs.DataString,i,j-i)+regport.Match[0];
         i:=regport.MatchPos[3]+1;
       end;
       res:=res+Copy(fs.DataString,i);

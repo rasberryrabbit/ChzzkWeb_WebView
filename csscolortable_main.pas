@@ -82,11 +82,11 @@ end;
 
 procedure TFormCssTable.Button2Click(Sender: TObject);
 const
-  rport = '(var\()([^\)]+)(\))';
+  rport = 'var\(([^\)]+)\)';
 var
   fs: TStringStream;
   regport: TRegExpr;
-  res: string;
+  res, ncolor: string;
   i, j: Integer;
 begin
   res:='';
@@ -99,23 +99,25 @@ begin
       // first item
       if regport.Exec(fs.DataString) then
       begin
-        j:=regport.MatchPos[1];
-        if CSSTable.Values[regport.Match[2]]<>'' then
-          res:=res+Copy(fs.DataString,i,j-i)+CSSTable.Values[regport.Match[2]]
+        j:=regport.MatchPos[0];
+        ncolor:=CSSTable.Values[regport.Match[1]];
+        if ncolor<>'' then
+          res:=res+Copy(fs.DataString,i,j-i)+ncolor
           else
             res:=res+Copy(fs.DataString,i,j-i)+regport.Match[0];
-        i:=regport.MatchPos[3]+1;
+        i:=j+regport.MatchLen[0];
       end;
 
       // second item
       while regport.ExecNext do
       begin
-        j:=regport.MatchPos[1];
-        if CSSTable.Values[regport.Match[2]]<>'' then
-          res:=res+Copy(fs.DataString,i,j-i)+CSSTable.Values[regport.Match[2]]
+        j:=regport.MatchPos[0];
+        ncolor:=CSSTable.Values[regport.Match[1]];
+        if ncolor<>'' then
+          res:=res+Copy(fs.DataString,i,j-i)+ncolor
           else
             res:=res+Copy(fs.DataString,i,j-i)+regport.Match[0];
-        i:=regport.MatchPos[3]+1;
+        i:=j+regport.MatchLen[0];
       end;
       res:=res+Copy(fs.DataString,i);
       // save to file

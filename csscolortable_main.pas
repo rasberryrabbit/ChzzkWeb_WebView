@@ -100,7 +100,10 @@ begin
       if regport.Exec(fs.DataString) then
       begin
         j:=regport.MatchPos[1];
-        res:=res+Copy(fs.DataString,i,j-i)+CSSTable.Values[regport.Match[2]];
+        if CSSTable.Values[regport.Match[2]]<>'' then
+          res:=res+Copy(fs.DataString,i,j-i)+CSSTable.Values[regport.Match[2]]
+          else
+            res:=res+Copy(fs.DataString,i,j-i)+regport.Match[2];
         i:=regport.MatchPos[3]+1;
       end;
 
@@ -108,7 +111,10 @@ begin
       while regport.ExecNext do
       begin
         j:=regport.MatchPos[1];
-        res:=res+Copy(fs.DataString,i,j-i)+CSSTable.Values[regport.Match[2]];
+        if CSSTable.Values[regport.Match[2]]<>'' then
+          res:=res+Copy(fs.DataString,i,j-i)+CSSTable.Values[regport.Match[2]]
+          else
+            res:=res+Copy(fs.DataString,i,j-i)+regport.Match[2];
         i:=regport.MatchPos[3]+1;
       end;
       res:=res+Copy(fs.DataString,i);

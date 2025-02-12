@@ -82,7 +82,7 @@ end;
 
 procedure TFormCssTable.Button2Click(Sender: TObject);
 const
-  rport = '(?-s)(var\()([^\)]+)(\))';
+  rport = '(var\()([^\)]+)(\))';
 var
   fs: TStringStream;
   regport: TRegExpr;

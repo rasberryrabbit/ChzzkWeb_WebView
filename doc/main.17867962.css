@@ -6086,7 +6086,7 @@ input {
 }
 .name_ellipsis__Hu9B\+ {
   display:-ms-inline-flexbox;
-  display:inline-flex;
+  display:flex;
   max-width:100%;
   overflow:hidden;
   vertical-align:top
@@ -12010,6 +12010,11 @@ a.news_profile__73Esm {
 .live_chatting_popup_profile_link__MwN4n svg {
   margin-top:1px
 }
+
+.live_chatting_message_container__vrI-y {
+  padding: 5px;
+}    
+
 .live_chatting_message_container__vrI-y .live_chatting_message_emoji__1V1bl {
   font-size:22px
 }

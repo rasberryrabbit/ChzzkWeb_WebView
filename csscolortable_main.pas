@@ -47,6 +47,12 @@ begin
     CSSTable.Clear;
     for i:=0 to st.Count-1 do begin
       s:=st.Strings[i];
+      j:=Pos('{',s);
+      if j>0 then
+        s:=Copy(s,j+1);
+      j:=Pos('}',s);
+      if j>0 then
+        s:=Copy(s,1,j-1);
       j:=Pos(':',s);
       if j=0 then
         j:=1;
@@ -63,7 +69,11 @@ begin
       end
       else
         rs:=Copy(s,j+1,k-j);
-      CSSTable.InsertRow(Copy(s,1,j-1),rs,True);
+      ck:=Copy(s,1,j-1);
+      if CSSTable.FindRow(ck,w) then
+          CSSTable.Values[ck]:=rs
+        else
+          CSSTable.InsertRow(ck,rs,True);
     end;
   finally
     st.Free;

@@ -6125,7 +6125,7 @@ input {
 }
 .live_chatting_username_container__m1-i5:not(.live_chatting_username_is_overlay__A8Xmr):not(.live_chatting_username_is_donation__eXMYs):not(.live_chatting_username_donation_alarm__xEM44):not(.live_chatting_username_is_subscription__G\+gtA).live_chatting_username_is_message__jvTvP {
   line-height:18px;
-  margin:-2px 0;
+  margin:2px 0;
   padding:2px 4px 2px 2px;
   position:relative
 }
@@ -12012,7 +12012,7 @@ a.news_profile__73Esm {
 }
 
 .live_chatting_message_container__vrI-y {
-  padding: 5px;
+  padding: 4px;
 }    
 
 .live_chatting_message_container__vrI-y .live_chatting_message_emoji__1V1bl {

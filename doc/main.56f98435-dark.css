@@ -1732,7 +1732,7 @@ html.theme_dark{--Background-Weak:#0e0f10;--Background-Weak-rgb:14,15,16;--Backg
 .badge_description__Qp7uq{-ms-flex-align:center;-ms-flex-pack:center;align-items:center;display:-ms-flexbox;display:flex;font-weight:500;justify-content:center;margin-top:2px;text-align:center;width:100%}
 .badge_tail__EYM2A{color:#dfe2ea;position:absolute}
 .name_truncate__uk\+a- .name_text__yQG50{display:inline!important}
-.name_ellipsis__Hu9B\+{display:-ms-inline-flexbox;display:inline-flex;max-width:100%;overflow:hidden;vertical-align:top}
+.name_ellipsis__Hu9B\+{display:-ms-inline-flexbox;display:flex;max-width:100%;overflow:hidden;vertical-align:top}
 .name_ellipsis__Hu9B\+ .name_text__yQG50{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .name_ellipsis__Hu9B\+ .name_empty__\+6Q\+G,.name_ellipsis__Hu9B\+ .name_icon__zdbVH{-ms-flex:none;flex:none}
 .name_ellipsis2__EiKJ8 .name_text__yQG50{-webkit-line-clamp:2}

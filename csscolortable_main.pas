@@ -38,45 +38,48 @@ uses
 procedure TFormCssTable.Button1Click(Sender: TObject);
 var
   st: TStringList;
-  i, j, k, v, w: Integer;
+  i, j, k, v, w, z: Integer;
   s, ck, rs: string;
 begin
   st:=TStringList.Create;
   try
+    Button1.Enabled:=False;
     st.LoadFromFile('doc\dark_theme_table.txt');
     CSSTable.Clear;
-    for i:=0 to st.Count-1 do begin
-      s:=st.Strings[i];
-      j:=Pos('{',s);
-      if j>0 then
-        s:=Copy(s,j+1);
-      j:=Pos('}',s);
-      if j>0 then
-        s:=Copy(s,1,j-1);
-      j:=Pos(':',s);
-      if j=0 then
-        j:=1;
-      k:=Pos(';',s);
-      if k=0 then
-        k:=Length(s)
+    for z:=0 to 1 do
+      for i:=0 to st.Count-1 do begin
+        s:=st.Strings[i];
+        j:=Pos('{',s);
+        if j>0 then
+          s:=Copy(s,j+1);
+        j:=Pos('}',s);
+        if j>0 then
+          s:=Copy(s,1,j-1);
+        j:=Pos(':',s);
+        if j=0 then
+          j:=1;
+        k:=Pos(';',s);
+        if k=0 then
+          k:=Length(s)
+          else
+            Dec(k);
+        v:=Pos('var(',s);
+        w:=Pos(')',s);
+        if (v>0) and (w>v) then begin
+          ck:=Trim(Copy(s,v+4,w-v-4));
+          rs:=CSSTable.Values[ck];
+        end
         else
-          Dec(k);
-      v:=Pos('var(',s);
-      w:=Pos(')',s);
-      if (v>0) and (w>v) then begin
-        ck:=Copy(s,v+4,w-v-4);
-        rs:=CSSTable.Values[ck];
-      end
-      else
-        rs:=Copy(s,j+1,k-j);
-      ck:=Copy(s,1,j-1);
-      if CSSTable.FindRow(ck,w) then
-          CSSTable.Values[ck]:=rs
-        else
-          CSSTable.InsertRow(ck,rs,True);
-    end;
+          rs:=Trim(Copy(s,j+1,k-j));
+        ck:=Trim(Copy(s,1,j-1));
+        if CSSTable.FindRow(ck,w) then
+            CSSTable.Values[ck]:=rs
+          else
+            CSSTable.InsertRow(ck,rs,True);
+      end;
   finally
     st.Free;
+    Button1.Enabled:=True;
   end;
 end;
 

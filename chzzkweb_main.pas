@@ -163,8 +163,8 @@ var
   IncludeChatTime: Boolean = False;
   chatlog_full: string = 'doc\webchatlog_list.html';
   chatlog_full_unique: string = 'doc\webchatlog_list_unique.html';
-  chatlog_donation: string = 'doc\도네_구독_메시지.html';
-  chatlog_chatonly: string = 'doc\채팅.html';
+  chatlog_donation: string = 'doc\webchatlog_donation_sub.html';
+  chatlog_chatonly: string = 'doc\webchatlog_chatbox.html';
   chatlog_userid: string = 'doc\webchatlog_user_unique.html';
   stripusertooltip: TRegExpr;
   PageLoaded: Boolean = False;

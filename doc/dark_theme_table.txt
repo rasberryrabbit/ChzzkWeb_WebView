@@ -756,3 +756,17 @@ html.theme_dark{--Background-Weak:var(--Ref-Color-Neutral-95);
 --Border-Static-Black-rgb:var(--Ref-Color-Neutral-100-rgb);
 --Border-Static-BlackAlpha-Base:rgba(0,0,0,.15);
 --Border-Static-BlackAlpha-Strong:rgba(0,0,0,.3)}
+html{--background:var(--Ref-Color-Neutral-50);
+--background-rgb:var(--Ref-Color-Neutral-50-rgb);
+--button-background:rgba(var(--Ref-Color-Neutral-0-rgb),0.1);
+--button-background-hover:rgba(var(--Ref-Color-Neutral-0-rgb),0.2);
+--button-text-color:var(--Content-Static-White);
+--more-button-text-color:var(--Ref-Color-Neutral-20)}
+html.theme_dark{--background:var(--Ref-Color-Neutral-70);
+--background-rgb:var(--Ref-Color-Neutral-70-rgb);
+--button-background:var(--Surface-Neutral-Base);
+--button-background-hover:var(--Surface-Neutral-Strong);
+--button-text-color:var(--Surface-Neutral-Strongest);
+--more-button-text-color:var(--Surface-Neutral-Strong)}
+--price-highlight:#7b93ff
+--Surface-Static-Black-rgb: var(--Ref-Color-Neutral-100-rgb);

@@ -80,14 +80,41 @@ begin
   end;
 end;
 
+function CodeWalk(const s:string; ipos: Integer):Integer;
+var
+  i, l, id: Integer;
+  ch: char;
+begin
+  Result:=ipos;
+  l:=Length(s);
+  id:=1;
+  while ipos<=l do begin
+    ch:=s[ipos];
+    if ch=')' then begin
+      if id>0 then begin
+          Dec(id);
+          if id=0 then begin
+              Result:=ipos;
+              break;
+          end;
+      end else
+        break;
+    end else
+    if ch='(' then begin
+        Inc(id);
+    end;
+    Inc(ipos);
+  end;
+end;
+
 procedure TFormCssTable.Button2Click(Sender: TObject);
 const
-  rport = 'var\(([^\)]+)\)';
+  rport = 'var\(([^\),]+)(\)|,)';
 var
   fs: TStringStream;
   regport: TRegExpr;
   res, ncolor: string;
-  i, j: Integer;
+  i, j, k, m: Integer;
 begin
   res:='';
   i:=1;
@@ -101,10 +128,15 @@ begin
       begin
         j:=regport.MatchPos[0];
         ncolor:=CSSTable.Values[regport.Match[1]];
-        if ncolor<>'' then
-          res:=res+Copy(fs.DataString,i,j-i)+ncolor
-          else
-            res:=res+Copy(fs.DataString,i,j-i)+regport.Match[0];
+        if ncolor<>'' then begin
+          res:=res+Copy(fs.DataString,i,j-i)+ncolor;
+          m:=j+regport.MatchLen[0]-1;
+          k:=CodeWalk(fs.DataString,m);
+          if k>m then
+            res:=res+Copy(fs.DataString,m,k-m);
+          j:=j+k-m;
+        end else
+          res:=res+Copy(fs.DataString,i,j-i)+regport.Match[0];
         i:=j+regport.MatchLen[0];
       end;
 
@@ -113,10 +145,15 @@ begin
       begin
         j:=regport.MatchPos[0];
         ncolor:=CSSTable.Values[regport.Match[1]];
-        if ncolor<>'' then
-          res:=res+Copy(fs.DataString,i,j-i)+ncolor
-          else
-            res:=res+Copy(fs.DataString,i,j-i)+regport.Match[0];
+        if ncolor<>'' then begin
+          res:=res+Copy(fs.DataString,i,j-i)+ncolor;
+          m:=j+regport.MatchLen[0]-1;
+          k:=CodeWalk(fs.DataString,m);
+          if k>m then
+            res:=res+Copy(fs.DataString,m,k-m);
+          j:=j+k-m;
+        end else
+          res:=res+Copy(fs.DataString,i,j-i)+regport.Match[0];
         i:=j+regport.MatchLen[0];
       end;
       res:=res+Copy(fs.DataString,i);

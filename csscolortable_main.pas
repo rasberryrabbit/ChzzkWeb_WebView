@@ -115,14 +115,17 @@ var
   RegVarColor: TRegExpr;
   res, ncolor: string;
   i, j, k, m: Integer;
+  tick: int64;
 begin
   res:='';
   i:=1;
   fs := TStringStream.Create('');
   try
+    Button2.Enabled:=False;
     fs.LoadFromFile('doc\main.56f98435.css');
     RegVarColor:=TRegExpr.Create(rport);
     try
+      tick:=GetTickCount64;
       // first item
       if RegVarColor.Exec(fs.DataString) then
       begin
@@ -155,6 +158,10 @@ begin
         end else
           res:=res+Copy(fs.DataString,i,j-i)+RegVarColor.Match[0];
         i:=j+RegVarColor.MatchLen[0];
+        if GetTickCount64-tick>2000 then begin
+          tick:=GetTickCount64;
+          Application.ProcessMessages;
+        end;
       end;
       res:=res+Copy(fs.DataString,i);
       // save to file
@@ -166,6 +173,7 @@ begin
     end;
   finally
     fs.Free;
+    Button2.Enabled:=True;
   end;
 end;
 

@@ -72,9 +72,10 @@ begin
         else
           rs:=Trim(Copy(s,j+1,k-j));
         ck:=Trim(Copy(s,1,j-1));
-        if CSSTable.FindRow(ck,w) then
-            CSSTable.Values[ck]:=rs
-          else
+        if CSSTable.FindRow(ck,w) then begin
+          if rs<>'' then
+            CSSTable.Values[ck]:=rs;
+        end else
             CSSTable.InsertRow(ck,rs,True);
       end;
   finally

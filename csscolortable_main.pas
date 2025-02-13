@@ -112,7 +112,7 @@ const
   rport = 'var\(([^\),]+)(\)|,)';
 var
   fs: TStringStream;
-  regport: TRegExpr;
+  RegVarColor: TRegExpr;
   res, ncolor: string;
   i, j, k, m: Integer;
 begin
@@ -121,40 +121,40 @@ begin
   fs := TStringStream.Create('');
   try
     fs.LoadFromFile('doc\main.56f98435.css');
-    regport:=TRegExpr.Create(rport);
+    RegVarColor:=TRegExpr.Create(rport);
     try
       // first item
-      if regport.Exec(fs.DataString) then
+      if RegVarColor.Exec(fs.DataString) then
       begin
-        j:=regport.MatchPos[0];
-        ncolor:=CSSTable.Values[regport.Match[1]];
+        j:=RegVarColor.MatchPos[0];
+        ncolor:=CSSTable.Values[RegVarColor.Match[1]];
         if ncolor<>'' then begin
           res:=res+Copy(fs.DataString,i,j-i)+ncolor;
-          m:=j+regport.MatchLen[0]-1;
+          m:=j+RegVarColor.MatchLen[0]-1;
           k:=CodeWalk(fs.DataString,m);
           if k>m then
             res:=res+Copy(fs.DataString,m,k-m);
           j:=j+k-m;
         end else
-          res:=res+Copy(fs.DataString,i,j-i)+regport.Match[0];
-        i:=j+regport.MatchLen[0];
+          res:=res+Copy(fs.DataString,i,j-i)+RegVarColor.Match[0];
+        i:=j+RegVarColor.MatchLen[0];
       end;
 
       // second item
-      while regport.ExecNext do
+      while RegVarColor.ExecNext do
       begin
-        j:=regport.MatchPos[0];
-        ncolor:=CSSTable.Values[regport.Match[1]];
+        j:=RegVarColor.MatchPos[0];
+        ncolor:=CSSTable.Values[RegVarColor.Match[1]];
         if ncolor<>'' then begin
           res:=res+Copy(fs.DataString,i,j-i)+ncolor;
-          m:=j+regport.MatchLen[0]-1;
+          m:=j+RegVarColor.MatchLen[0]-1;
           k:=CodeWalk(fs.DataString,m);
           if k>m then
             res:=res+Copy(fs.DataString,m,k-m);
           j:=j+k-m;
         end else
-          res:=res+Copy(fs.DataString,i,j-i)+regport.Match[0];
-        i:=j+regport.MatchLen[0];
+          res:=res+Copy(fs.DataString,i,j-i)+RegVarColor.Match[0];
+        i:=j+RegVarColor.MatchLen[0];
       end;
       res:=res+Copy(fs.DataString,i);
       // save to file
@@ -162,7 +162,7 @@ begin
       fs.WriteString(res);
       fs.SaveToFile('doc\main.56f98435-dark.css');
     finally
-      regport.Free;
+      RegVarColor.Free;
     end;
   finally
     fs.Free;

@@ -37,7 +37,7 @@ uses
 
 procedure TFormCssTable.Button1Click(Sender: TObject);
 const
-  spat = '(html|\.theme_dark)([^{]+)?\{([^\}]+)\}';
+  spat = '(html|[\.#][a-zA-Z_])([^{]+)?\{(\s+)?--([^\}]+)\}';
 var
   st: TStringList;
   i, j, k, v, w, z: Integer;

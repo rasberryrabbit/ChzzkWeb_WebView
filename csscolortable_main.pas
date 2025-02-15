@@ -36,11 +36,45 @@ uses
 { TFormCssTable }
 
 procedure TFormCssTable.Button1Click(Sender: TObject);
+const
+  spat = '(html|\.theme_dark)([^{]+)?\{([^\}]+)\}';
 var
   st: TStringList;
   i, j, k, v, w, z: Integer;
   s, ck, rs: string;
+  stable: TStringStream;
+  sexpr: TRegExpr;
 begin
+  // extract Var()
+  stable:= TStringStream.Create('');
+  try
+    stable.LoadFromFile('doc\main.56f98435.css');
+    s:=stable.DataString;
+    stable.Clear;
+    sexpr:=TRegExpr.Create(spat);
+    try
+      if sexpr.Exec(s) then begin
+        rs:=sexpr.Match[0];
+        rs:=StringReplace(rs,';',';'#13#10,[rfReplaceAll]);
+        stable.WriteString(rs);
+        stable.WriteString(#13#10);
+      end;
+
+      while sexpr.ExecNext() do begin
+        rs:=sexpr.Match[0];
+        rs:=StringReplace(rs,';',';'#13#10,[rfReplaceAll]);
+        stable.WriteString(rs);
+        stable.WriteString(#13#10);
+      end;
+
+      stable.SaveToFile('doc\dark_theme_table.txt');
+    finally
+      sexpr.Free;
+    end;
+  finally
+    stable.Free;
+  end;
+
   st:=TStringList.Create;
   try
     Button1.Enabled:=False;

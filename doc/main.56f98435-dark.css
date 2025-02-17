@@ -4917,7 +4917,7 @@ to{opacity:0}
 .live_chatting_list_fixed__Wy3TT{background-color:#141517;left:0;position:absolute;right:0;top:77px;z-index:10}
 .live_chatting_list_wrapper__a5XTV{-ms-overflow-style:none;display:-ms-flexbox;display:flex;-ms-flex-direction:column;flex-direction:column;overflow-y:auto;padding:0 12px;scrollbar-width:none;width:100%}
 .live_chatting_list_wrapper__a5XTV::-webkit-scrollbar{display:none}
-.live_chatting_list_item__0SGhw{margin-bottom:3px}
+.live_chatting_list_item__0SGhw{margin-bottom:3px;background: #1e20238f;border-radius: 6px;}
 .live_chatting_list_item__0SGhw:first-child{margin-top:auto}
 .live_chatting_list_big_padding__iG-3T{padding:4px 8px}
 .live_chatting_list_small_padding__YOtZE{padding:4px 6px}

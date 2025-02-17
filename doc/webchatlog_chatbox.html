@@ -14,6 +14,7 @@
             height: 600px;
             padding: 5px;
             overflow: hidden;
+            align-content: flex-end; 
         }
     </style>
 <script>
@@ -74,7 +75,7 @@ chatsock.onmessage = function (event) {
       div.children('div')[0].remove();
     }
     var le=document.querySelector('#chatbox').lastChild;
-    le.scrollIntoView();
+    le.scrollIntoView({behavior: "smooth", block: "end"});
     // disappear
     setTimeout(function () {
           le.style.display='none';    

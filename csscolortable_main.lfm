@@ -24,23 +24,31 @@ object FormCssTable: TFormCssTable
     )
   end
   object Button1: TButton
-    Left = 441
+    Left = 440
     Height = 25
-    Top = 24
+    Top = 56
     Width = 75
     Anchors = [akTop, akRight]
     Caption = 'Read Table'
-    TabOrder = 1
+    TabOrder = 2
     OnClick = Button1Click
   end
   object Button2: TButton
-    Left = 441
+    Left = 440
     Height = 25
-    Top = 72
+    Top = 104
     Width = 75
     Anchors = [akTop, akRight]
     Caption = 'Patch'
-    TabOrder = 2
+    TabOrder = 3
     OnClick = Button2Click
+  end
+  object CheckBoxSaveTable: TCheckBox
+    Left = 432
+    Height = 19
+    Top = 24
+    Width = 101
+    Caption = 'Save CSS Table'
+    TabOrder = 1
   end
 end

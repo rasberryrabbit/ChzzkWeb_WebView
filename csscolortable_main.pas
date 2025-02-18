@@ -14,6 +14,7 @@ type
   TFormCssTable = class(TForm)
     Button1: TButton;
     Button2: TButton;
+    CheckBoxSaveTable: TCheckBox;
     CSSTable: TValueListEditor;
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
@@ -29,7 +30,7 @@ var
 implementation
 
 uses
-  RegExpr;
+  RegExpr, StrUtils;
 
 {$R *.lfm}
 
@@ -44,41 +45,53 @@ var
   s, ck, rs: string;
   stable: TStringStream;
   sexpr: TRegExpr;
-begin
-  // extract Var()
-  stable:= TStringStream.Create('');
-  try
-    stable.LoadFromFile('doc\main.56f98435.css');
-    s:=stable.DataString;
-    stable.Clear;
-    sexpr:=TRegExpr.Create(spat);
-    try
-      if sexpr.Exec(s) then begin
-        rs:=sexpr.Match[0];
-        rs:=StringReplace(rs,';',';'#13#10,[rfReplaceAll]);
-        stable.WriteString(rs);
-        stable.WriteString(#13#10);
-      end;
 
-      while sexpr.ExecNext() do begin
-        rs:=sexpr.Match[0];
-        rs:=StringReplace(rs,';',';'#13#10,[rfReplaceAll]);
-        stable.WriteString(rs);
-        stable.WriteString(#13#10);
-      end;
-
-      stable.SaveToFile('doc\dark_theme_table.txt');
-    finally
-      sexpr.Free;
+  procedure GetCSSItem;
+  begin
+    i:=1;
+    j:=Pos(';',rs);
+    while j>0 do begin
+      st.Add(Copy(rs,i,j-i+1));
+      i:=j+1;
+      j:=PosEx(';',rs,i);
     end;
-  finally
-    stable.Free;
+    if j=0 then
+      j:=Length(rs);
+    if i<j then
+      st.Add(Copy(rs,i,j-i+1));
   end;
 
+begin
   st:=TStringList.Create;
   try
     Button1.Enabled:=False;
-    st.LoadFromFile('doc\dark_theme_table.txt');
+    st.Clear;
+    // extract Var()
+    stable:= TStringStream.Create('');
+    try
+      stable.LoadFromFile('doc\main.56f98435.css');
+      s:=stable.DataString;
+      stable.Clear;
+      sexpr:=TRegExpr.Create(spat);
+      try
+        if sexpr.Exec(s) then begin
+          rs:=sexpr.Match[0];
+          GetCSSItem;
+        end;
+
+        while sexpr.ExecNext() do begin
+          rs:=sexpr.Match[0];
+          GetCSSItem;
+        end;
+      finally
+        sexpr.Free;
+      end;
+    finally
+      stable.Free;
+    end;
+
+    if CheckBoxSaveTable.Checked then
+      st.SaveToFile('doc\dark_theme_table.txt');
     CSSTable.Clear;
     for z:=0 to 1 do
       for i:=0 to st.Count-1 do begin

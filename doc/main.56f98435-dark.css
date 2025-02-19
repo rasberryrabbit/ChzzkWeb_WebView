@@ -4918,7 +4918,7 @@ to{opacity:0}
 .live_chatting_list_fixed__Wy3TT{background-color:#141517;left:0;position:absolute;right:0;top:77px;z-index:10}
 .live_chatting_list_wrapper__a5XTV{-ms-overflow-style:none;display:-ms-flexbox;display:flex;-ms-flex-direction:column;flex-direction:column;overflow-y:auto;padding:0 12px;scrollbar-width:none;width:100%}
 .live_chatting_list_wrapper__a5XTV::-webkit-scrollbar{display:none}
-.live_chatting_list_item__0SGhw{margin-bottom:3px;background:#333333cf;border-radius: 6px; text-shadow: -1px -1px 0 #333333, 1px -1px 0 #333333,-1px 1px 0 #333333,1px 1px 0 #333333;}
+.live_chatting_list_item__0SGhw{margin-bottom:3px}
 .live_chatting_list_item__0SGhw:first-child{margin-top:auto}
 .live_chatting_list_big_padding__iG-3T{padding:4px 8px}
 .live_chatting_list_small_padding__YOtZE{padding:4px 6px}
@@ -6755,3 +6755,9 @@ to{-webkit-transform:translateY(0);transform:translateY(0)}
 .clip_comment_container__Jridy{height:100%}
 @media screen and (max-width:735px){.clip_comment_container__Jridy{height:calc(100% - 30px);overflow:auto;padding:0 20px}
 }
+
+/* Enhance text */
+.live_chatting_message_chatting_message__7TKns {background:#333333cf;border-radius: 6px; text-shadow: -1px -1px 0 #333333, 1px -1px 0 #333333,-1px 1px 0 #333333,1px 1px 0 #333333;}
+.name_ellipsis__Hu9B\+{display:-ms-inline-flexbox;display:flex;max-width:100%;overflow:hidden;vertical-align:top}
+.name_text__yQG50 {text-shadow: -1px -1px 0 #333333, 1px -1px 0 #333333,-1px 1px 0 #333333,1px 1px 0 #333333;}
+

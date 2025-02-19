@@ -1731,14 +1731,13 @@ html.theme_dark{--Background-Weak:#0e0f10;--Background-Weak-rgb:14,15,16;--Backg
 .badge_title__HWZ1\+{font-weight:800}
 .badge_description__Qp7uq{-ms-flex-align:center;-ms-flex-pack:center;align-items:center;display:-ms-flexbox;display:flex;font-weight:500;justify-content:center;margin-top:2px;text-align:center;width:100%}
 .badge_tail__EYM2A{color:#dfe2ea;position:absolute}
-.name_truncate__uk\+a- .name_text__yQG50{display:inline!important;}
-.name_ellipsis__Hu9B\+{display:-ms-inline-flexbox;display:flex;max-width:100%;overflow:hidden;vertical-align:top}
+.name_truncate__uk\+a- .name_text__yQG50{display:inline!important}
+.name_ellipsis__Hu9B\+{display:-ms-inline-flexbox;display:inline-flex;max-width:100%;overflow:hidden;vertical-align:top}
 .name_ellipsis__Hu9B\+ .name_text__yQG50{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .name_ellipsis__Hu9B\+ .name_empty__\+6Q\+G,.name_ellipsis__Hu9B\+ .name_icon__zdbVH{-ms-flex:none;flex:none}
 .name_ellipsis2__EiKJ8 .name_text__yQG50{-webkit-line-clamp:2}
 .name_ellipsis2__EiKJ8 .name_text__yQG50,.name_ellipsis3__7jkF1 .name_text__yQG50{-webkit-box-orient:vertical;display:block;display:-webkit-box;overflow:hidden;text-overflow:ellipsis}
 .name_ellipsis3__7jkF1 .name_text__yQG50{-webkit-line-clamp:3}
-.name_text__yQG50 {text-shadow: -1px -1px 0 #333333, 1px -1px 0 #333333,-1px 1px 0 #333333,1px 1px 0 #333333;}
 .name_show_tooltip__X0ET0{overflow:visible}
 .name_empty__\+6Q\+G,.name_icon__zdbVH{display:inline-block;margin-left:4px;vertical-align:top}
 .name_icon__zdbVH{background:url(https://ssl.pstatic.net/static/nng/glive/resource/p/static/media/icon_official.a53d1555f8f4796d7862.png) no-repeat 50%/cover;position:relative}
@@ -6755,9 +6754,7 @@ to{-webkit-transform:translateY(0);transform:translateY(0)}
 .clip_comment_container__Jridy{height:100%}
 @media screen and (max-width:735px){.clip_comment_container__Jridy{height:calc(100% - 30px);overflow:auto;padding:0 20px}
 }
-
 /* Enhance text */
 .live_chatting_message_chatting_message__7TKns {background:#333333cf;border-radius: 6px; text-shadow: -1px -1px 0 #333333, 1px -1px 0 #333333,-1px 1px 0 #333333,1px 1px 0 #333333;}
 .name_ellipsis__Hu9B\+{display:-ms-inline-flexbox;display:flex;max-width:100%;overflow:hidden;vertical-align:top}
 .name_text__yQG50 {text-shadow: -1px -1px 0 #333333, 1px -1px 0 #333333,-1px 1px 0 #333333,1px 1px 0 #333333;}
-

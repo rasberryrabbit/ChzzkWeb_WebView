@@ -13,8 +13,8 @@ var chatsize = JSON.parse(sessionStorage.chatsize || "{}");
 $(document).ready(function(){
   // load/save size
   if(chatsize.wrapper) {
-    $("#wrapper").width(chatsize.wrapper.width);
-    $("#wrapper").height(chatsize.wrapper.height);
+    //$("#wrapper").width(chatsize.wrapper.width);
+    //$("#wrapper").height(chatsize.wrapper.height);
   }
   // make resizable
   $("#wrapper").resizable({autoHide: true, stop: function (event, ui) {

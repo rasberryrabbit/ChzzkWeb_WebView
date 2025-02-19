@@ -16,6 +16,7 @@ type
     Button2: TButton;
     CheckBoxSaveTable: TCheckBox;
     CSSTable: TValueListEditor;
+    Memo1: TMemo;
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
   private
@@ -218,6 +219,8 @@ begin
       // save to file
       fs.Clear;
       fs.WriteString(res);
+      if Memo1.Text<>'' then
+        fs.WriteString(Memo1.Text);
       fs.SaveToFile('doc\main.56f98435-dark.css');
     finally
       RegVarColor.Free;

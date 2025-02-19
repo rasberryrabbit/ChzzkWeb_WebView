@@ -9,7 +9,7 @@ object FormCssTable: TFormCssTable
   LCLVersion = '4.99.0.0'
   object CSSTable: TValueListEditor
     Left = 8
-    Height = 392
+    Height = 296
     Top = 8
     Width = 401
     Anchors = [akTop, akLeft, akRight, akBottom]
@@ -50,5 +50,19 @@ object FormCssTable: TFormCssTable
     Width = 101
     Caption = 'Save CSS Table'
     TabOrder = 1
+  end
+  object Memo1: TMemo
+    Left = 8
+    Height = 90
+    Top = 312
+    Width = 528
+    Lines.Strings = (
+      '/* Enhance text */'
+      '.live_chatting_message_chatting_message__7TKns {background:#333333cf;border-radius: 6px; text-shadow: -1px -1px 0 #333333, 1px -1px 0 #333333,-1px 1px 0 #333333,1px 1px 0 #333333;}'
+      '.name_ellipsis__Hu9B\+{display:-ms-inline-flexbox;display:flex;max-width:100%;overflow:hidden;vertical-align:top}'
+      '.name_text__yQG50 {text-shadow: -1px -1px 0 #333333, 1px -1px 0 #333333,-1px 1px 0 #333333,1px 1px 0 #333333;}'
+    )
+    ScrollBars = ssAutoVertical
+    TabOrder = 4
   end
 end

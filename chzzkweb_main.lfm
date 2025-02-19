@@ -162,8 +162,8 @@ object FormChzzkWeb: TFormChzzkWeb
   end
   object UniqueInstance1: TUniqueInstance
     Enabled = True
-    Left = 496
-    Top = 8
+    Left = 376
+    Top = 88
   end
   object ActionList1: TActionList
     Left = 112
@@ -250,8 +250,8 @@ object FormChzzkWeb: TFormChzzkWeb
     Top = 144
   end
   object RxVersionInfo1: TRxVersionInfo
-    Left = 536
-    Top = 8
+    Left = 480
+    Top = 88
   end
   object WVBrowser1: TWVBrowser
     TargetCompatibleBrowserVersion = '131.0.2903.40'
@@ -270,6 +270,11 @@ object FormChzzkWeb: TFormChzzkWeb
     StoredValues = <>
     OnSaveProperties = XMLPropStorage1SaveProperties
     Left = 288
+    Top = 88
+  end
+  object ExceptionLogger1: TExceptionLogger
+    MaxCallStackDepth = 20
+    Left = 584
     Top = 88
   end
 end

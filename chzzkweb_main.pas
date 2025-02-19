@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, XMLConf, Forms, Controls, Graphics, Dialogs, StdCtrls,
   LMessages, ExtCtrls, ActnList, Menus, XMLPropStorage, Buttons, UniqueInstance,
-  uWVWindowParent, uWVBrowser, RxVersInfo, Messages,
+  UExceptionLogger, uWVWindowParent, uWVBrowser, RxVersInfo, Messages,
   uWVTypeLibrary, uWVEvents, uWVTypes;
 
 
@@ -35,6 +35,7 @@ type
     ButtonHome: TButton;
     ButtonGo: TButton;
     Editurl: TEdit;
+    ExceptionLogger1: TExceptionLogger;
     MainMenu1: TMainMenu;
     MenuItem1: TMenuItem;
     MenuItem10: TMenuItem;

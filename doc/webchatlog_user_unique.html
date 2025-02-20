@@ -8,6 +8,28 @@
 <script src = "./jquery/jquery-3.7.1.min.js"></script>
 <script src = "./jquery/jquery-ui.js"></script>
 <!-- link href="https://ssl.pstatic.net/static/nng/glive/resource/p/static/css/main.cb0f9f29.css" rel="stylesheet"-->
+<style>
+    #popup {
+        display: none;
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        padding: 20px;
+        background-color: white;
+        border: 1px solid #ccc;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+    #overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+    }
+</style>
 <script>
 try {
 var chatsize = JSON.parse(localStorage.chatsize || "{}");
@@ -31,9 +53,17 @@ $(document).ready(function(){
 </head> 
 <body>
 <button id="btnclear"><p style="border-radius: 8px;background-color:red;padding: 5px;width: 80px; height: 30px; color:white">리셋</p></button>
-<span id="usercount" style="display: inine-flex; background-color:gley;padding: 5px;color:blue">0</span>
-<div id="wrapper" >   
+<span id="usercount" style="display: inine-flex; background-color:glay;padding: 5px;color:blue">0</span>
+<div id="wrapper" style="padding: 10px">   
     <div id="chatbox"></div>
+</div>
+<button id="selectNumberBtn"><p style="border-radius: 8px;background-color:blue;padding: 5px;width: 80px; height: 30px; color:white">선택하기</p></button>
+<button id="choosenclear"><p style="border-radius: 8px;background-color:red;padding: 5px;width: 80px; height: 30px; color:white">선택리셋</p></button>
+<div id="choosen" style="padding: 10px"></div>
+<div id="overlay"></div>
+<div id="popup">
+    <p id="selectedNumber" style="padding: 10px"></p>
+    <button id="closePopup" style="display: block; width: 80px; height: 30px;border-radius: 8px;background-color:red">닫기</button>
 </div>
 <script type="text/javascript" src="reconnecting-websocket.min.js"></script>
 <script type="text/javascript">
@@ -57,6 +87,7 @@ $(window).on('scroll', function(){
 
 var idlist={};
 var sublist={};
+var selidlist={};
 //
 var chatsock1 = new ReconnectingWebSocket("ws://localhost:65002","chat");
 chatsock1.reconnectInterval=1000;
@@ -112,7 +143,53 @@ function clearuser(){
   $(div).empty();
   var user=$("#usercount");
   user.html(Object.values(idlist).length);
+  selidlist={};
+  var choosen=$("#choosen");
+  $(choosen).empty();  
 }
+
+document.getElementById("choosenclear").addEventListener('click',choosenclearuser);
+function choosenclearuser(){
+  selidlist={};
+  var choosen=$("#choosen");
+  $(choosen).empty();
+}
+
+document.getElementById('selectNumberBtn').addEventListener('click', function() {
+    var idlistlen=Object.keys(idlist).length;
+    var selidlen=Object.keys(selidlist).length;
+    if(!idlistlen || idlistlen==selidlen) return;
+
+    const popup = document.getElementById('popup');
+    const overlay = document.getElementById('overlay');
+    const selectedNumber = document.getElementById('selectedNumber');
+
+    while(true) {
+        const choosenum = Math.floor(Math.random() * idlistlen);    
+        var idname=Object.keys(idlist)[choosenum];    
+        selectedNumber.textContent = '선택 중';
+        if(!selidlist[idname]) {
+          selidlist[idname]=idlist[idname].clone();
+          break;
+        }
+    }
+    popup.style.display = 'block';
+    overlay.style.display = 'block';
+
+    setTimeout(() => {
+        selectedNumber.textContent = '';
+        var newuser=idlist[idname].clone();
+        selectedNumber.append(newuser[0]);
+        var seluser=idlist[idname].clone();
+        $("#choosen").append(seluser[0]);
+        //console.log(choosenum,idname);
+    }, 1000); // Animation delay
+
+    document.getElementById('closePopup').addEventListener('click', function() {
+        popup.style.display = 'none';
+        overlay.style.display = 'none';
+    });
+});
 </script>
 </body>
 </html>

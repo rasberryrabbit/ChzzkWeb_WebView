@@ -214,10 +214,11 @@ document.getElementById('selectNumberBtn').addEventListener('click', function() 
         selectedUser.append(newuser[0]);
     }
     let idShow = setInterval(showitems , 100);
+    var keepsel=true;
 
     setTimeout(() => {
         clearInterval(idShow);
-        while(idlistlen && idlistlen>selidlen) {
+        while(keepsel && idlistlen && idlistlen>selidlen) {
             idlistlen=Object.keys(idlist).length;
             const choosenum = Math.floor(Math.random() * idlistlen);
             var idname=Object.keys(idlist)[choosenum];
@@ -236,17 +237,21 @@ document.getElementById('selectNumberBtn').addEventListener('click', function() 
               break;
             }
         }
-        selectedUser.textContent = '';
-        var newuser=idlist[idname].clone();
-        selectedUser.append(newuser[0]);
-        var seluser=idlist[idname].clone();       
-        $("#choosen").append(seluser[0]);
-        reviewuser=idname;
+        // got valid user
+        if(keepsel) {
+            selectedUser.textContent = '';
+            var newuser=idlist[idname].clone();
+            selectedUser.append(newuser[0]);
+            var seluser=idlist[idname].clone();       
+            $("#choosen").append(seluser[0]);
+            reviewuser=idname;
+        }
     }, 3000);
 
     document.getElementById('closePopup').addEventListener('click', function() {
         popup.style.display = 'none';
         overlay.style.display = 'none';
+        keepsel=false;
     });
 });
 </script>

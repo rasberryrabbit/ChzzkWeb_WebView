@@ -67,9 +67,11 @@ $(document).ready(function(){
 <div id="choosen" style="padding: 10px"></div>
 <div id="overlay"></div>
 <div id="popup">
-    <p id="selectedNumber" style="padding: 10px"></p>
-    <div id="seluserchat"></div>
+    <p id="selectedUser" style="padding: 10px; background: #111111ef; border-radius: 8px;"></p>
+    <div id="seluserchat" style="margin: 10px;"></div>
+    <p align="center" style="margin: 5px;">
     <button id="closePopup" style="display: block; width: 80px; height: 30px;border-radius: 8px;background-color:red">닫기</button>
+    </p>
 </div>
 <script type="text/javascript" src="reconnecting-websocket.min.js"></script>
 <script type="text/javascript">
@@ -94,6 +96,7 @@ $(window).on('scroll', function(){
 var idlist={};
 var sublist={};
 var selidlist={};
+var reviewuser;
 //
 var chatsock1 = new ReconnectingWebSocket("ws://localhost:65002","chat");
 chatsock1.reconnectInterval=1000;
@@ -138,6 +141,10 @@ chatsock1.onmessage = function (event) {
             div.children('div')[0].remove();
           }
       }
+    } else if(reviewuser && username==reviewuser) {
+        // add chat message on user selection window
+        var userchat=$(event.data).clone();
+        $("#seluserchat").append(userchat[0]);
     }
 }
 
@@ -169,6 +176,7 @@ document.getElementById('selectNumberBtn').addEventListener('click', function() 
     var selidlen=Object.keys(selidlist).length;
     if(!idlistlen || idlistlen==selidlen) return;
     
+    // selected user iteration
     var selsubidlen=0;
     var selnosubidlen=0;
     Object.entries(selidlist).forEach(([key, value]) => {
@@ -176,9 +184,9 @@ document.getElementById('selectNumberBtn').addEventListener('click', function() 
       else { selnosubidlen+=1 }
     });
 
+    // check select user type
     var checkuser = $('input:radio[name="selusertype"]:checked').val();
     var usertype=0;
-    //console.log(checkuser);
     if(checkuser=='sub') {
       usertype=1;
       if(subidlen==selsubidlen) return;
@@ -189,13 +197,26 @@ document.getElementById('selectNumberBtn').addEventListener('click', function() 
 
     const popup = document.getElementById('popup');
     const overlay = document.getElementById('overlay');
-    const selectedNumber = document.getElementById('selectedNumber');
+    const selectedUser = document.getElementById('selectedUser');
 
     popup.style.display = 'block';
     overlay.style.display = 'block';
-    selectedNumber.textContent = '';
+    selectedUser.textContent = '';
+    reviewuser='';
+    $("#seluserchat").empty();
+    
+    // preview selection
+    function showitems() {
+        var num = Math.floor(Math.random() * idlistlen);
+        var idname=Object.keys(idlist)[num];
+        selectedUser.textContent = '';        
+        var newuser=idlist[idname].clone();
+        selectedUser.append(newuser[0]);
+    }
+    let idShow = setInterval(showitems , 100);
 
     setTimeout(() => {
+        clearInterval(idShow);
         while(idlistlen && idlistlen>selidlen) {
             idlistlen=Object.keys(idlist).length;
             const choosenum = Math.floor(Math.random() * idlistlen);
@@ -205,7 +226,7 @@ document.getElementById('selectNumberBtn').addEventListener('click', function() 
             } else if(usertype==2) {
               if(sublist[idname]) continue;
             }
-            selectedNumber.textContent = '선택 중';
+            selectedUser.textContent = '선택 중';
             if(!selidlist[idname]) {
               if(sublist[idname]) {
                 selidlist[idname]=1;
@@ -215,13 +236,13 @@ document.getElementById('selectNumberBtn').addEventListener('click', function() 
               break;
             }
         }
-        selectedNumber.textContent = '';
+        selectedUser.textContent = '';
         var newuser=idlist[idname].clone();
-        selectedNumber.append(newuser[0]);
-        var seluser=idlist[idname].clone();
+        selectedUser.append(newuser[0]);
+        var seluser=idlist[idname].clone();       
         $("#choosen").append(seluser[0]);
-        //console.log(choosenum,idname);
-    }, 1000); // Animation delay
+        reviewuser=idname;
+    }, 3000);
 
     document.getElementById('closePopup').addEventListener('click', function() {
         popup.style.display = 'none';

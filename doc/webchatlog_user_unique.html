@@ -220,8 +220,8 @@ document.getElementById('selectNumberBtn').addEventListener('click', function() 
         clearInterval(idShow);
         while(keepsel && idlistlen && idlistlen>selidlen) {
             idlistlen=Object.keys(idlist).length;
-            const choosenum = Math.floor(Math.random() * idlistlen);
-            var idname=Object.keys(idlist)[choosenum];
+            var num = Math.floor(Math.random() * idlistlen);
+            var idname=Object.keys(idlist)[num];
             if(usertype==1) {
               if(!sublist[idname]) continue;
             } else if(usertype==2) {

@@ -58,11 +58,17 @@ $(document).ready(function(){
     <div id="chatbox"></div>
 </div>
 <button id="selectNumberBtn"><p style="border-radius: 8px;background-color:blue;padding: 5px;width: 80px; height: 30px; color:white">선택하기</p></button>
+<div style="display: inline; padding: 5px;width: 80px; height: 30px; color:white; background:gray">
+<input type="radio" name="selusertype" value="all"><label for="all">모두</label></input>
+<input type="radio" name="selusertype" value="sub"><label for="sub">구독자</label></input>
+<input type="radio" name="selusertype" value="nosub"><label for="nosub">구독자 제외</label></input>
+</div>
 <button id="choosenclear"><p style="border-radius: 8px;background-color:red;padding: 5px;width: 80px; height: 30px; color:white">선택리셋</p></button>
 <div id="choosen" style="padding: 10px"></div>
 <div id="overlay"></div>
 <div id="popup">
     <p id="selectedNumber" style="padding: 10px"></p>
+    <div id="seluserchat"></div>
     <button id="closePopup" style="display: block; width: 80px; height: 30px;border-radius: 8px;background-color:red">닫기</button>
 </div>
 <script type="text/javascript" src="reconnecting-websocket.min.js"></script>
@@ -135,6 +141,8 @@ chatsock1.onmessage = function (event) {
     }
 }
 
+$("input[name='selusertype'][value='all']").prop("checked", true);
+
 document.getElementById("btnclear").addEventListener('click',clearuser);
 function clearuser(){
   idlist={};
@@ -157,26 +165,56 @@ function choosenclearuser(){
 
 document.getElementById('selectNumberBtn').addEventListener('click', function() {
     var idlistlen=Object.keys(idlist).length;
+    var subidlen=Object.keys(sublist).length;
     var selidlen=Object.keys(selidlist).length;
     if(!idlistlen || idlistlen==selidlen) return;
+    
+    var selsubidlen=0;
+    var selnosubidlen=0;
+    Object.entries(selidlist).forEach(([key, value]) => {
+      if(value==1) { selsubidlen+=1 }
+      else { selnosubidlen+=1 }
+    });
+
+    var checkuser = $('input:radio[name="selusertype"]:checked').val();
+    var usertype=0;
+    //console.log(checkuser);
+    if(checkuser=='sub') {
+      usertype=1;
+      if(subidlen==selsubidlen) return;
+    } else if(checkuser=='nosub') {
+      usertype=2;
+      if(idlistlen-subidlen==selnosubidlen) return;
+    }
 
     const popup = document.getElementById('popup');
     const overlay = document.getElementById('overlay');
     const selectedNumber = document.getElementById('selectedNumber');
 
-    while(true) {
-        const choosenum = Math.floor(Math.random() * idlistlen);    
-        var idname=Object.keys(idlist)[choosenum];    
-        selectedNumber.textContent = '선택 중';
-        if(!selidlist[idname]) {
-          selidlist[idname]=idlist[idname].clone();
-          break;
-        }
-    }
     popup.style.display = 'block';
     overlay.style.display = 'block';
+    selectedNumber.textContent = '';
 
     setTimeout(() => {
+        while(idlistlen && idlistlen>selidlen) {
+            idlistlen=Object.keys(idlist).length;
+            const choosenum = Math.floor(Math.random() * idlistlen);
+            var idname=Object.keys(idlist)[choosenum];
+            if(usertype==1) {
+              if(!sublist[idname]) continue;
+            } else if(usertype==2) {
+              if(sublist[idname]) continue;
+            }
+            selectedNumber.textContent = '선택 중';
+            if(!selidlist[idname]) {
+              if(sublist[idname]) {
+                selidlist[idname]=1;
+              } else { 
+                selidlist[idname]=2;
+              }
+              break;
+            }
+        }
         selectedNumber.textContent = '';
         var newuser=idlist[idname].clone();
         selectedNumber.append(newuser[0]);

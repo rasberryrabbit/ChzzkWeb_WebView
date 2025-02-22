@@ -215,6 +215,7 @@ document.getElementById('selectNumberBtn').addEventListener('click', function() 
     }
     let idShow = setInterval(showitems , 100);
     var keepsel=true;
+    $('#closePopup').css('background','red');
 
     setTimeout(() => {
         clearInterval(idShow);
@@ -239,6 +240,7 @@ document.getElementById('selectNumberBtn').addEventListener('click', function() 
         }
         // got valid user
         if(keepsel) {
+            $('#closePopup').css('background','#90EE90');
             selectedUser.textContent = '';
             var newuser=idlist[idname].clone();
             selectedUser.append(newuser[0]);

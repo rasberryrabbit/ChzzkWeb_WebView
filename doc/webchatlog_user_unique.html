@@ -5,6 +5,7 @@
 <title>채팅 유저 리스트</title>
 <link rel="stylesheet" href="./jquery/jquery-ui.css" />
 <link type="text/css" rel="stylesheet" href="main.56f98435-dark.css" />
+<link type="text/css" rel="stylesheet" href="firework.css" />
 <script src = "./jquery/jquery-3.7.1.min.js"></script>
 <script src = "./jquery/jquery-ui.js"></script>
 <!-- link href="https://ssl.pstatic.net/static/nng/glive/resource/p/static/css/main.cb0f9f29.css" rel="stylesheet"-->
@@ -28,7 +29,7 @@
         width: 100%;
         height: 100%;
         background: rgba(0, 0, 0, 0.5);
-    }
+    }    
 </style>
 <script>
 try {
@@ -65,7 +66,12 @@ $(document).ready(function(){
 <button id="selectNumberBtn"><p style="border-radius: 8px;background-color:blue;padding: 5px;width: 80px; height: 30px; color:white">선택하기</p></button>
 <button id="choosenclear"><p style="margin-left:20px; border-radius: 8px;background-color:red;padding: 5px;width: 80px; height: 30px; color:white">선택리셋</p></button>
 <div id="choosen" style="padding: 10px"></div>
-<div id="overlay"></div>
+<div id="overlay">
+    <div class="pyro" style="display:none">
+        <div class="before"></div>
+        <div class="after"></div>
+    </div>
+</div>
 <div id="popup">
     <p id="selectedUser" style="padding: 10px; background: #111111ef; border-radius: 8px;"></p>
     <div id="seluserchat" style="margin: 10px;"></div>
@@ -247,6 +253,7 @@ document.getElementById('selectNumberBtn').addEventListener('click', function() 
             var seluser=idlist[idname].clone();       
             $("#choosen").append(seluser[0]);
             reviewuser=idname;
+            $('.pyro').css('display','flex');
         }
     }, 3000);
 
@@ -254,6 +261,7 @@ document.getElementById('selectNumberBtn').addEventListener('click', function() 
         keepsel=false;
         popup.style.display = 'none';
         overlay.style.display = 'none';
+        $('.pyro').css('display','none');
     });
 });
 </script>

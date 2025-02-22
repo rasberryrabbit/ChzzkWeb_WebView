@@ -16,7 +16,7 @@
       <AutoIncrementBuild Value="True"/>
       <MinorVersionNr Value="1"/>
       <RevisionNr Value="9"/>
-      <BuildNr Value="2"/>
+      <BuildNr Value="3"/>
     </VersionInfo>
     <BuildModes>
       <Item Name="Default" Default="True"/>

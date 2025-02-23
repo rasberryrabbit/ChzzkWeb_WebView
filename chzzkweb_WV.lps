@@ -462,10 +462,6 @@
     <JumpHistory HistoryIndex="29">
       <Position>
         <Filename Value="chzzkweb_main.pas"/>
-        <Caret Line="608" Column="22" TopLine="595"/>
-      </Position>
-      <Position>
-        <Filename Value="chzzkweb_main.pas"/>
         <Caret Line="214" Column="24" TopLine="198"/>
       </Position>
       <Position>
@@ -578,6 +574,10 @@
       <Position>
         <Filename Value="chzzkweb_main.pas"/>
         <Caret Line="559" Column="15" TopLine="559"/>
+      </Position>
+      <Position>
+        <Filename Value="chzzkweb_main.pas"/>
+        <Caret Line="560" Column="15" TopLine="560"/>
       </Position>
     </JumpHistory>
     <RunParams>

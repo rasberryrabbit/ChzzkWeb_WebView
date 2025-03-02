@@ -126,9 +126,11 @@ uses
 const
   MaxLength = 2048;
   cqueryjs = 'var obser=document.querySelector("div.live_chatting_list_wrapper__a5XTV");'+
+             'var observer;'+
              'if(obser) {'+
+             'if(observer) { observer.disconnect(); };'+
              'window.chrome.webview.postMessage("!Observer Start!");'+
-             'const observer = new MutationObserver((mutations) => {'+
+             'var observer = new MutationObserver((mutations) => {'+
              'mutations.forEach(mutat => {'+
              'mutat.addedNodes.forEach(node => {'+
              'window.chrome.webview.postMessage(node.outerHTML);'+

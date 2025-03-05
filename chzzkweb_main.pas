@@ -478,7 +478,7 @@ begin
     exit;
   buf:=res;
   CoTaskMemFree(res);
-  if (not observer_started) and (buf='!Observer Start!') then
+  if (not observer_started) {and (buf='!Observer Start!')} then
   begin
     observer_started:=True;
   end

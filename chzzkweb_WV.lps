@@ -21,8 +21,7 @@
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="ChzzkWeb_Main"/>
         <IsVisibleTab Value="True"/>
-        <TopLine Value="465"/>
-        <CursorPos X="59" Y="481"/>
+        <CursorPos Y="99"/>
         <UsageCount Value="152"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -98,8 +97,7 @@
         <Filename Value="uwebsocksimple.pas"/>
         <UnitName Value="uWebsockSimple"/>
         <EditorIndex Value="1"/>
-        <TopLine Value="5"/>
-        <CursorPos X="6" Y="77"/>
+        <CursorPos Y="52"/>
         <UsageCount Value="63"/>
         <Loaded Value="True"/>
       </Unit>
@@ -462,38 +460,6 @@
     <JumpHistory HistoryIndex="29">
       <Position>
         <Filename Value="chzzkweb_main.pas"/>
-        <Caret Line="489" Column="23" TopLine="469"/>
-      </Position>
-      <Position>
-        <Filename Value="chzzkweb_main.pas"/>
-        <Caret Line="492" Column="21" TopLine="472"/>
-      </Position>
-      <Position>
-        <Filename Value="chzzkweb_main.pas"/>
-        <Caret Line="540" Column="29" TopLine="519"/>
-      </Position>
-      <Position>
-        <Filename Value="chzzkweb_main.pas"/>
-        <Caret Line="541" Column="19" TopLine="520"/>
-      </Position>
-      <Position>
-        <Filename Value="chzzkweb_main.pas"/>
-        <Caret Line="559" Column="15" TopLine="559"/>
-      </Position>
-      <Position>
-        <Filename Value="chzzkweb_main.pas"/>
-        <Caret Line="560" Column="15" TopLine="560"/>
-      </Position>
-      <Position>
-        <Filename Value="chzzkweb_main.pas"/>
-        <Caret Line="173" Column="12" TopLine="155"/>
-      </Position>
-      <Position>
-        <Filename Value="chzzkweb_main.pas"/>
-        <Caret Line="421" Column="26" TopLine="400"/>
-      </Position>
-      <Position>
-        <Filename Value="chzzkweb_main.pas"/>
         <Caret Line="459" Column="24" TopLine="437"/>
       </Position>
       <Position>
@@ -579,6 +545,38 @@
       <Position>
         <Filename Value="chzzkweb_main.pas"/>
         <Caret Line="485" Column="34" TopLine="470"/>
+      </Position>
+      <Position>
+        <Filename Value="chzzkweb_main.pas"/>
+        <Caret Line="497" TopLine="486"/>
+      </Position>
+      <Position>
+        <Filename Value="uwebsocksimple.pas"/>
+        <Caret Line="24" Column="41" TopLine="13"/>
+      </Position>
+      <Position>
+        <Filename Value="uwebsocksimple.pas"/>
+        <Caret Line="89" Column="38" TopLine="71"/>
+      </Position>
+      <Position>
+        <Filename Value="uwebsocksimple.pas"/>
+        <Caret Line="28" Column="22" TopLine="15"/>
+      </Position>
+      <Position>
+        <Filename Value="uwebsocksimple.pas"/>
+        <Caret Line="91" Column="3" TopLine="71"/>
+      </Position>
+      <Position>
+        <Filename Value="uwebsocksimple.pas"/>
+        <Caret Line="28" TopLine="15"/>
+      </Position>
+      <Position>
+        <Filename Value="uwebsocksimple.pas"/>
+        <Caret Line="88" TopLine="63"/>
+      </Position>
+      <Position>
+        <Filename Value="uwebsocksimple.pas"/>
+        <Caret Line="22"/>
       </Position>
     </JumpHistory>
     <RunParams>

@@ -96,7 +96,6 @@ type
     procedure WVBrowser1WebMessageReceived(Sender: TObject;
       const aWebView: ICoreWebView2;
       const aArgs: ICoreWebView2WebMessageReceivedEventArgs);
-    procedure XMLPropStorage1SaveProperties(Sender: TObject);
   private
     procedure CheckChatting(var Msg:TLMessage); message MSGVISITDOM;
 
@@ -478,10 +477,8 @@ begin
     exit;
   buf:=res;
   CoTaskMemFree(res);
-  if (not observer_started) {and (buf='!Observer Start!')} then
-  begin
-    observer_started:=True;
-  end
+  if not observer_started then
+    observer_started:=True
   else
   begin
     if (Pos(UTF8Decode(syschat_str),buf)>0) and
@@ -494,11 +491,6 @@ begin
     else
       SockServerChat.BroadcastMsg(UTF8Encode(buf));
   end;
-end;
-
-procedure TFormChzzkWeb.XMLPropStorage1SaveProperties(Sender: TObject);
-begin
-
 end;
 
 procedure TFormChzzkWeb.CheckChatting(var Msg: TLMessage);

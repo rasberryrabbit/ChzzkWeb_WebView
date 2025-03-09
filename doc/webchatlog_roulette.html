@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>Spin Wheel Example - IIFE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <link rel="icon" href="data:image/x-icon;," type="image/x-icon">
+  <!--link type="text/css" rel="stylesheet" href="main.56f98435-dark.css" /-->
+  <style>
+    .gui-wrapper {
+       background-color: white;
+    }
+    .gui-wrapper button {
+        display: block;
+        backgroud-color: #777777;
+        border: ridge;
+    }
+  </style>
+  <script src = "./jquery/jquery-3.7.1.min.js"></script>
+  <script src="spin-wheel-iife.js"></script>
+  <script>
+    let prop={items:[]};
+
+    window.onload = () => {
+
+      const container = document.querySelector('.wheel-wrapper');
+
+      window.wheel = new spinWheel.Wheel(container);
+      initwheel();
+    }
+        
+    function spinwheel() {
+      wheel.spin(Math.random(1)*360+360);
+    }
+    
+    function stopwheel() {
+      wheel.stop();
+    }
+    
+    function randomHSLA(){
+      return `hsla(${~~(360 * Math.random())}, 70%,  72%, 0.8)`
+    }
+    
+    function default_prop() {
+      prop={items:[]};
+      prop.items.push({label: "하나하나하나", labelColor: '#000000', backgroundColor: randomHSLA(), weight: 1});
+      prop.items.push({label: "둘둘둘둘둘둘", labelColor: '#000000', backgroundColor: randomHSLA(), weight: 1});
+      prop.items.push({label: "셋셋셋셋셋셋", labelColor: '#000000', backgroundColor: randomHSLA(), weight: 1});
+      prop.items.push({label: "넷넷넷넷넷넷", labelColor: '#000000', backgroundColor: randomHSLA(), weight: 1});
+      prop.items.push({label: "다섯다섯다섯", labelColor: '#000000', backgroundColor: randomHSLA(), weight: 1});
+      prop.items.push({label: "여섯여섯여섯", labelColor: '#000000', backgroundColor: randomHSLA(), weight: 1});
+      return prop;
+    }
+    
+    function initwheel() {
+      wheel.stop();
+      wheel.init(default_prop());
+      wheel.rotationSpeedMax = 720;
+      wheel.onRest= function (event) {
+        console.log(event.currentIndex, prop.items[event.currentIndex].label);
+      };
+    }    
+  </script>
+</head>
+
+<body>
+  <div class="gui-wrapper">
+    <button onclick="spinwheel()">돌리기</button>
+    <button onclick="stopwheel()">중단</button>
+    <button onclick="initwheel()">테스트</button>
+  </div>
+  <div class="wheel-wrapper"></div>
+
+<script type="text/javascript" src="reconnecting-websocket.min.js"></script>
+<script type="text/javascript">
+var itemmax=30;
+var chatsock = new ReconnectingWebSocket("ws://localhost:65003","chat");
+chatsock.reconnectInterval=2000;
+chatsock.onmessage = function (event) {
+    var div = $("#chatbox");
+    chatline=$(event.data);
+}
+</script>
+</body>
+
+</html>

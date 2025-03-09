@@ -12,8 +12,7 @@
       width: 80%;
     }
     .gui-wrapper {
-      float: right;
-      width: 20%;
+        display: flow-root;
     }
     .rbutton {
         border-radius: 10px;
@@ -132,28 +131,29 @@
     
     function stopwheel() {
       wheel.stop();
+      document.getElementById('restext').innerText=lastitemtext;
     }
     
     // get pastel color
     function randomHSLA(){
-      return `hsla(${~~(360 * Math.random())}, 70%,  72%, 0.8)`
+        return `hsla(${~~(360 * Math.random())}, 70%,  72%, 0.8)`
+    }
+    
+    function showCurrent(event) {
+        var itemText=prop.items[event.currentIndex].label;
+        lastitemtext=itemText;
+        document.getElementById('restext').innerText=itemText;
     }
     
     function initwheel() {
       wheel.stop();
+      lastitemtext='';
       wheel.init(prop);
       wheel.rotationSpeedMax = 720;
       wheel.itemLabelFontSizeMax = 30;
       wheel.overlayImage=whimg;
-      wheel.onRest= function (event) {
-        var itemText=prop.items[event.currentIndex].label;
-        lastitemtext=itemText;
-        for(vi of document.getElementById('itemList').children) {
-            if(vi.children[0].innerText==itemText) {
-                document.getElementById('restext').innerText=itemText;
-            }
-        }
-      };
+      wheel.onRest=showCurrent;
+      wheel.onCurrentIndexChange=showCurrent;
     }
   </script>
 
@@ -165,7 +165,7 @@
 
   <div class="gui-wrapper">
   <button class='rbutton' onclick="spinwheel()">돌리기</button>
-  <button class='rbutton' onclick="stopwheel()">중단</button>
+  <button class='rbutton' onclick="stopwheel()">멈추기</button>
   <button class='rbutton' onclick="initwheel()" style="display: none">테스트</button>
   <h5>목록</h5>
   <input type="checkbox" id="chkremove" onclick="checkremoveclick()">

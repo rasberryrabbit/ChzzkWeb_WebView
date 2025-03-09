@@ -136,7 +136,8 @@
     
     // get pastel color
     function randomHSLA(){
-        return `hsla(${~~(360 * Math.random())}, 70%,  72%, 0.8)`
+      var h = 360 * Math.random();
+      return `hsl(${h}deg, 100%, 90%)`;
     }
     
     function showCurrent(event) {

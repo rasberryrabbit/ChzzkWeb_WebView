@@ -106,26 +106,55 @@ function additembutton() {
     var itemInput = document.getElementById('itemInput');
     var itemText = itemInput.value.trim();
     if (itemText) {
-        var li = document.createElement('li');
-        li.className = 'item';
-        li.innerHTML = '<span>'+itemText+'</span><button class="remove-btn">-</button>';
-        document.getElementById('itemList').appendChild(li);
-        prop.items.push({label: itemText, labelColor: '#000000', backgroundColor: randomHSLA(), weight: 1});
+        // find item
+        var aitem=null;
+        prop.items.forEach((ele) => {
+            if(ele.label==itemText) {
+              aitem=ele;
+            }
+        });
+        if(aitem) {
+            // add weight on existing item
+            aitem.weight+=1;
+            for(vi of document.getElementById('itemList').children) {
+                if(vi.children[0].innerText==itemText) {
+                    vi.children[1].innerText=aitem.weight; 
+                }
+            }
+        } else {
+            // add new item
+            var li = document.createElement('li');
+            li.className = 'item';
+            li.innerHTML = '<span>'+itemText+'</span><span class="iweight">1</span><button class="remove-btn">-</button>';
+            document.getElementById('itemList').appendChild(li);
+            prop.items.push({label: itemText, labelColor: '#000000', backgroundColor: randomHSLA(), weight: 1});
+            // add remove event
+            li.querySelector('.remove-btn').addEventListener('click', function () {
+                var txt=li.children[0].innerText;
+                var item=null;
+                prop.items.forEach((ele) => {
+                   if(ele.label==txt) {
+                     item=ele;
+                   }
+                });
+                // delete item when weight==0
+                if(item) {
+                    var ix=prop.items.indexOf(item);
+                    if(ix>-1) {
+                        item.weight-=1;
+                        if(item.weight<=0) {
+                          prop.items.splice(ix,1);
+                          li.remove();
+                        } else {
+                          li.children[1].innerText=item.weight;
+                        }
+                        initwheel();
+                    }
+                }
+            });
+        }
         itemInput.value = '';
         initwheel();
-
-        li.querySelector('.remove-btn').addEventListener('click', function () {
-            var txt=li.children[0].innerText;
-            var ix=-1;
-            prop.items.forEach((ele) => {
-               if(ele.label==txt) {
-                 ix=prop.items.indexOf(ele);
-               }
-            });
-            prop.items.splice(ix,1);
-            initwheel();
-            li.remove();
-        });
     }
 }
 

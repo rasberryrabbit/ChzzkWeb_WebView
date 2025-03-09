@@ -8,13 +8,38 @@
   <link rel="icon" href="data:image/x-icon;," type="image/x-icon">
   <!--link type="text/css" rel="stylesheet" href="main.56f98435-dark.css" /-->
   <style>
+    .wheel-wrapper {
+       float:left;
+       width: 70%;
+    }
     .gui-wrapper {
        background-color: white;
+       float:right;
+       width: 30%;
     }
     .gui-wrapper button {
-        display: block;
-        backgroud-color: #777777;
         border: ridge;
+    }
+    #itemList {
+        list-style-type: none;
+        padding: 0;
+    }
+    #itemInput {
+        display: inline;
+        width: 80%;
+    }
+    .item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 5px 0;
+    }
+    .remove-btn {
+        background-color: red;
+        color: white;
+        border: none;
+        cursor: pointer;
+        padding: 5px 10px;
     }
   </style>
   <script src = "./jquery/jquery-3.7.1.min.js"></script>
@@ -42,20 +67,9 @@
       return `hsla(${~~(360 * Math.random())}, 70%,  72%, 0.8)`
     }
     
-    function default_prop() {
-      prop={items:[]};
-      prop.items.push({label: "하나하나하나", labelColor: '#000000', backgroundColor: randomHSLA(), weight: 1});
-      prop.items.push({label: "둘둘둘둘둘둘", labelColor: '#000000', backgroundColor: randomHSLA(), weight: 1});
-      prop.items.push({label: "셋셋셋셋셋셋", labelColor: '#000000', backgroundColor: randomHSLA(), weight: 1});
-      prop.items.push({label: "넷넷넷넷넷넷", labelColor: '#000000', backgroundColor: randomHSLA(), weight: 1});
-      prop.items.push({label: "다섯다섯다섯", labelColor: '#000000', backgroundColor: randomHSLA(), weight: 1});
-      prop.items.push({label: "여섯여섯여섯", labelColor: '#000000', backgroundColor: randomHSLA(), weight: 1});
-      return prop;
-    }
-    
     function initwheel() {
       wheel.stop();
-      wheel.init(default_prop());
+      wheel.init(prop);
       wheel.rotationSpeedMax = 720;
       wheel.onRest= function (event) {
         console.log(event.currentIndex, prop.items[event.currentIndex].label);
@@ -68,12 +82,56 @@
   <div class="gui-wrapper">
     <button onclick="spinwheel()">돌리기</button>
     <button onclick="stopwheel()">중단</button>
-    <button onclick="initwheel()">테스트</button>
+    <button onclick="initwheel()" style="display: none">테스트</button>
+
+    <h5>목록</h5>
+    <input type="text" id="itemInput" onkeyup="enterKey(this)" placeholder="추가할 내용">
+    <button id="addItemBtn">+</button>
+    <ul id="itemList"></ul>
+    
   </div>
   <div class="wheel-wrapper"></div>
 
 <script type="text/javascript" src="reconnecting-websocket.min.js"></script>
 <script type="text/javascript">
+
+function enterKey() {
+    if (window.event.keyCode == 13) {
+        additembutton();
+    }
+}
+
+function additembutton() {
+    var itemInput = document.getElementById('itemInput');
+    var itemText = itemInput.value.trim();
+    if (itemText) {
+        var li = document.createElement('li');
+        li.className = 'item';
+        li.innerHTML = '<span>'+itemText+'</span><button class="remove-btn">-</button>';
+        document.getElementById('itemList').appendChild(li);
+        prop.items.push({label: itemText, labelColor: '#000000', backgroundColor: randomHSLA(), weight: 1});
+        itemInput.value = '';
+        initwheel();
+
+        li.querySelector('.remove-btn').addEventListener('click', function () {
+            var txt=li.children[0].innerText;
+            var ix=-1;
+            prop.items.forEach((ele) => {
+               if(ele.label==txt) {
+                 ix=prop.items.indexOf(ele);
+               }
+            });
+            prop.items.splice(ix,1);
+            initwheel();
+            li.remove();
+        });
+    }
+}
+
+document.getElementById('addItemBtn').addEventListener('click', function() {
+    additembutton();
+});
+
 var itemmax=30;
 var chatsock = new ReconnectingWebSocket("ws://localhost:65003","chat");
 chatsock.reconnectInterval=2000;

@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="utf-8">
-  <title>Spin Wheel Example - IIFE</title>
+  <title>Roulette - 룰렛</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
   <link rel="icon" href="data:image/x-icon;," type="image/x-icon">
   <!--link type="text/css" rel="stylesheet" href="main.56f98435-dark.css" /-->
@@ -71,6 +71,7 @@
       wheel.stop();
       wheel.init(prop);
       wheel.rotationSpeedMax = 720;
+      wheel.itemLabelFontSizeMax = 30;
       wheel.onRest= function (event) {
         console.log(event.currentIndex, prop.items[event.currentIndex].label);
       };

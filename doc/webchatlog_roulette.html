@@ -5,20 +5,20 @@
   <meta charset="utf-8">
   <title>Roulette - 룰렛</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-  <link rel="icon" href="data:image/x-icon;," type="image/x-icon">
   <!--link type="text/css" rel="stylesheet" href="main.56f98435-dark.css" /-->
   <style>
     .wheel-wrapper {
-       float:left;
-       width: 70%;
+      float: left;
+      width: 80%;
     }
     .gui-wrapper {
-       background-color: white;
-       float:right;
-       width: 30%;
+      float: right;
+      width: 20%;
     }
-    .gui-wrapper button {
-        border: ridge;
+    .rbutton {
+        border-radius: 10px;
+        width: 80px;
+        height: 30px;
     }
     #itemList {
         list-style-type: none;
@@ -34,18 +34,49 @@
         align-items: center;
         margin: 5px 0;
     }
-    .remove-btn {
-        background-color: red;
-        color: white;
-        border: none;
+    .add-btn {
+        background-color: lightgreen;
+        color: black;
+        border-collapse: collapse;
         cursor: pointer;
         padding: 5px 10px;
+        outline-color: black;
+        border-radius: 8px;
+    }
+    .remove-btn {
+        background-color: red;
+        color: black;
+        border-collapse: collapse;
+        cursor: pointer;
+        padding: 5px 10px;
+        outline-color: black;
+        border-radius: 8px;
+    }
+    .iweight {
+        margin-left: auto;
+        margin-right: 5px;        
+    }
+    .reshead {
+        display: inline;
+    }
+    .reshead p {
+        display: inline;
+        background-color: #000000;
+        color: #eeeeee;
+    }
+    #restext {
+        display: inline-block;
     }
   </style>
   <script src = "./jquery/jquery-3.7.1.min.js"></script>
   <script src="spin-wheel-iife.js"></script>
+  <script type="text/javascript" src="reconnecting-websocket.min.js"></script>
   <script>
     let prop={items:[]};
+    var doremoveitem=false;
+    var lastitemtext='';
+    let whimg=new Image(300,300);
+    whimg.src="./wheel_overlay.svg";
 
     window.onload = () => {
 
@@ -54,15 +85,56 @@
       window.wheel = new spinWheel.Wheel(container);
       initwheel();
     }
+    
+    function deleteitem(itext) {
+        var li=null;
+        for(vi of document.getElementById('itemList').children) {
+            if(vi.children[0].innerText==itext) {
+                li=vi;
+            }
+        }
+        var item=null;
+        prop.items.forEach((ele) => {
+           if(ele.label==itext) {
+             item=ele;
+           }
+        });
+        // delete item when weight==0
+        if(item) {
+            var ix=prop.items.indexOf(item);
+            if(ix>-1) {
+                item.weight-=1;
+                if(item.weight==0) {
+                  if(confirm(item.label+' 항목을 지우시겠습니까?')==true) {
+                    prop.items.splice(ix,1);
+                    li.remove();
+                  } else {
+                    item.weight=1;
+                  }
+                } else {
+                  li.children[1].innerText=item.weight;
+                }
+                initwheel();
+            }
+        }
+    }
         
     function spinwheel() {
+      wheel.stop();
+      if(doremoveitem==true && lastitemtext!='') {
+        deleteitem(lastitemtext);
+        lastitemtext='';
+        initwheel();
+      }
       wheel.spin(Math.random(1)*360+360);
+      document.getElementById('restext').innerText='';
     }
     
     function stopwheel() {
       wheel.stop();
     }
     
+    // get pastel color
     function randomHSLA(){
       return `hsla(${~~(360 * Math.random())}, 70%,  72%, 0.8)`
     }
@@ -72,103 +144,116 @@
       wheel.init(prop);
       wheel.rotationSpeedMax = 720;
       wheel.itemLabelFontSizeMax = 30;
+      wheel.overlayImage=whimg;
       wheel.onRest= function (event) {
-        console.log(event.currentIndex, prop.items[event.currentIndex].label);
+        var itemText=prop.items[event.currentIndex].label;
+        lastitemtext=itemText;
+        for(vi of document.getElementById('itemList').children) {
+            if(vi.children[0].innerText==itemText) {
+                document.getElementById('restext').innerText=itemText;
+            }
+        }
       };
-    }    
+    }
   </script>
+
 </head>
 
 <body>
-  <div class="gui-wrapper">
-    <button onclick="spinwheel()">돌리기</button>
-    <button onclick="stopwheel()">중단</button>
-    <button onclick="initwheel()" style="display: none">테스트</button>
-
-    <h5>목록</h5>
-    <input type="text" id="itemInput" onkeyup="enterKey(this)" placeholder="추가할 내용">
-    <button id="addItemBtn">+</button>
-    <ul id="itemList"></ul>
-    
+  <div class="wheel-wrapper">
   </div>
-  <div class="wheel-wrapper"></div>
 
-<script type="text/javascript" src="reconnecting-websocket.min.js"></script>
-<script type="text/javascript">
-
-function enterKey() {
-    if (window.event.keyCode == 13) {
-        additembutton();
+  <div class="gui-wrapper">
+  <button class='rbutton' onclick="spinwheel()">돌리기</button>
+  <button class='rbutton' onclick="stopwheel()">중단</button>
+  <button class='rbutton' onclick="initwheel()" style="display: none">테스트</button>
+  <h5>목록</h5>
+  <input type="checkbox" id="chkremove" onclick="checkremoveclick()">
+  <label for="chkremove">추첨된 항목 줄이기</label>
+  <input type="text" id="itemInput" onkeyup="enterKey(this)" placeholder="추가할 내용">
+  <button id="addItemBtn">+</button>
+  <ul id="itemList"></ul>
+  <div class="result"><p class="reshead">결과 : </p> <p id="restext"></p></div>
+  </div>
+<script>
+    function enterKey() {
+        if (window.event.keyCode == 13) {
+            additembutton();
+        }
     }
-}
 
-function additembutton() {
-    var itemInput = document.getElementById('itemInput');
-    var itemText = itemInput.value.trim();
-    if (itemText) {
-        // find item
-        var aitem=null;
-        prop.items.forEach((ele) => {
-            if(ele.label==itemText) {
-              aitem=ele;
-            }
-        });
-        if(aitem) {
-            // add weight on existing item
-            aitem.weight+=1;
-            for(vi of document.getElementById('itemList').children) {
-                if(vi.children[0].innerText==itemText) {
-                    vi.children[1].innerText=aitem.weight; 
-                }
-            }
-        } else {
-            // add new item
-            var li = document.createElement('li');
-            li.className = 'item';
-            li.innerHTML = '<span>'+itemText+'</span><span class="iweight">1</span><button class="remove-btn">-</button>';
-            document.getElementById('itemList').appendChild(li);
-            prop.items.push({label: itemText, labelColor: '#000000', backgroundColor: randomHSLA(), weight: 1});
-            // add remove event
-            li.querySelector('.remove-btn').addEventListener('click', function () {
-                var txt=li.children[0].innerText;
-                var item=null;
-                prop.items.forEach((ele) => {
-                   if(ele.label==txt) {
-                     item=ele;
-                   }
-                });
-                // delete item when weight==0
-                if(item) {
-                    var ix=prop.items.indexOf(item);
-                    if(ix>-1) {
-                        item.weight-=1;
-                        if(item.weight<=0) {
-                          prop.items.splice(ix,1);
-                          li.remove();
-                        } else {
-                          li.children[1].innerText=item.weight;
-                        }
-                        initwheel();
-                    }
+    function checkremoveclick() {
+        var chk=document.getElementById("chkremove");
+        doremoveitem=chk.checked;
+    }
+
+    function additembutton() {
+        var itemInput = document.getElementById('itemInput');
+        var itemText = itemInput.value.trim();
+        if (itemText) {
+            // find item
+            var aitem=null;
+            prop.items.forEach((ele) => {
+                if(ele.label==itemText) {
+                  aitem=ele;
                 }
             });
+            if(aitem) {
+                // add weight on existing item
+                aitem.weight+=1;
+                for(vi of document.getElementById('itemList').children) {
+                    if(vi.children[0].innerText==itemText) {
+                        vi.children[1].innerText=aitem.weight; 
+                    }
+                }
+            } else {
+                // add new item
+                var li = document.createElement('li');
+                li.className = 'item';
+                li.innerHTML = '<span class="textlabel">'+itemText+'</span><span class="iweight">1</span><button class="add-btn">+</button><button class="remove-btn">-</button>';
+                document.getElementById('itemList').appendChild(li);
+                prop.items.push({label: itemText, labelColor: '#000000', backgroundColor: randomHSLA(), weight: 1});
+                // add weight event
+                li.querySelector('.add-btn').addEventListener('click', function () {
+                    var txt=li.children[0].innerText;
+                    var item=null;
+                    prop.items.forEach((ele) => {
+                       if(ele.label==txt) {
+                         item=ele;
+                       }
+                    });
+                    // add item weight
+                    if(item) {
+                        var ix=prop.items.indexOf(item);
+                        if(ix>-1) {
+                            item.weight+=1;
+                            li.children[1].innerText=item.weight;
+                            initwheel();
+                        }
+                    }
+                });
+                // add remove event
+                li.querySelector('.remove-btn').addEventListener('click', function () {
+                    var txt=li.children[0].innerText;
+                    deleteitem(txt);
+                });
+            }
+            itemInput.value = '';
+            initwheel();
         }
-        itemInput.value = '';
-        initwheel();
     }
-}
 
-document.getElementById('addItemBtn').addEventListener('click', function() {
-    additembutton();
-});
+    document.getElementById('addItemBtn').addEventListener('click', function() {
+        additembutton();
+    });
 
-var itemmax=30;
-var chatsock = new ReconnectingWebSocket("ws://localhost:65003","chat");
-chatsock.reconnectInterval=2000;
-chatsock.onmessage = function (event) {
-    var div = $("#chatbox");
-    chatline=$(event.data);
-}
+    /* var itemmax=30;
+    var chatsock = new ReconnectingWebSocket("ws://localhost:65003","chat");
+    chatsock.reconnectInterval=2000;
+    chatsock.onmessage = function (event) {
+        var div = $("#chatbox");
+        chatline=$(event.data);
+    } */
 </script>
 </body>
 

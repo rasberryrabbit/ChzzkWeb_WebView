@@ -67,13 +67,16 @@
         display: inline-block;
     }
   </style>
-  <!--script src = "./jquery/jquery-3.7.1.min.js"></script-->
+  <script src = "./jquery/jquery-3.7.1.min.js"></script>
   <script src="./spinwheel/spin-wheel-iife.js"></script>
-  <!--script type="text/javascript" src="reconnecting-websocket.min.js"></script-->
+  <script type="text/javascript" src="reconnecting-websocket.min.js"></script>
   <script>
     let prop={items:[]};
     var doremoveitem=false;
+    var docheckcheese=false;
+    var wheeldospin=false;
     var lastitemtext='';
+
     let whimg=new Image(300,300);
     whimg.src="./spinwheel/wheel_overlay.svg";
 
@@ -131,6 +134,7 @@
     
     function stopwheel() {
       wheel.stop();
+      wheeldospin=false;
       document.getElementById('restext').innerText=lastitemtext;
     }
     
@@ -141,9 +145,21 @@
     }
     
     function showCurrent(event) {
-        var itemText=prop.items[event.currentIndex].label;
+        var item=prop.items[event.currentIndex];
+        var itemText=item.label;
         lastitemtext=itemText;
-        document.getElementById('restext').innerText=itemText;
+        var res=document.getElementById('restext');
+        res.innerText=itemText;
+        res.style.backgroundColor=item.backgroundColor;
+    }
+    
+    function wheelrest(event) {
+        wheeldospin=false;
+        showCurrent(event);
+    }
+    
+    function wheelspin(event) {
+        wheeldospin=true;
     }
     
     function initwheel() {
@@ -151,10 +167,13 @@
       lastitemtext='';
       wheel.init(prop);
       wheel.rotationSpeedMax = 720;
-      wheel.itemLabelFontSizeMax = 30;
+      wheel.itemLabelFontSizeMax = 70;
+      wheel.itemLabelRadiusMax = 0.1;
+      wheel.itemLabelRadius = 0.99;
       wheel.overlayImage=whimg;
-      wheel.onRest=showCurrent;
+      wheel.onRest=wheelrest;
       wheel.onCurrentIndexChange=showCurrent;
+      wheel.onSpin=wheelspin;
     }
   </script>
 
@@ -168,9 +187,16 @@
   <button class='rbutton' onclick="spinwheel()">돌리기</button>
   <button class='rbutton' onclick="stopwheel()">멈추기</button>
   <button class='rbutton' onclick="initwheel()" style="display: none">테스트</button>
-  <h5>목록</h5>
+  <div>
   <input type="checkbox" id="chkremove" onclick="checkremoveclick()">
   <label for="chkremove">추첨된 항목 줄이기</label>
+  </div>
+  <div>
+  <p style="display: block; background-color: coral; text-align: center;">목록</p>
+  <label for="cheeselow">치즈 : </label>  
+  <input type="number" id="cheeselow" name="cheesel" min="1000" value="1000" />
+  <input type="checkbox" id="chkcheese" onclick="chkcheeseclick()">
+  </div>
   <input type="text" id="itemInput" onkeyup="enterKey(this)" placeholder="추가할 내용">
   <button id="addItemBtn">+</button>
   <ul id="itemList"></ul>
@@ -186,6 +212,11 @@
     function checkremoveclick() {
         var chk=document.getElementById("chkremove");
         doremoveitem=chk.checked;
+    }
+    
+    function chkcheeseclick() {
+        var chkcheese=document.getElementById("chkcheese");
+        docheckcheese=chkcheese.checked;
     }
 
     function additembutton() {
@@ -213,7 +244,9 @@
                 li.className = 'item';
                 li.innerHTML = '<span class="textlabel">'+itemText+'</span><span class="iweight">1</span><button class="add-btn">+</button><button class="remove-btn">-</button>';
                 document.getElementById('itemList').appendChild(li);
-                prop.items.push({label: itemText, labelColor: '#000000', backgroundColor: randomHSLA(), weight: 1});
+                var bgcolor=randomHSLA();
+                prop.items.push({label: itemText, labelColor: '#000000', backgroundColor: bgcolor, weight: 1});
+                li.style.backgroundColor=bgcolor;
                 // add weight event
                 li.querySelector('.add-btn').addEventListener('click', function () {
                     var txt=li.children[0].innerText;
@@ -248,13 +281,28 @@
         additembutton();
     });
 
-    /* var itemmax=30;
     var chatsock = new ReconnectingWebSocket("ws://localhost:65003","chat");
     chatsock.reconnectInterval=2000;
     chatsock.onmessage = function (event) {
-        var div = $("#chatbox");
+      if(docheckcheese==true /*&& wheeldospin==false*/) {
         chatline=$(event.data);
-    } */
+        msg=chatline.find('p.live_chatting_donation_message_text__XbDKP');
+        cheese=chatline.find('span.live_chatting_donation_message_money__fE2UC');
+        if(msg) {
+          var itemInput = document.getElementById('itemInput');
+          var icheese = document.getElementById('cheeselow');
+          if(cheese) {
+             var vcheese=cheese.text();
+             vcheese=vcheese.replace(',','');
+             if(parseInt(vcheese)>=icheese.value) {
+                 itemInput.value=msg.text();
+                 additembutton();
+                 //console.log(vcheese);
+             }
+          }         
+        }
+      }
+    }
 </script>
 </body>
 

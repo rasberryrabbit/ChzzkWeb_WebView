@@ -141,7 +141,8 @@
     // get pastel color
     function randomHSLA(){
       var hue = Math.floor(Math.random() * 360);
-      return 'hsl(' + hue + ', 100%, 80%)';
+      var lum = Math.floor(Math.random() * 15)+65;
+      return 'hsl(' + hue + ', 100%, '+lum+'%)';
     }
     
     function showCurrent(event) {

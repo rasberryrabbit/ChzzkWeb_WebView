@@ -75,6 +75,7 @@
     var doremoveitem=false;
     var docheckcheese=false;
     var wheeldospin=false;
+    var wheelmaxitem=50;
     var lastitemtext='';
 
     let whimg=new Image(300,300);
@@ -225,6 +226,10 @@
     function additembutton() {
         var itemInput = document.getElementById('itemInput');
         var itemText = itemInput.value.trim();
+        if(document.getElementById('itemList').childElementCount>=wheelmaxitem) {
+          itemInput.value='';
+          return
+        }
         if (itemText) {
             // find item
             var aitem=null;

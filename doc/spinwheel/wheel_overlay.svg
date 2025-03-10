@@ -23,9 +23,9 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
-     inkscape:zoom="1.1241547"
-     inkscape:cx="351.81992"
-     inkscape:cy="358.93637"
+     inkscape:zoom="3.1795896"
+     inkscape:cx="351.77495"
+     inkscape:cy="20.600143"
      inkscape:window-width="1920"
      inkscape:window-height="1009"
      inkscape:window-x="-8"
@@ -48,7 +48,6 @@
     <path
        style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.264583;stroke-linecap:butt;stroke-dasharray:none;stroke-opacity:1"
        id="path3"
-       d="m 94.951676,15.45725 -4.462124,-7.7286246 8.924247,-2e-7 z"
-       transform="translate(10.672862,-1.8401482)" />
+       d="m 105.72501,13.617102 -4.46212,-7.7286248 8.92425,-2e-7 z" />
   </g>
 </svg>

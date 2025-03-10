@@ -56,7 +56,9 @@
         margin-right: 5px;        
     }
     .reshead {
-        display: inline;
+        display: block;
+        background-color: aqua;
+        text-align: center;
     }
     .reshead p {
         display: inline;
@@ -207,7 +209,9 @@
   <input type="text" id="itemInput" onkeyup="enterKey(this)" placeholder="추가할 내용">
   <button id="addItemBtn">+</button>
   <ul id="itemList"></ul>
-  <div class="result"><p class="reshead">결과 : </p> <p id="restext"></p></div>
+  <div class="result">
+  <p class="reshead">결과 : </p>
+  <p id="restext"></p></div>
   </div>
 <script>
     function clearwheel() {

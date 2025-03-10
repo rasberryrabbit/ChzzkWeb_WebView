@@ -207,6 +207,10 @@ object FormChzzkWeb: TFormChzzkWeb
       Checked = True
       OnExecute = ActionLoggingExecute
     end
+    object ActionOpenRoulette: TAction
+      Caption = '룰렛'
+      OnExecute = ActionOpenRouletteExecute
+    end
   end
   object MainMenu1: TMainMenu
     Left = 200
@@ -233,6 +237,9 @@ object FormChzzkWeb: TFormChzzkWeb
       end
       object MenuItem8: TMenuItem
         Action = ActionOpenUserList
+      end
+      object MenuItem11: TMenuItem
+        Action = ActionOpenRoulette
       end
     end
     object MenuItem5: TMenuItem

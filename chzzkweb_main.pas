@@ -19,6 +19,7 @@ type
   { TFormChzzkWeb }
 
   TFormChzzkWeb = class(TForm)
+    ActionOpenRoulette: TAction;
     ActionLogging: TAction;
     ActionOpenUserList: TAction;
     ActionWSockUnique: TAction;
@@ -39,6 +40,7 @@ type
     MainMenu1: TMainMenu;
     MenuItem1: TMenuItem;
     MenuItem10: TMenuItem;
+    MenuItem11: TMenuItem;
     MenuItem2: TMenuItem;
     MenuItem3: TMenuItem;
     MenuItem4: TMenuItem;
@@ -61,6 +63,7 @@ type
     procedure ActionOpenChatExecute(Sender: TObject);
     procedure ActionOpenChatFullExecute(Sender: TObject);
     procedure ActionOpenNotifyExecute(Sender: TObject);
+    procedure ActionOpenRouletteExecute(Sender: TObject);
     procedure ActionOpenUserListExecute(Sender: TObject);
     procedure ActionWSockUniqueExecute(Sender: TObject);
     procedure ActionWSockUniqueUpdate(Sender: TObject);
@@ -168,6 +171,7 @@ var
   chatlog_donation: string = 'doc\webchatlog_donation_sub.html';
   chatlog_chatonly: string = 'doc\webchatlog_chatbox.html';
   chatlog_userid: string = 'doc\webchatlog_user_unique.html';
+  chatlog_roulette: string = 'doc\webchatlog_roulette.html';
   stripusertooltip: TRegExpr;
   PageLoaded: Boolean = False;
   observer_started: Boolean = False;
@@ -202,13 +206,14 @@ begin
     begin
       try
         SetUpWebSocketPort;
+        XMLConfig1.SetValue('WS/PORT',WSPortChat);
+        XMLConfig1.SetValue('WS/PORTSYS',WSPortSys);
         ReplaceWSPortHTML(chatlog_chatonly,WSPortChat,'');
         ReplaceWSPortHTML(chatlog_donation,WSPortSys,'');
         ReplaceWSPortHTML(chatlog_userid,WSPortChat,'');
         ReplaceWSPortHTML(chatlog_full_unique,WSPortChat,'');
         ReplaceWSPortHTML(chatlog_full,WSPortChat,WSPortSys);
-        XMLConfig1.SetValue('WS/PORT',WSPortChat);
-        XMLConfig1.SetValue('WS/PORTSYS',WSPortSys);
+        ReplaceWSPortHTML(chatlog_roulette,WSPortSys,'');
         SetFormCaption;
       except
         on e:exception do
@@ -267,6 +272,11 @@ begin
   ShellExecuteW(0,'open',pwidechar(ExtractFilePath(Application.ExeName)+UTF8Decode(chatlog_donation)),nil,nil,SW_SHOWNORMAL);
 end;
 
+procedure TFormChzzkWeb.ActionOpenRouletteExecute(Sender: TObject);
+begin
+  ShellExecuteW(0,'open',pwidechar(ExtractFilePath(Application.ExeName)+UTF8Decode(chatlog_roulette)),nil,nil,SW_SHOWNORMAL);
+end;
+
 procedure TFormChzzkWeb.ActionOpenUserListExecute(Sender: TObject);
 begin
   ShellExecuteW(0,'open',pwidechar(ExtractFilePath(Application.ExeName)+UTF8Decode(chatlog_userid)),nil,nil,SW_SHOWNORMAL);
@@ -307,38 +317,6 @@ begin
       Inc(sp);
       Insert('Time="'+IntToStr(DateTimeToUnix(Now))+'" ', s, sp);
     end;
-end;
-
-procedure TFormChzzkWeb.Chromium1ProcessMessageReceived(Sender: TObject;
-  const browser: ICefBrowser; const frame: ICefFrame;
-  sourceProcess: TCefProcessId; const message: ICefProcessMessage; out
-  Result: Boolean);
-var
-  s: ustring;
-begin
-  // browser message
-  Result := False;
-  if message=nil then
-    exit;
-
-  if message.Name=SLOGCHAT then
-    begin
-      s:=message.ArgumentList.GetString(0);
-      if IncludeChatTime then
-        InsertTime(s);
-      SockServerChat.BroadcastMsg(UTF8Encode(s));
-      Result:=True;
-    end else
-    if message.Name=SLOGSYS then
-      begin
-        s:=message.ArgumentList.GetString(0);
-        if IncludeChatTime then
-          InsertTime(s);
-        SockServerSys.BroadcastMsg(UTF8Encode(s));
-        if WSPortUnique then
-          SockServerChat.BroadcastMsg(UTF8Encode(s));
-        Result:=True;
-      end;
 end;}
 
 procedure TFormChzzkWeb.EditurlKeyPress(Sender: TObject; var Key: char);
@@ -366,6 +344,7 @@ begin
   XMLConfig1.SetValue('CHAT/CHAT',UTF8Decode(chatlog_chatonly));
   XMLConfig1.SetValue('CHAT/DONATION',UTF8Decode(chatlog_donation));
   XMLConfig1.SetValue('CHAT/USERID',UTF8Decode(chatlog_userid));
+  XMLConfig1.SetValue('CHAT/ROULETTE',UTF8Decode(chatlog_roulette));
   if XMLConfig1.Modified then
     XMLConfig1.SaveToFile('config.xml');
   Sleep(200);
@@ -390,6 +369,7 @@ begin
   chatlog_chatonly:=UTF8Encode(XMLConfig1.GetValue('CHAT/CHAT',UTF8Decode(chatlog_chatonly)));
   chatlog_donation:=UTF8Encode(XMLConfig1.GetValue('CHAT/DONATION',UTF8Decode(chatlog_donation)));
   chatlog_userid:=UTF8Encode(XMLConfig1.GetValue('CHAT/USERID',UTF8Decode(chatlog_userid)));
+  chatlog_roulette:=UTF8Encode(XMLConfig1.GetValue('CHAT/ROULETTE',UTF8Decode(chatlog_roulette)));
 
   SetUpWebSocketPort;
   SetFormCaption;

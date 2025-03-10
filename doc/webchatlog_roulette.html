@@ -289,20 +289,24 @@
     chatsock.onmessage = function (event) {
       if(docheckcheese==true /*&& wheeldospin==false*/) {
         chatline=$(event.data);
-        msg=chatline.find('p.live_chatting_donation_message_text__XbDKP');
-        cheese=chatline.find('span.live_chatting_donation_message_money__fE2UC');
+        var msg=chatline.find('p.live_chatting_donation_message_text__XbDKP');
+        var cheese=chatline.find('span.live_chatting_donation_message_money__fE2UC');
         if(msg) {
           var itemInput = document.getElementById('itemInput');
           var icheese = document.getElementById('cheeselow');
+          var vcheese='';
           if(cheese) {
-             var vcheese=cheese.text();
-             vcheese=vcheese.replace(',','');
-             if(parseInt(vcheese)>=icheese.value) {
-                 itemInput.value=msg.text();
-                 additembutton();
-                 //console.log(vcheese);
-             }
-          }         
+            vcheese=cheese.text();
+            vcheese=vcheese.replace(',','');
+          }
+          if(!vcheese) {
+            vcheese='1000';
+          }
+          if(parseInt(vcheese)>=icheese.value) {
+            itemInput.value=msg.text();
+            additembutton();
+            //console.log(vcheese);
+          }
         }
       }
     }

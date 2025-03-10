@@ -75,8 +75,8 @@
     var doremoveitem=false;
     var docheckcheese=false;
     var wheeldospin=false;
-    var wheelmaxitem=50;
     var lastitemtext='';
+    var wheelmaxitem=50;
 
     let whimg=new Image(300,300);
     whimg.src="./spinwheel/wheel_overlay.svg";
@@ -161,6 +161,7 @@
     }
     
     function wheelspin(event) {
+        //console.log('spin');
         wheeldospin=true;
     }
     
@@ -190,6 +191,7 @@
   <div class="gui-wrapper">
   <button class='rbutton' onclick="spinwheel()">돌리기</button>
   <button class='rbutton' onclick="stopwheel()">멈추기</button>
+  <button class='rbutton' onclick="clearwheel()">지우기</button>
   <button class='rbutton' onclick="initwheel()" style="display: none">테스트</button>
   <div>
   <input type="checkbox" id="chkremove" onclick="checkremoveclick()">
@@ -207,6 +209,18 @@
   <div class="result"><p class="reshead">결과 : </p> <p id="restext"></p></div>
   </div>
 <script>
+    function clearwheel() {
+        if(wheeldospin==false && confirm('모든 항목을 지우시겠습니까?')==true) {
+            prop={items:[]};
+            doremoveitem=false;
+            docheckcheese=false;
+            wheeldospin=false;
+            lastitemtext='';
+            initwheel();
+            document.getElementById('itemList').innerHTML='';
+        }
+    }
+    
     function enterKey() {
         if (window.event.keyCode == 13) {
             additembutton();

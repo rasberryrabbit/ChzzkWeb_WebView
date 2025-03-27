@@ -11,7 +11,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="4"/>
         <CursorPos Y="28"/>
-        <UsageCount Value="152"/>
+        <UsageCount Value="153"/>
       </Unit>
       <Unit>
         <Filename Value="chzzkweb_main.pas"/>
@@ -23,7 +23,7 @@
         <IsVisibleTab Value="True"/>
         <TopLine Value="271"/>
         <CursorPos X="53" Y="210"/>
-        <UsageCount Value="152"/>
+        <UsageCount Value="153"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit>
@@ -34,7 +34,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="165"/>
         <CursorPos X="21" Y="176"/>
-        <UsageCount Value="111"/>
+        <UsageCount Value="112"/>
       </Unit>
       <Unit>
         <Filename Value="C:\development\extras\CEF4Delphi\source\uCEFApplicationCore.pas"/>

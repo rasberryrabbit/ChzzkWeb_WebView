@@ -174,7 +174,7 @@ begin
   fs := TStringStream.Create('');
   try
     Button2.Enabled:=False;
-    fs.LoadFromFile('doc\main.56f98435.css');
+    fs.LoadFromFile('doc\main.00a54a17.css');
     RegVarColor:=TRegExpr.Create(rport);
     try
       tick:=GetTickCount64;
@@ -216,12 +216,13 @@ begin
         end;
       end;
       res:=res+Copy(fs.DataString,i);
+      Res:=StringReplace(res,'background-clip:text;color:transparent!important','background-clip:text;',[]);
       // save to file
       fs.Clear;
       fs.WriteString(res);
       if Memo1.Text<>'' then
         fs.WriteString(Memo1.Text);
-      fs.SaveToFile('doc\main.56f98435-dark.css');
+      fs.SaveToFile('doc\main.00a54a17-dark.css');
     finally
       RegVarColor.Free;
     end;

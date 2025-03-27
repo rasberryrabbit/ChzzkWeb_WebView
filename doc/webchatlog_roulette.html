@@ -203,7 +203,7 @@
   <div>
   <p style="display: block; background-color: coral; text-align: center;">목록</p>
   <label for="cheeselow">치즈 : </label>  
-  <input type="number" id="cheeselow" name="cheesel" min="1000" value="1000" />
+  <input type="text" id="cheeselow" name="cheesel" value="1000" />
   <input type="checkbox" id="chkcheese" onclick="chkcheeseclick()">
   <input type="text" id="itemInput" onkeyup="enterKey(this)" placeholder="추가할 내용">
   <button id="addItemBtn">+</button>
@@ -325,8 +325,12 @@
           }
           if(!vcheese) {
             vcheese='1000';
+            donlvl=event.data.match('live_chatting_donation_message_level\d');
+            if(donlvl) {
+              console.log(donlvl);
+            }
           }
-          if(parseInt(vcheese)>=icheese.value) {
+          if(parseInt(vcheese)>=parseint(icheese.value)) {
             itemInput.value=msg.text();
             additembutton();
             //console.log(vcheese);

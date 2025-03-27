@@ -37,10 +37,14 @@ chatsock.reconnectInterval=2000;
 chatsock.onmessage = function (event) {
     var div = $("#chatbox");
     chatline=$(event.data);
-    // disable random color
-    //if(!randomcolor) {
-    //  chatline.find('.chat-author__display-name').attr('style','');
-    //}
+    // replace alpha color
+    var chatid=chatline.find('span.live_chatting_username_nickname__dDbbj');
+    if(chatid) {
+        var userclr=chatid.css('color');
+        if(userclr && userclr.indexOf('rgba')!=-1 ) {
+            chatid.css('color','');
+        }
+    }
     div.append(chatline);
     if (div.children('div').length>10) {
       div.children('div')[0].remove();

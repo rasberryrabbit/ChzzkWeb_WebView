@@ -109,6 +109,14 @@ chatsock1.reconnectInterval=1000;
 chatsock1.onmessage = function (event) {
     var div = $("#chatbox");
     chatline=$(event.data).find("button").children();
+    // replace alpha color
+    var chatid=chatline.find('span.live_chatting_username_nickname__dDbbj');
+    if(chatid) {
+        var userclr=chatid.css('color');
+        if(userclr && userclr.indexOf('rgba')!=-1 ) {
+            chatid.css('color','');
+        }
+    }
     username=$(chatline).find("span.name_text__yQG50").text();
     if(idlist[username]==undefined) {
       div.append(chatline);

@@ -64,6 +64,10 @@ object FormCssTable: TFormCssTable
       '.live_chatting_guide_container__vr6hZ {display: none}'
       '.name_ellipsis__Hu9B\+ .name_text__yQG50 {overflow: hidden;text-overflow: unset;white-space: nowrap;display: contents;}'
       '.name_has_highlight__jLpxr, .name_has_highlight__jLpxr .name_text__yQG50 {margin-right: 0px;}'
+      '.live_chatting_message_container__vrI-y:not(.live_chatting_message_is_overlay__cALCf) .live_chatting_message_chatting_message__7TKns {'
+      '    display: inline-block;'
+      '    border-radius: 6px;'
+      '}'
     )
     ScrollBars = ssAutoVertical
     TabOrder = 4

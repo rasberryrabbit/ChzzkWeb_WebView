@@ -159,9 +159,28 @@ begin
   end;
 end;
 
+function GetOutputFilename(const src:string):string;
+var
+  i, l: Integer;
+begin
+  Result:='';
+  l:=Length(src);
+  i:=l;
+  while i>1 do begin
+    if src[i]='.' then
+      break;
+    Dec(i);
+  end;
+  if i>1 then
+    Result:=Copy(src,1,i-1)+'-dark'+Copy(src,i)
+    else
+      Result:=src;
+end;
+
 procedure TFormCssTable.Button2Click(Sender: TObject);
 const
   rport = 'var\(([^\),]+)(\)|,)';
+  cssfilename = 'doc\main.00a54a17.css';
 var
   fs: TStringStream;
   RegVarColor: TRegExpr;
@@ -174,7 +193,7 @@ begin
   fs := TStringStream.Create('');
   try
     Button2.Enabled:=False;
-    fs.LoadFromFile('doc\main.00a54a17.css');
+    fs.LoadFromFile(cssfilename);
     RegVarColor:=TRegExpr.Create(rport);
     try
       tick:=GetTickCount64;
@@ -222,7 +241,7 @@ begin
       fs.WriteString(res);
       if Memo1.Text<>'' then
         fs.WriteString(Memo1.Text);
-      fs.SaveToFile('doc\main.00a54a17-dark.css');
+      fs.SaveToFile(GetOutputFilename(cssfilename));
     finally
       RegVarColor.Free;
     end;

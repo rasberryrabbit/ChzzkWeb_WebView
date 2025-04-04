@@ -14,11 +14,14 @@ type
   TFormCssTable = class(TForm)
     Button1: TButton;
     Button2: TButton;
+    Button3: TButton;
     CheckBoxSaveTable: TCheckBox;
     CSSTable: TValueListEditor;
     Memo1: TMemo;
+    OpenDialog1: TOpenDialog;
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
+    procedure Button3Click(Sender: TObject);
   private
 
   public
@@ -32,6 +35,9 @@ implementation
 
 uses
   RegExpr, StrUtils;
+
+var
+  cssfilename : string = '';
 
 {$R *.lfm}
 
@@ -70,7 +76,7 @@ begin
     // extract Var()
     stable:= TStringStream.Create('');
     try
-      stable.LoadFromFile('doc\main.56f98435.css');
+      stable.LoadFromFile(cssfilename);
       s:=stable.DataString;
       stable.Clear;
       sexpr:=TRegExpr.Create(spat);
@@ -92,7 +98,7 @@ begin
     end;
 
     if CheckBoxSaveTable.Checked then
-      st.SaveToFile('doc\dark_theme_table.txt');
+      st.SaveToFile(ExtractFilePath(cssfilename)+'dark_theme_table.txt');
     CSSTable.Clear;
     for z:=0 to 1 do
       for i:=0 to st.Count-1 do begin
@@ -180,7 +186,7 @@ end;
 procedure TFormCssTable.Button2Click(Sender: TObject);
 const
   rport = 'var\(([^\),]+)(\)|,)';
-  cssfilename = 'doc\main.00a54a17.css';
+  //cssfilename = 'doc\main.00a54a17.css';
 var
   fs: TStringStream;
   RegVarColor: TRegExpr;
@@ -249,6 +255,14 @@ begin
     fs.Free;
     Button2.Enabled:=True;
   end;
+end;
+
+procedure TFormCssTable.Button3Click(Sender: TObject);
+begin
+  if OpenDialog1.Execute then
+    cssfilename:=OpenDialog1.FileName
+    else
+      cssfilename:='';
 end;
 
 end.

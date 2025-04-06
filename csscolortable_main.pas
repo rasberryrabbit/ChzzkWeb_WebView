@@ -14,14 +14,12 @@ type
   TFormCssTable = class(TForm)
     Button1: TButton;
     Button2: TButton;
-    Button3: TButton;
     CheckBoxSaveTable: TCheckBox;
     CSSTable: TValueListEditor;
     Memo1: TMemo;
     OpenDialog1: TOpenDialog;
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
-    procedure Button3Click(Sender: TObject);
   private
 
   public
@@ -69,6 +67,12 @@ var
   end;
 
 begin
+  if OpenDialog1.Execute then
+    cssfilename:=OpenDialog1.FileName
+    else begin
+      cssfilename:='';
+      exit;
+    end;
   st:=TStringList.Create;
   try
     Button1.Enabled:=False;
@@ -255,14 +259,6 @@ begin
     fs.Free;
     Button2.Enabled:=True;
   end;
-end;
-
-procedure TFormCssTable.Button3Click(Sender: TObject);
-begin
-  if OpenDialog1.Execute then
-    cssfilename:=OpenDialog1.FileName
-    else
-      cssfilename:='';
 end;
 
 end.

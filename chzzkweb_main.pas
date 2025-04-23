@@ -461,8 +461,9 @@ begin
     observer_started:=True
   else
   begin
-    if (Pos(UTF8Decode(syschat_str),buf)>0) and
-       (Pos(UTF8Decode(syschat_guide),buf)=0) then
+    if Pos(UTF8Decode(syschat_guide),buf)>0 then
+      exit;
+    if (Pos(UTF8Decode(syschat_str),buf)>0) then
     begin
       SockServerSys.BroadcastMsg(UTF8Encode(buf));
       if WSPortUnique then

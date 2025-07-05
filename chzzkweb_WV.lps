@@ -21,7 +21,7 @@
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="ChzzkWeb_Main"/>
         <IsVisibleTab Value="True"/>
-        <TopLine Value="471"/>
+        <TopLine Value="473"/>
         <CursorPos X="56" Y="473"/>
         <UsageCount Value="153"/>
         <Loaded Value="True"/>

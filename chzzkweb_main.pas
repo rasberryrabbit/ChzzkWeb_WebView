@@ -501,12 +501,38 @@ begin
     WVBrowser1.NotifyParentWindowPositionChanged;
 end;
 
+function GetFileVersionEx(const AFileName:UnicodeString):string;
+  var
+    { useful only as long as we don't need to touch different stack pages }
+    buf : array[0..3071] of byte;
+    bufp : pointer;
+    valsize,
+    size : DWORD;
+    valrec : PVSFixedFileInfo;
+  begin
+    result:='';
+    size:=GetFileVersionInfoSizeW(PUnicodeChar(AFileName),nil);
+    bufp:=@buf;
+    if size>sizeof(buf) then
+      bufp:=getmem(size);
+    if GetFileVersionInfoW(PUnicodeChar(AFileName),0,size,bufp) then
+      if VerQueryValue(bufp,'\',valrec,valsize) then
+      begin
+        result:=IntToStr(valrec^.dwFileVersionMS shr 16)+'.'+
+                IntToStr(valrec^.dwFileVersionMS and $ffff)+'.'+
+                IntToStr(valrec^.dwFileVersionLS shr 16)+'.'+
+                IntToStr(valrec^.dwFileVersionLS and $ffff);
+      end;
+    if bufp<>@buf then
+      freemem(bufp);
+  end;
+
 procedure TFormChzzkWeb.SetFormCaption;
 var
-  cefVer: Cardinal;
+  cefVer: string;
 begin
-  cefVer:=GetFileVersion('WebView2Loader');
-  Caption:='ChzzkWeb_WebView2 '+RxVersionInfo1.FileVersion+' '+IntToHex(cefVer,8)+' @'+WSPortChat;
+  cefVer:=GetFileVersionEx('WebView2Loader');
+  Caption:='ChzzkWeb_WebView2 '+RxVersionInfo1.FileVersion+' '+cefVer+' @'+WSPortChat;
 end;
 
 procedure TFormChzzkWeb.SetUpWebSocketPort;

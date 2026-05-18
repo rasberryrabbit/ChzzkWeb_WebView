@@ -1,7 +1,7 @@
 object FormChzzkWeb: TFormChzzkWeb
-  Left = 354
+  Left = 359
   Height = 691
-  Top = 159
+  Top = 155
   Width = 1027
   Caption = 'ChzzkWeb'
   ClientHeight = 691

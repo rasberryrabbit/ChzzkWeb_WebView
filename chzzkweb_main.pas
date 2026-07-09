@@ -127,7 +127,7 @@ uses
 
 const
   MaxLength = 2048;
-  cqueryjs = 'var obser=document.querySelector("div.live_chatting_list_wrapper__a5XTV");'+
+  cqueryjs = 'var obser=document.querySelector("div._wrapper_sg7hy_25");'+
              'var observer;'+
              'if(obser) {'+
              'if(observer) { observer.disconnect(); };'+
@@ -151,8 +151,8 @@ const
              '});'+
              '}';
 
-  syschat_str = '0SGhw live_chatting_list';
-  syschat_guide = 'live_chatting_guide_';
+  syschat_str = '0SGhw live_chatting_list'; // to do
+  syschat_guide = '_container_zl6bx_1';
 
   ChzzkURL ='chzzk.naver.com/live/';
 

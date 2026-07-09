@@ -116,8 +116,10 @@ chatsock1.onmessage = function (event) {
         if(userclr && userclr.indexOf('rgb')!=-1 ) {
             chatid.css('background-image','');
         }
+    } else {
+      return;
     }
-    username=$(chatline).find("span._text_dtc6c_2").text();
+    username=$(chatline).find("span._nickname_o04z9_57").text();
     if(idlist[username]==undefined) {
       div.append(chatline);
       idlist[username]=chatline;

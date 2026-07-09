@@ -108,7 +108,7 @@ var chatsock1 = new ReconnectingWebSocket("ws://localhost:65002","chat");
 chatsock1.reconnectInterval=1000;
 chatsock1.onmessage = function (event) {
     var div = $("#chatbox");
-    chatline=$(event.data).find("button").children();
+    chatline=$(event.data).find("button._nickname_1vemp_37");
     // replace alpha color
     var chatid=chatline.find('span._nickname_o04z9_57');
     if(chatid) {
@@ -119,8 +119,9 @@ chatsock1.onmessage = function (event) {
     } else {
       return;
     }
-    username=$(chatline).find("span._nickname_o04z9_57").text();
+    username=$(chatline).find("span._text_dtc6c_2").text();
     if(idlist[username]==undefined) {
+      //console.log(username);
       div.append(chatline);
       idlist[username]=chatline;
       // subscriber

@@ -14,7 +14,6 @@ object FormCssTable: TFormCssTable
     Width = 401
     Anchors = [akTop, akLeft, akRight, akBottom]
     DefaultColWidth = 180
-    FixedCols = 0
     RowCount = 2
     TabOrder = 0
     Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goColSizing, goAlwaysShowEditor, goThumbTracking]
@@ -58,15 +57,9 @@ object FormCssTable: TFormCssTable
     Width = 528
     Lines.Strings = (
       '/* custom */'
-      '.live_chatting_message_chatting_message__7TKns {text-shadow: rgb(56, 60, 62) 1px 0px 0px, rgb(56, 60, 62) 0.540302px 0.841471px 0px, rgb(56, 60, 62) -0.416147px 0.909297px 0px, rgb(56, 60, 62) -0.989993px 0.14112px 0px, rgb(56, 60, 62) -0.653644px -0.756803px 0px, rgb(56, 60, 62) 0.283662px -0.958924px 0px, rgb(56, 60, 62) 0.96017px -0.279416px 0px;}'
-      '.name_text__yQG50{text-shadow: rgb(56, 60, 62) 1px 0px 0px, rgb(56, 60, 62) 0.540302px 0.841471px 0px, rgb(56, 60, 62) -0.416147px 0.909297px 0px, rgb(56, 60, 62) -0.989993px 0.14112px 0px, rgb(56, 60, 62) -0.653644px -0.756803px 0px, rgb(56, 60, 62) 0.283662px -0.958924px 0px, rgb(56, 60, 62) 0.96017px -0.279416px 0px;}'
-      '.name_ellipsis__Hu9B\+{display:-ms-inline-flexbox;display:flex;max-width:100%;overflow:hidden;vertical-align:top}'
-      '.live_chatting_guide_container__vr6hZ {display: none}'
-      '.name_ellipsis__Hu9B\+ .name_text__yQG50 {overflow: hidden;text-overflow: unset;white-space: nowrap;display: contents;}'
-      '.name_has_highlight__jLpxr, .name_has_highlight__jLpxr .name_text__yQG50 {margin-right: 0px;}'
-      '.live_chatting_message_container__vrI-y:not(.live_chatting_message_is_overlay__cALCf) .live_chatting_message_chatting_message__7TKns {'
-      '    display: inline-block;'
-      '    border-radius: 6px;'
+      '._container_1vemp_1:not(._is_overlay_1vemp_1) ._text_1vemp_1 {'
+      '    color: #dfe2ea;'
+      '    position: fixed;'
       '}'
     )
     ScrollBars = ssAutoVertical

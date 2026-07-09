@@ -151,7 +151,7 @@ const
              '});'+
              '}';
 
-  syschat_str = '0SGhw live_chatting_list'; // to do
+  syschat_str = '_item_sg7hy_7 _small_padding_sg7hy_57';
   syschat_guide = '_container_zl6bx_1';
 
   ChzzkURL ='chzzk.naver.com/live/';

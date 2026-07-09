@@ -114,7 +114,7 @@ chatsock1.onmessage = function (event) {
     if(chatid) {
         var userclr=chatid.css('background-image');
         if(userclr && userclr.indexOf('rgb')!=-1 ) {
-            chatid.css('background-image','');
+            chatid.css('background-image','#000000');
         }
     } else {
       return;

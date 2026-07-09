@@ -110,21 +110,21 @@ chatsock1.onmessage = function (event) {
     var div = $("#chatbox");
     chatline=$(event.data).find("button").children();
     // replace alpha color
-    var chatid=chatline.find('span.live_chatting_username_nickname__dDbbj');
+    var chatid=chatline.find('span._nickname_o04z9_57');
     if(chatid) {
         var userclr=chatid.css('color');
         if(userclr && userclr.indexOf('rgba')!=-1 ) {
             chatid.css('color','');
         }
     }
-    username=$(chatline).find("span.name_text__yQG50").text();
+    username=$(chatline).find("span._text_dtc6c_2").text();
     if(idlist[username]==undefined) {
       div.append(chatline);
       idlist[username]=chatline;
       // subscriber
-      iconinfo=$(chatline).find("span.live_chatting_username_wrapper__iJpJB");
+      iconinfo=$(chatline).find("span._wrapper_o04z9_23");
       if(iconinfo) {
-        sub=$(iconinfo).find("span.badge_container__a64XB");
+        sub=$(iconinfo).find("span._container_1jo9t_2");
         if(sub) {
           $(sub).each(function (index, item) {
             ipos=$(item).children("img").attr("src").indexOf("/subscription/");
@@ -160,7 +160,7 @@ chatsock1.onmessage = function (event) {
         var userchat=$(event.data).clone();
         $("#seluserchat").append(userchat[0]);
         // tts
-        var temp=userchat.find('span.live_chatting_message_text__DyleH');
+        var temp=userchat.find('span._text_1vemp_1');
         if(temp) {
             var text=temp.text();
             const speech = new SpeechSynthesisUtterance(text);

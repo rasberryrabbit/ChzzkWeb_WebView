@@ -57,9 +57,15 @@ object FormCssTable: TFormCssTable
     Width = 528
     Lines.Strings = (
       '/* custom */'
-      '._container_1vemp_1:not(._is_overlay_1vemp_1) ._text_1vemp_1 {'
-      '    color: #dfe2ea;'
-      '    position: fixed;'
+      '._container_1vemp_1:not(._is_overlay_1vemp_1) ._chatting_message_1vemp_21 {'
+      '    text-align: left;'
+      '    word-wrap: break-word;'
+      '    word-break: break-all;'
+      '    contain: layout;'
+      '    padding: 4px 6px;'
+      '    line-height: 20px;'
+      '    overflow: hidden;'
+      '    display: flex;'
       '}'
     )
     ScrollBars = ssAutoVertical

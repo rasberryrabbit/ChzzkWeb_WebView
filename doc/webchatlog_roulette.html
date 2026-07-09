@@ -313,8 +313,8 @@
     chatsock.onmessage = function (event) {
       if(docheckcheese==true /*&& wheeldospin==false*/) {
         chatline=$(event.data);
-        var msg=chatline.find('p.live_chatting_donation_message_text__XbDKP');
-        var cheese=chatline.find('span.live_chatting_donation_message_money__fE2UC');
+        var msg=chatline.find('p._text_1f5gx_36');
+        var cheese=chatline.find('em._money_1f5gx_69');
         if(msg) {
           var itemInput = document.getElementById('itemInput');
           var icheese = document.getElementById('cheeselow');
@@ -322,10 +322,12 @@
           if(cheese) {
             vcheese=cheese.text();
             vcheese=vcheese.replace(',','');
+            vcheese=vcheese.replace('치즈','');
+            vcheese=vcheese.replace('\"','');            
           }
           if(!vcheese) {
             vcheese='1000';
-            donlvl=event.data.match('live_chatting_donation_message_level\d');
+            donlvl=event.data.match('_level\d+_1f5gx_10');
             if(donlvl) {
               console.log(donlvl);
             }

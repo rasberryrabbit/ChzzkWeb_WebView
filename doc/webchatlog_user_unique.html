@@ -112,9 +112,9 @@ chatsock1.onmessage = function (event) {
     // replace alpha color
     var chatid=chatline.find('span._nickname_o04z9_57');
     if(chatid) {
-        var userclr=chatid.css('color');
-        if(userclr && userclr.indexOf('rgba')!=-1 ) {
-            chatid.css('color','');
+        var userclr=chatid.css('background-image');
+        if(userclr && userclr.indexOf('rgb')!=-1 ) {
+            chatid.css('background-image','');
         }
     }
     username=$(chatline).find("span._text_dtc6c_2").text();
@@ -127,7 +127,7 @@ chatsock1.onmessage = function (event) {
         sub=$(iconinfo).find("span._container_1jo9t_2");
         if(sub) {
           $(sub).each(function (index, item) {
-            ipos=$(item).children("img").attr("src").indexOf("/subscription/");
+            ipos=$(item).children("img").attr("src").indexOf("/subscription/badge/");
             if(ipos>-1) {
               if(sublist[username]==undefined) {
                 sublist[username]=1;

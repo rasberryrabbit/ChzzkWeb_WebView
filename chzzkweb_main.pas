@@ -153,6 +153,7 @@ const
 
   syschat_str = '_item_sg7hy_7 _small_padding_sg7hy_57';
   syschat_guide = '_container_zl6bx_1';
+  chat_is_hidden = '_is_hidden_';
 
   ChzzkURL ='chzzk.naver.com/live/';
 
@@ -463,6 +464,7 @@ begin
   begin
     if Pos(UTF8Decode(syschat_guide),buf)=0 then
       begin
+        // donation text
         if (Pos(UTF8Decode(syschat_str),buf)>0) then
         begin
           SockServerSys.BroadcastMsg(UTF8Encode(buf));
@@ -470,7 +472,12 @@ begin
             SockServerChat.BroadcastMsg(UTF8Encode(buf));
         end
         else
-          SockServerChat.BroadcastMsg(UTF8Encode(buf));
+        // chatting text
+        begin
+          // ignore hidden chat
+          if Pos(UTF8Decode(chat_is_hidden),buf)=0 then
+            SockServerChat.BroadcastMsg(UTF8Encode(buf));
+        end;
       end;
   end;
 end;

@@ -4,7 +4,8 @@
 <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 <title>채팅 유저 리스트</title>
 <link rel="stylesheet" href="./jquery/jquery-ui.css" />
-<link type="text/css" rel="stylesheet" href="index-D6XKMuln-dark.css" />
+<link type="text/css" rel="stylesheet" href="vendor-Zr7AVuQA.css" />
+<link type="text/css" rel="stylesheet" href="index-DHVxLlSL-dark.css" />
 <link type="text/css" rel="stylesheet" href="firework.css" />
 <script src = "./jquery/jquery-3.7.1.min.js"></script>
 <script src = "./jquery/jquery-ui.js"></script>
@@ -112,9 +113,9 @@ var chatsock1 = new ReconnectingWebSocket("ws://localhost:65002","chat");
 chatsock1.reconnectInterval=1000;
 chatsock1.onmessage = function (event) {
     var div = $("#chatbox");
-    chatline=$(event.data).find("button._nickname_1vemp_37");
+    chatline=$(event.data).find("button._nickname_ca0ha_37");
     // replace alpha color
-    var chatid=chatline.find('span._nickname_o04z9_57');
+    var chatid=chatline.find('span._nickname_zw6kq_57');
     if(chatid) {
         var userclr=chatid.css('background-image');
         if(userclr && userclr.indexOf('rgb')!=-1 ) {
@@ -123,15 +124,15 @@ chatsock1.onmessage = function (event) {
     } else {
       return;
     }
-    username=$(chatline).find("span._text_dtc6c_2").text();
+    username=$(chatline).find("span._text_1iatj_2").text();
     if(idlist[username]==undefined) {
       //console.log(username);
       div.append(chatline);
       idlist[username]=chatline;
       // subscriber
-      iconinfo=$(chatline).find("span._wrapper_o04z9_23");
+      iconinfo=$(chatline).find("span._wrapper_zw6kq_23");
       if(iconinfo) {
-        sub=$(iconinfo).find("span._container_1jo9t_2");
+        sub=$(iconinfo).find("span._container_1nwpy_2");
         if(sub) {
           $(sub).each(function (index, item) {
             ipos=$(item).children("img").attr("src").indexOf("/subscription/badge/");
@@ -167,7 +168,7 @@ chatsock1.onmessage = function (event) {
         var userchat=$(event.data).clone();
         $("#seluserchat").append(userchat[0]);
         // tts
-        var temp=userchat.find('span._text_1vemp_1');
+        var temp=userchat.find('span._text_ca0ha_1');
         if(temp) {
             var text=temp.text();
             const speech = new SpeechSynthesisUtterance(text);

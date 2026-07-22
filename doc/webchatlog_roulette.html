@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <title>Roulette - 룰렛</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-  <!--link type="text/css" rel="stylesheet" href="main.56f98435-dark.css" /-->
+  <!--link type="text/css" rel="stylesheet" href="index-DHVxLlSL-dark.css" /-->
   <style>
     .wheel-wrapper {
       float: left;
@@ -313,8 +313,8 @@
     chatsock.onmessage = function (event) {
       if(docheckcheese==true /*&& wheeldospin==false*/) {
         chatline=$(event.data);
-        var msg=chatline.find('p._text_1f5gx_36');
-        var cheese=chatline.find('em._money_1f5gx_69');
+        var msg=chatline.find('p._text_gb6rb_36');
+        var cheese=chatline.find('em._money_gb6rb_69');
         if(msg) {
           var itemInput = document.getElementById('itemInput');
           var icheese = document.getElementById('cheeselow');
@@ -327,7 +327,7 @@
           }
           if(!vcheese) {
             vcheese='1000';
-            donlvl=event.data.match('_level\d+_1f5gx_10');
+            donlvl=event.data.match('_level\d+_gb6rb_10');
             if(donlvl) {
               console.log(donlvl);
             }

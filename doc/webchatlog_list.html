@@ -4,7 +4,8 @@
 <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 <title>채팅 통합 리스트</title>
 <link rel="stylesheet" href="./jquery/jquery-ui.css" />
-<link type="text/css" rel="stylesheet" href="index-D6XKMuln-dark.css" />
+<link type="text/css" rel="stylesheet" href="vendor-Zr7AVuQA.css" />
+<link type="text/css" rel="stylesheet" href="index-DHVxLlSL-dark.css" />
 <script src = "./jquery/jquery-3.7.1.min.js"></script>
 <script src = "./jquery/jquery-ui.js"></script>
 <!-- link href="https://ssl.pstatic.net/static/nng/glive/resource/p/static/css/main.cb0f9f29.css" rel="stylesheet"-->
@@ -61,7 +62,7 @@ chatsock1.onmessage = function (event) {
     var div = $("#chatbox");
     chatline=$(event.data);
     // replace alpha color
-    var chatid=chatline.find('span.live_chatting_username_nickname__dDbbj');
+    var chatid=chatline.find('span._nickname_zw6kq_57');
     if(chatid) {
         var userclr=chatid.css('color');
         if(userclr && userclr.indexOf('rgba')!=-1 ) {

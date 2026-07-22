@@ -12,14 +12,14 @@ type
   { TFormCssTable }
 
   TFormCssTable = class(TForm)
-    Button1: TButton;
-    Button2: TButton;
+    ButtonOpen: TButton;
+    ButtonPatch: TButton;
     CheckBoxSaveTable: TCheckBox;
     CSSTable: TValueListEditor;
     Memo1: TMemo;
     OpenDialog1: TOpenDialog;
-    procedure Button1Click(Sender: TObject);
-    procedure Button2Click(Sender: TObject);
+    procedure ButtonOpenClick(Sender: TObject);
+    procedure ButtonPatchClick(Sender: TObject);
   private
 
   public
@@ -41,7 +41,7 @@ var
 
 { TFormCssTable }
 
-procedure TFormCssTable.Button1Click(Sender: TObject);
+procedure TFormCssTable.ButtonOpenClick(Sender: TObject);
 const
   spat = '(html|[\.#][a-zA-Z_])([^{]+)?\{(\s+)?--([^\}]+)\}';
 var
@@ -75,7 +75,7 @@ begin
     end;
   st:=TStringList.Create;
   try
-    Button1.Enabled:=False;
+    ButtonOpen.Enabled:=False;
     st.Clear;
     // extract Var()
     stable:= TStringStream.Create('');
@@ -103,7 +103,7 @@ begin
 
     if CheckBoxSaveTable.Checked then
       st.SaveToFile(ExtractFilePath(cssfilename)+'dark_theme_table.txt');
-    CSSTable.Clear;
+    //CSSTable.Clear;
     for z:=0 to 1 do
       for i:=0 to st.Count-1 do begin
         s:=st.Strings[i];
@@ -138,7 +138,7 @@ begin
       end;
   finally
     st.Free;
-    Button1.Enabled:=True;
+    ButtonOpen.Enabled:=True;
   end;
 end;
 
@@ -187,7 +187,7 @@ begin
       Result:=src;
 end;
 
-procedure TFormCssTable.Button2Click(Sender: TObject);
+procedure TFormCssTable.ButtonPatchClick(Sender: TObject);
 const
   rport = 'var\(([^\),]+)(\)|,)';
   //cssfilename = 'doc\main.00a54a17.css';
@@ -202,7 +202,7 @@ begin
   i:=1;
   fs := TStringStream.Create('');
   try
-    Button2.Enabled:=False;
+    ButtonPatch.Enabled:=False;
     fs.LoadFromFile(cssfilename);
     RegVarColor:=TRegExpr.Create(rport);
     try
@@ -257,7 +257,7 @@ begin
     end;
   finally
     fs.Free;
-    Button2.Enabled:=True;
+    ButtonPatch.Enabled:=True;
   end;
 end;
 

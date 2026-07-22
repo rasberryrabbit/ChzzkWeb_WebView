@@ -22,7 +22,7 @@ object FormCssTable: TFormCssTable
       217
     )
   end
-  object Button1: TButton
+  object ButtonOpen: TButton
     Left = 440
     Height = 25
     Top = 48
@@ -30,9 +30,9 @@ object FormCssTable: TFormCssTable
     Anchors = [akTop, akRight]
     Caption = 'Open'
     TabOrder = 2
-    OnClick = Button1Click
+    OnClick = ButtonOpenClick
   end
-  object Button2: TButton
+  object ButtonPatch: TButton
     Left = 440
     Height = 25
     Top = 112
@@ -40,7 +40,7 @@ object FormCssTable: TFormCssTable
     Anchors = [akTop, akRight]
     Caption = 'Patch'
     TabOrder = 3
-    OnClick = Button2Click
+    OnClick = ButtonPatchClick
   end
   object CheckBoxSaveTable: TCheckBox
     Left = 432
@@ -57,7 +57,7 @@ object FormCssTable: TFormCssTable
     Width = 528
     Lines.Strings = (
       '/* custom */'
-      '._container_1vemp_1:not(._is_overlay_1vemp_1) ._chatting_message_1vemp_21 {'
+      '._container_ca0ha_1:not(._is_overlay_ca0ha_1) ._chatting_message_ca0ha_21 {'
       '    text-align: left;'
       '    word-wrap: break-word;'
       '    word-break: break-all;'
@@ -66,6 +66,9 @@ object FormCssTable: TFormCssTable
       '    line-height: 20px;'
       '    overflow: hidden;'
       '    display: flex;'
+      '}'
+      'html {'
+      '    color-scheme: dark'
       '}'
     )
     ScrollBars = ssAutoVertical

@@ -15,8 +15,7 @@
       <UseVersionInfo Value="True"/>
       <AutoIncrementBuild Value="True"/>
       <MinorVersionNr Value="1"/>
-      <RevisionNr Value="14"/>
-      <BuildNr Value="5"/>
+      <RevisionNr Value="15"/>
     </VersionInfo>
     <BuildModes>
       <Item Name="Default" Default="True"/>
@@ -72,22 +71,6 @@
         <PackageName Value="LCL"/>
       </Item>
     </RequiredPackages>
-    <Units>
-      <Unit>
-        <Filename Value="chzzkweb_WV.lpr"/>
-      </Unit>
-      <Unit>
-        <Filename Value="chzzkweb_main.pas"/>
-        <ComponentName Value="FormChzzkWeb"/>
-        <HasResources Value="True"/>
-        <ResourceBaseClass Value="Form"/>
-        <UnitName Value="ChzzkWeb_Main"/>
-      </Unit>
-      <Unit>
-        <Filename Value="uchecksumlist.pas"/>
-        <UnitName Value="uChecksumList"/>
-      </Unit>
-    </Units>
   </ProjectOptions>
   <CompilerOptions>
     <Version Value="11"/>

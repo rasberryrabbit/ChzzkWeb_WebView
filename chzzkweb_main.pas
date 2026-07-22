@@ -127,7 +127,9 @@ uses
 
 const
   MaxLength = 2048;
-  cqueryjs = 'var obser=document.querySelector("div._wrapper_sg7hy_25");'+
+  chat_cont_id = '8lqsk';
+  guide_cont_id = 's1cb2';
+  cqueryjs = 'var obser=document.querySelector("div._wrapper_'+chat_cont_id+'_25");'+
              'var observer;'+
              'if(obser) {'+
              'if(observer) { observer.disconnect(); };'+
@@ -151,8 +153,8 @@ const
              '});'+
              '}';
 
-  syschat_str = '_item_sg7hy_7 _small_padding_sg7hy_57';
-  syschat_guide = '_container_zl6bx_1';
+  syschat_str = '"_header_';
+  syschat_guide = '_container_'+guide_cont_id+'_1';
   chat_is_hidden = '_is_hidden_';
 
   ChzzkURL ='chzzk.naver.com/live/';

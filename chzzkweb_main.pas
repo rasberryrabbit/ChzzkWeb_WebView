@@ -127,9 +127,8 @@ uses
 
 const
   MaxLength = 2048;
-  chat_cont_id = '8lqsk';
   guide_cont_id = 's1cb2';
-  cqueryjs = 'var obser=document.querySelector("div._wrapper_'+chat_cont_id+'_25");'+
+  cqueryjs = 'var obser=document.querySelector("aside > div:nth-child(2)");'+
              'var observer;'+
              'if(obser) {'+
              'if(observer) { observer.disconnect(); };'+
@@ -142,7 +141,7 @@ const
              '});'+
              '});'+
              'observer.observe(obser, {'+
-             '    subtree: false,'+
+             '    subtree: true,'+
              '    attributes: false,'+
              '    childList: true,'+
              '    characterData: false,'+

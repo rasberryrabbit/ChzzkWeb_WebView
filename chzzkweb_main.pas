@@ -128,7 +128,7 @@ uses
 const
   MaxLength = 2048;
   guide_cont_id = 's1cb2';
-  cqueryjs = 'var obser=document.querySelector("aside > div:nth-child(2)");'+
+  cqueryjs = 'var obser=document.querySelector("div[role=\"log\"]");'+
              'var observer;'+
              'if(obser) {'+
              'if(observer) { observer.disconnect(); };'+

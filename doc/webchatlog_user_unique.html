@@ -117,9 +117,9 @@ chatsock1.onmessage = function (event) {
     // replace alpha color
     var chatid=chatline.find('span._nickname_zw6kq_57');
     if(chatid) {
-        var userclr=chatid.css('background-image');
-        if(userclr && userclr.indexOf('rgb')!=-1 ) {
-            chatid.css('background-image','#000000');
+        var userclr=chatid.css('color');
+        if(userclr && userclr.indexOf('rgba')!=-1 ) {
+            chatid.css('color','');
         }
     } else {
       return;

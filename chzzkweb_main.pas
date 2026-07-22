@@ -127,6 +127,7 @@ uses
 
 const
   MaxLength = 2048;
+  chat_item_id = '_item_';
   guide_cont_id = 's1cb2';
   cqueryjs = 'var obser=document.querySelector("div[role=\"log\"]");'+
              'var observer;'+
@@ -463,23 +464,26 @@ begin
     observer_started:=True
   else
   begin
-    if Pos(UTF8Decode(syschat_guide),buf)=0 then
-      begin
-        // donation text
-        if (Pos(UTF8Decode(syschat_str),buf)>0) then
+    if Pos(UTF8Decode(chat_item_id),buf)>0 then
+    begin
+      if Pos(UTF8Decode(syschat_guide),buf)=0 then
         begin
-          SockServerSys.BroadcastMsg(UTF8Encode(buf));
-          if WSPortUnique then
-            SockServerChat.BroadcastMsg(UTF8Encode(buf));
-        end
-        else
-        // chatting text
-        begin
-          // ignore hidden chat
-          if Pos(UTF8Decode(chat_is_hidden),buf)=0 then
-            SockServerChat.BroadcastMsg(UTF8Encode(buf));
+          // donation text
+          if (Pos(UTF8Decode(syschat_str),buf)>0) then
+          begin
+            SockServerSys.BroadcastMsg(UTF8Encode(buf));
+            if WSPortUnique then
+              SockServerChat.BroadcastMsg(UTF8Encode(buf));
+          end
+          else
+          // chatting text
+          begin
+            // ignore hidden chat
+            if Pos(UTF8Decode(chat_is_hidden),buf)=0 then
+              SockServerChat.BroadcastMsg(UTF8Encode(buf));
+          end;
         end;
-      end;
+    end;
   end;
 end;
 

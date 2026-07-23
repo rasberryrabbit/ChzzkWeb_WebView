@@ -211,6 +211,10 @@ object FormChzzkWeb: TFormChzzkWeb
       Caption = '룰렛'
       OnExecute = ActionOpenRouletteExecute
     end
+    object ActionResetIDInfo: TAction
+      Caption = '디버그 정보 리셋하기'
+      OnExecute = ActionResetIDInfoExecute
+    end
   end
   object MainMenu1: TMainMenu
     Left = 200
@@ -251,16 +255,19 @@ object FormChzzkWeb: TFormChzzkWeb
         Caption = '-'
       end
       object MenuItem12: TMenuItem
-        Caption = '디버그 정보'
+        Action = ActionResetIDInfo
       end
       object MenuItemGuideID: TMenuItem
         Caption = 'guide_id'
       end
-      object MenuItemUserID: TMenuItem
-        Caption = 'username_id'
+      object MenuItemItemID: TMenuItem
+        Caption = 'item_id'
       end
       object MenuItemChatID: TMenuItem
         Caption = 'chatting_id'
+      end
+      object MenuItemUserID: TMenuItem
+        Caption = 'username_id'
       end
     end
   end

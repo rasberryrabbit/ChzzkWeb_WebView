@@ -19,6 +19,7 @@ type
   { TFormChzzkWeb }
 
   TFormChzzkWeb = class(TForm)
+    ActionResetIDInfo: TAction;
     ActionOpenRoulette: TAction;
     ActionLogging: TAction;
     ActionOpenUserList: TAction;
@@ -42,6 +43,7 @@ type
     MenuItem10: TMenuItem;
     MenuItem11: TMenuItem;
     MenuItem12: TMenuItem;
+    MenuItemItemID: TMenuItem;
     MenuItemChatID: TMenuItem;
     MenuItemUserID: TMenuItem;
     MenuItemGuideID: TMenuItem;
@@ -70,6 +72,7 @@ type
     procedure ActionOpenNotifyExecute(Sender: TObject);
     procedure ActionOpenRouletteExecute(Sender: TObject);
     procedure ActionOpenUserListExecute(Sender: TObject);
+    procedure ActionResetIDInfoExecute(Sender: TObject);
     procedure ActionWSockUniqueExecute(Sender: TObject);
     procedure ActionWSockUniqueUpdate(Sender: TObject);
     procedure ActionWSPortExecute(Sender: TObject);
@@ -132,7 +135,6 @@ uses
 
 const
   MaxLength = 2048;
-  chat_item_id = '_item_';
   cqueryjs = 'var obser=document.querySelector("div[role=\"log\"]");'+
              'var observer;'+
              'if(obser) {'+
@@ -162,6 +164,7 @@ const
   expr_guide = '_filter_(.{5})_\d+';
   expr_username = '_is_message_(.{5})_\d+';
   expr_chatting = '_chatting_message_(.{5})_\d+';
+  expr_chatitem = '_item_.{5}_\d+';
 
   ChzzkURL ='chzzk.naver.com/live/';
 
@@ -187,6 +190,7 @@ var
   syschat_guide : string = '';
   chat_username : string = '';
   chat_chatting : string = '';
+  chat_chatitem : string = '';
   filter_expr : TRegExpr;
 
 { TFormChzzkWeb }
@@ -292,6 +296,18 @@ end;
 procedure TFormChzzkWeb.ActionOpenUserListExecute(Sender: TObject);
 begin
   ShellExecuteW(0,'open',pwidechar(ExtractFilePath(Application.ExeName)+UTF8Decode(chatlog_userid)),nil,nil,SW_SHOWNORMAL);
+end;
+
+procedure TFormChzzkWeb.ActionResetIDInfoExecute(Sender: TObject);
+begin
+  syschat_guide := '';
+  chat_username := '';
+  chat_chatting := '';
+  chat_chatitem := '';
+  MenuItemChatID.Caption:='';
+  MenuItemGuideID.Caption:='';
+  MenuItemItemID.Caption:='';
+  MenuItemUserID.Caption:='';
 end;
 
 procedure TFormChzzkWeb.ActionWSockUniqueExecute(Sender: TObject);
@@ -489,6 +505,20 @@ begin
         filter_expr.Free;
       end;
     end;
+    // chat item id
+    if chat_chatitem='' then
+    begin
+      filter_expr:=TRegExpr.Create(expr_chatitem);
+      try
+        if filter_expr.Exec(buf) and (Pos('_fixed_',buf)=0) then
+        begin
+          chat_chatitem:=filter_expr.Match[0];
+          MenuItemItemID.Caption:=chat_chatitem;
+        end;
+      finally
+        filter_expr.Free;
+      end;
+    end;
     // chat class id
     if chat_chatting='' then
     begin
@@ -518,7 +548,7 @@ begin
       end;
     end;
     //
-    if Pos(UTF8Decode(chat_item_id),buf)>0 then
+    if (chat_chatitem='') or (Pos(UTF8Decode(chat_chatitem),buf)>0) then
     begin
       if (syschat_guide='') or (Pos(UTF8Decode(syschat_guide),buf)=0) then
         begin

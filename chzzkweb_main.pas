@@ -41,6 +41,8 @@ type
     MenuItem1: TMenuItem;
     MenuItem10: TMenuItem;
     MenuItem11: TMenuItem;
+    MenuItemGuideID: TMenuItem;
+    Separator1: TMenuItem;
     MenuItem2: TMenuItem;
     MenuItem3: TMenuItem;
     MenuItem4: TMenuItem;
@@ -128,7 +130,6 @@ uses
 const
   MaxLength = 2048;
   chat_item_id = '_item_';
-  guide_cont_id = 's1cb2';
   cqueryjs = 'var obser=document.querySelector("div[role=\"log\"]");'+
              'var observer;'+
              'if(obser) {'+
@@ -154,8 +155,8 @@ const
              '}';
 
   sys_donation = '"_header_';
-  syschat_guide = '_container_'+guide_cont_id+'_1';
   chat_is_hidden = '_is_hidden_';
+  expr_guide = '_filter_(.{5})_\d+';
 
   ChzzkURL ='chzzk.naver.com/live/';
 
@@ -178,7 +179,8 @@ var
   stripusertooltip: TRegExpr;
   PageLoaded: Boolean = False;
   observer_started: Boolean = False;
-
+  syschat_guide : string = '';
+  filter_expr : TRegExpr;
 
 { TFormChzzkWeb }
 
@@ -461,12 +463,29 @@ begin
   buf:=res;
   CoTaskMemFree(res);
   if not observer_started then
-    observer_started:=True
+  begin
+    observer_started:=True;
+  end
   else
   begin
+    // get guide class ID
+    if syschat_guide='' then
+    begin
+      filter_expr:=TRegExpr.Create(expr_guide);
+      try
+        if filter_expr.Exec(buf) then
+        begin
+          syschat_guide:='_container_'+filter_expr.Match[1]+'_1';
+          MenuItemGuideID.Caption:=syschat_guide;
+        end;
+      finally
+        filter_expr.Free;
+      end;
+    end;
+    //
     if Pos(UTF8Decode(chat_item_id),buf)>0 then
     begin
-      if Pos(UTF8Decode(syschat_guide),buf)=0 then
+      if (syschat_guide='') or (Pos(UTF8Decode(syschat_guide),buf)=0) then
         begin
           // donation text
           if (Pos(UTF8Decode(sys_donation),buf)>0) then

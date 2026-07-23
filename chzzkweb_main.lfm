@@ -247,6 +247,12 @@ object FormChzzkWeb: TFormChzzkWeb
       object MenuItem6: TMenuItem
         Action = ActionWSockUnique
       end
+      object Separator1: TMenuItem
+        Caption = '-'
+      end
+      object MenuItemGuideID: TMenuItem
+        Caption = 'guide_id'
+      end
     end
   end
   object XMLConfig1: TXMLConfig

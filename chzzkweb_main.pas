@@ -153,7 +153,7 @@ const
              '});'+
              '}';
 
-  syschat_str = '"_header_';
+  sys_donation = '"_header_';
   syschat_guide = '_container_'+guide_cont_id+'_1';
   chat_is_hidden = '_is_hidden_';
 
@@ -469,7 +469,7 @@ begin
       if Pos(UTF8Decode(syschat_guide),buf)=0 then
         begin
           // donation text
-          if (Pos(UTF8Decode(syschat_str),buf)>0) then
+          if (Pos(UTF8Decode(sys_donation),buf)>0) then
           begin
             SockServerSys.BroadcastMsg(UTF8Encode(buf));
             if WSPortUnique then

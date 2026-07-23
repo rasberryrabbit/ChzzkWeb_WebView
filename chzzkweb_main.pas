@@ -41,6 +41,9 @@ type
     MenuItem1: TMenuItem;
     MenuItem10: TMenuItem;
     MenuItem11: TMenuItem;
+    MenuItem12: TMenuItem;
+    MenuItemChatID: TMenuItem;
+    MenuItemUserID: TMenuItem;
     MenuItemGuideID: TMenuItem;
     Separator1: TMenuItem;
     MenuItem2: TMenuItem;
@@ -157,6 +160,8 @@ const
   sys_donation = '"_header_';
   chat_is_hidden = '_is_hidden_';
   expr_guide = '_filter_(.{5})_\d+';
+  expr_username = '_is_message_(.{5})_\d+';
+  expr_chatting = '_chatting_message_(.{5})_\d+';
 
   ChzzkURL ='chzzk.naver.com/live/';
 
@@ -180,6 +185,8 @@ var
   PageLoaded: Boolean = False;
   observer_started: Boolean = False;
   syschat_guide : string = '';
+  chat_username : string = '';
+  chat_chatting : string = '';
   filter_expr : TRegExpr;
 
 { TFormChzzkWeb }
@@ -477,6 +484,34 @@ begin
         begin
           syschat_guide:='_container_'+filter_expr.Match[1]+'_1';
           MenuItemGuideID.Caption:=syschat_guide;
+        end;
+      finally
+        filter_expr.Free;
+      end;
+    end;
+    // chat class id
+    if chat_chatting='' then
+    begin
+      filter_expr:=TRegExpr.Create(expr_chatting);
+      try
+        if filter_expr.Exec(buf) then
+        begin
+          chat_chatting:=filter_expr.Match[0];
+          MenuItemChatID.Caption:=chat_chatting;
+        end;
+      finally
+        filter_expr.Free;
+      end;
+    end;
+    // username class id
+    if chat_username='' then
+    begin
+      filter_expr:=TRegExpr.Create(expr_username);
+      try
+        if filter_expr.Exec(buf) then
+        begin
+          chat_username:=filter_expr.Match[0];
+          MenuItemUserID.Caption:=chat_username;
         end;
       finally
         filter_expr.Free;

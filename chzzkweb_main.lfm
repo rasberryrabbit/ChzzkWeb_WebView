@@ -250,8 +250,17 @@ object FormChzzkWeb: TFormChzzkWeb
       object Separator1: TMenuItem
         Caption = '-'
       end
+      object MenuItem12: TMenuItem
+        Caption = '디버그 정보'
+      end
       object MenuItemGuideID: TMenuItem
         Caption = 'guide_id'
+      end
+      object MenuItemUserID: TMenuItem
+        Caption = 'username_id'
+      end
+      object MenuItemChatID: TMenuItem
+        Caption = 'chatting_id'
       end
     end
   end

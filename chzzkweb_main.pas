@@ -43,6 +43,7 @@ type
     MenuItem10: TMenuItem;
     MenuItem11: TMenuItem;
     MenuItem12: TMenuItem;
+    MenuItemGiftID: TMenuItem;
     MenuItemItemID: TMenuItem;
     MenuItemChatID: TMenuItem;
     MenuItemUserID: TMenuItem;
@@ -159,12 +160,11 @@ const
              '});'+
              '}';
 
-  sys_donation = '"_header_';
   chat_is_hidden = '_is_hidden_';
   expr_guide = '_filter_(.{5})_\d+';
   expr_username = '_is_message_(.{5})_\d+';
   expr_chatting = '_chatting_message_(.{5})_\d+';
-  expr_chatitem = '_item_.{5}_\d+';
+  expr_chatitem = '_item_(.{5})_\d+';
 
   ChzzkURL ='chzzk.naver.com/live/';
 
@@ -191,6 +191,7 @@ var
   chat_username : string = '';
   chat_chatting : string = '';
   chat_chatitem : string = '';
+  chat_donation : string = '';
   filter_expr : TRegExpr;
 
 { TFormChzzkWeb }
@@ -304,10 +305,12 @@ begin
   chat_username := '';
   chat_chatting := '';
   chat_chatitem := '';
+  chat_donation := '';
   MenuItemChatID.Caption:='';
   MenuItemGuideID.Caption:='';
   MenuItemItemID.Caption:='';
   MenuItemUserID.Caption:='';
+  MenuItemGiftID.Caption:='';
 end;
 
 procedure TFormChzzkWeb.ActionWSockUniqueExecute(Sender: TObject);
@@ -513,7 +516,9 @@ begin
         if filter_expr.Exec(buf) and (Pos('_fixed_',buf)=0) then
         begin
           chat_chatitem:=filter_expr.Match[0];
+          chat_donation:='_padding_'+filter_expr.Match[1];
           MenuItemItemID.Caption:=chat_chatitem;
+          MenuItemGiftID.Caption:=chat_donation;
         end;
       finally
         filter_expr.Free;
@@ -553,7 +558,7 @@ begin
       if (syschat_guide='') or (Pos(UTF8Decode(syschat_guide),buf)=0) then
         begin
           // donation text
-          if (Pos(UTF8Decode(sys_donation),buf)>0) then
+          if (chat_donation<>'') and (Pos(UTF8Decode(chat_donation),buf)>0) then
           begin
             SockServerSys.BroadcastMsg(UTF8Encode(buf));
             if WSPortUnique then

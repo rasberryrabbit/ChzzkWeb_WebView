@@ -263,6 +263,9 @@ object FormChzzkWeb: TFormChzzkWeb
       object MenuItemItemID: TMenuItem
         Caption = 'item_id'
       end
+      object MenuItemGiftID: TMenuItem
+        Caption = 'donation_id'
+      end
       object MenuItemChatID: TMenuItem
         Caption = 'chatting_id'
       end

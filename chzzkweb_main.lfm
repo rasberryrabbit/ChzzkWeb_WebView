@@ -258,12 +258,12 @@ object FormChzzkWeb: TFormChzzkWeb
         Action = ActionResetIDInfo
       end
       object MenuItemGuideID: TMenuItem
-        Caption = 'guide_id'
+        Caption = ' '
       end
       object MenuItemItemID: TMenuItem
         Caption = 'item_id'
       end
-      object MenuItemGiftID: TMenuItem
+      object MenuItemDonationID: TMenuItem
         Caption = 'donation_id'
       end
       object MenuItemChatID: TMenuItem
@@ -271,6 +271,9 @@ object FormChzzkWeb: TFormChzzkWeb
       end
       object MenuItemUserID: TMenuItem
         Caption = 'username_id'
+      end
+      object MenuItemGift: TMenuItem
+        Caption = ' '
       end
     end
   end

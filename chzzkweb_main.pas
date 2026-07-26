@@ -43,7 +43,8 @@ type
     MenuItem10: TMenuItem;
     MenuItem11: TMenuItem;
     MenuItem12: TMenuItem;
-    MenuItemGiftID: TMenuItem;
+    MenuItemGift: TMenuItem;
+    MenuItemDonationID: TMenuItem;
     MenuItemItemID: TMenuItem;
     MenuItemChatID: TMenuItem;
     MenuItemUserID: TMenuItem;
@@ -165,6 +166,7 @@ const
   expr_username = '_is_message_(.{5})_\d+';
   expr_chatting = '_chatting_message_(.{5})_\d+';
   expr_chatitem = '_item_(.{5})_\d+';
+  expr_giftitem = '_level\d+_(.{5})_\d+';
 
   ChzzkURL ='chzzk.naver.com/live/';
 
@@ -192,6 +194,7 @@ var
   chat_chatting : string = '';
   chat_chatitem : string = '';
   chat_donation : string = '';
+  chat_giftmsg  : string = '';
   filter_expr : TRegExpr;
 
 { TFormChzzkWeb }
@@ -306,11 +309,13 @@ begin
   chat_chatting := '';
   chat_chatitem := '';
   chat_donation := '';
+  chat_giftmsg  := '';
   MenuItemChatID.Caption:='';
   MenuItemGuideID.Caption:='';
   MenuItemItemID.Caption:='';
   MenuItemUserID.Caption:='';
-  MenuItemGiftID.Caption:='';
+  MenuItemDonationID.Caption:='';
+  MenuItemGift.Caption:='';
 end;
 
 procedure TFormChzzkWeb.ActionWSockUniqueExecute(Sender: TObject);
@@ -518,7 +523,7 @@ begin
           chat_chatitem:=filter_expr.Match[0];
           chat_donation:='_padding_'+filter_expr.Match[1];
           MenuItemItemID.Caption:=chat_chatitem;
-          MenuItemGiftID.Caption:=chat_donation;
+          MenuItemDonationID.Caption:=chat_donation;
         end;
       finally
         filter_expr.Free;
@@ -563,6 +568,20 @@ begin
             SockServerSys.BroadcastMsg(UTF8Encode(buf));
             if WSPortUnique then
               SockServerChat.BroadcastMsg(UTF8Encode(buf));
+            // donation id
+            if chat_giftmsg='' then
+            begin
+              filter_expr:=TRegExpr.Create(expr_giftitem);
+              try
+                if filter_expr.Exec(buf) then
+                begin
+                  chat_giftmsg:=filter_expr.Match[0];
+                  MenuItemGift.Caption:=chat_giftmsg;
+                end;
+              finally
+                filter_expr.Free;
+              end;
+            end;
           end
           else
           // chatting text

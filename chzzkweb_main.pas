@@ -166,7 +166,7 @@ const
   expr_username = '_is_message_(.{5})_\d+';
   expr_chatting = '_chatting_message_(.{5})_\d+';
   expr_chatitem = '_item_(.{5})_\d+';
-  expr_giftitem = '_level\d+_(.{5})_\d+';
+  expr_giftitem = '_header_(.{5})_\d+';
 
   ChzzkURL ='chzzk.naver.com/live/';
 

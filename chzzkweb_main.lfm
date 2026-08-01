@@ -215,6 +215,10 @@ object FormChzzkWeb: TFormChzzkWeb
       Caption = '디버그 정보 리셋하기'
       OnExecute = ActionResetIDInfoExecute
     end
+    object ActionReplaceUsernameScript: TAction
+      Caption = '스크립트 업데이트'
+      OnExecute = ActionReplaceUsernameScriptExecute
+    end
   end
   object MainMenu1: TMainMenu
     Left = 200
@@ -274,6 +278,9 @@ object FormChzzkWeb: TFormChzzkWeb
       end
       object MenuItemGift: TMenuItem
         Caption = ' '
+      end
+      object MenuItem13: TMenuItem
+        Action = ActionReplaceUsernameScript
       end
     end
   end

@@ -19,6 +19,7 @@ type
   { TFormChzzkWeb }
 
   TFormChzzkWeb = class(TForm)
+    ActionReplaceUsernameScript: TAction;
     ActionResetIDInfo: TAction;
     ActionOpenRoulette: TAction;
     ActionLogging: TAction;
@@ -43,6 +44,7 @@ type
     MenuItem10: TMenuItem;
     MenuItem11: TMenuItem;
     MenuItem12: TMenuItem;
+    MenuItem13: TMenuItem;
     MenuItemGift: TMenuItem;
     MenuItemDonationID: TMenuItem;
     MenuItemItemID: TMenuItem;
@@ -74,6 +76,7 @@ type
     procedure ActionOpenNotifyExecute(Sender: TObject);
     procedure ActionOpenRouletteExecute(Sender: TObject);
     procedure ActionOpenUserListExecute(Sender: TObject);
+    procedure ActionReplaceUsernameScriptExecute(Sender: TObject);
     procedure ActionResetIDInfoExecute(Sender: TObject);
     procedure ActionWSockUniqueExecute(Sender: TObject);
     procedure ActionWSockUniqueUpdate(Sender: TObject);
@@ -120,6 +123,7 @@ type
 
     procedure SetUpWebSocketPort;
     procedure ReplaceWSPortHTML(const fname, port1, port2: string);
+    procedure UpdateScriptID(const Filename: string);
 
   end;
 
@@ -168,6 +172,8 @@ const
   expr_chatitem = '_item_(.{5})_\d+';
   expr_giftitem = '_header_(.{5})_\d+';
 
+  expr_script_username = '(span\._nickname)_(.{5})_(\d+)';
+
   ChzzkURL ='chzzk.naver.com/live/';
 
 
@@ -191,6 +197,7 @@ var
   observer_started: Boolean = False;
   syschat_guide : string = '';
   chat_username : string = '';
+  chat_username_sub : string = '';
   chat_chatting : string = '';
   chat_chatitem : string = '';
   chat_donation : string = '';
@@ -302,10 +309,29 @@ begin
   ShellExecuteW(0,'open',pwidechar(ExtractFilePath(Application.ExeName)+UTF8Decode(chatlog_userid)),nil,nil,SW_SHOWNORMAL);
 end;
 
+procedure TFormChzzkWeb.ActionReplaceUsernameScriptExecute(Sender: TObject);
+const
+  script : array[0..3] of string = (
+           'doc\webchatlog.html',
+           'doc\webchatlog_chatbox.html',
+           'doc\webchatlog_list.html',
+           'doc\webchatlog_list_unique.html');
+var
+  i: Integer;
+begin
+  try
+    for i:=0 to High(script) do
+      UpdateScriptID(script[i]);
+  except
+    ShowMessage('Error : Script Updating '+script[i]);
+  end;
+end;
+
 procedure TFormChzzkWeb.ActionResetIDInfoExecute(Sender: TObject);
 begin
   syschat_guide := '';
   chat_username := '';
+  chat_username_sub := '';
   chat_chatting := '';
   chat_chatitem := '';
   chat_donation := '';
@@ -551,6 +577,7 @@ begin
         if filter_expr.Exec(buf) then
         begin
           chat_username:=filter_expr.Match[0];
+          chat_username_sub:=filter_expr.Match[1];
           MenuItemUserID.Caption:=chat_username;
         end;
       finally
@@ -729,6 +756,33 @@ begin
     end;
   finally
     fs.Free;
+  end;
+end;
+
+procedure TFormChzzkWeb.UpdateScriptID(const Filename: string);
+var
+  retemp: TRegExpr;
+  stext: string;
+  sbuf: TStringStream;
+begin
+  if chat_username_sub='' then
+    exit;
+  sbuf := TStringStream.Create('');
+  try
+    sbuf.LoadFromFile(Filename);
+    stext := sbuf.DataString;
+    retemp:=TRegExpr.Create(expr_script_username);
+    try
+      stext:=retemp.Replace(sbuf.DataString, '$1_'+chat_username_sub
+        +'_$3', True);
+      sbuf.Clear;
+      sbuf.Write(stext[1], Length(stext));
+      sbuf.SaveToFile(Filename);
+    finally
+      retemp.Free;
+    end;
+  finally
+    sbuf.Free;
   end;
 end;
 

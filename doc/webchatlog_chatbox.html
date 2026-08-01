@@ -70,7 +70,14 @@ chatsock.reconnectInterval=2000;
 chatsock.onmessage = function (event) {
     var div = $("#chatbox");
     chatline=$(event.data);
-
+    // replace alpha color
+    var chatid=chatline.find('span._nickname_zw6kq_57');
+    if(chatid) {
+        var userclr=chatid.css('color');
+        if(userclr && userclr.indexOf('rgba')!=-1 ) {
+            chatid.css('color','');
+        }
+    }
     div.append(chatline);
     if (div.children('div').length>50) {
       div.children('div')[0].remove();

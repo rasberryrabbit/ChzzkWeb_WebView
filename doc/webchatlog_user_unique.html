@@ -113,7 +113,7 @@ var chatsock1 = new ReconnectingWebSocket("ws://localhost:65002","chat");
 chatsock1.reconnectInterval=1000;
 chatsock1.onmessage = function (event) {
     var div = $("#chatbox");
-    chatline=$(event.data).find("button._nickname_ca0ha_37");
+    chatline=$(event.data).find("button._nickname_1y6kj_37");
     // replace alpha color
     var chatid=chatline.find('span._nickname_zw6kq_57');
     if(chatid) {
@@ -168,7 +168,7 @@ chatsock1.onmessage = function (event) {
         var userchat=$(event.data).clone();
         $("#seluserchat").append(userchat[0]);
         // tts
-        var temp=userchat.find('span._text_ca0ha_1');
+        var temp=userchat.find('span._text_1y6kj_1');
         if(temp) {
             var text=temp.text();
             const speech = new SpeechSynthesisUtterance(text);

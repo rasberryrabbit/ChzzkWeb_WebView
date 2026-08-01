@@ -173,6 +173,7 @@ const
   expr_giftitem = '_header_(.{5})_\d+';
 
   expr_script_username = '(span\._nickname)_(.{5})_(\d+)';
+  expr_script_nickname = '(button\._nickname)_(.{5})_(\d+)';
 
   ChzzkURL ='chzzk.naver.com/live/';
 
@@ -199,6 +200,7 @@ var
   chat_username : string = '';
   chat_username_sub : string = '';
   chat_chatting : string = '';
+  chat_chatting_id : string = '';
   chat_chatitem : string = '';
   chat_donation : string = '';
   chat_giftmsg  : string = '';
@@ -311,11 +313,12 @@ end;
 
 procedure TFormChzzkWeb.ActionReplaceUsernameScriptExecute(Sender: TObject);
 const
-  script : array[0..3] of string = (
+  script : array[0..4] of string = (
            'doc\webchatlog.html',
            'doc\webchatlog_chatbox.html',
            'doc\webchatlog_list.html',
-           'doc\webchatlog_list_unique.html');
+           'doc\webchatlog_list_unique.html',
+           'doc\webchatlog_user_unique.html');
 var
   i: Integer;
 begin
@@ -333,6 +336,7 @@ begin
   chat_username := '';
   chat_username_sub := '';
   chat_chatting := '';
+  chat_chatting_id:= '';
   chat_chatitem := '';
   chat_donation := '';
   chat_giftmsg  := '';
@@ -563,6 +567,7 @@ begin
         if filter_expr.Exec(buf) then
         begin
           chat_chatting:=filter_expr.Match[0];
+          chat_chatting_id:=filter_expr.Match[1];
           MenuItemChatID.Caption:=chat_chatting;
         end;
       finally
@@ -777,10 +782,22 @@ begin
         +'_$3', True);
       sbuf.Clear;
       sbuf.Write(stext[1], Length(stext));
-      sbuf.SaveToFile(Filename);
     finally
       retemp.Free;
     end;
+    if chat_chatting_id<>'' then
+    begin
+      retemp:=TRegExpr.Create(expr_script_nickname);
+      try
+        stext:=retemp.Replace(sbuf.DataString, '$1_'+chat_chatting_id
+          +'_$3', True);
+        sbuf.Clear;
+        sbuf.Write(stext[1], Length(stext));
+      finally
+        retemp.Free;
+      end;
+    end;
+    sbuf.SaveToFile(Filename);
   finally
     sbuf.Free;
   end;

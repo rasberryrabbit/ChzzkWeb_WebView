@@ -68,6 +68,7 @@ chatsock1.onmessage = function (event) {
         if(userclr && userclr.indexOf('rgba')!=-1 ) {
             chatid.css('color','');
         }
+        chatid.css('background-image', '');
     }
     div.append(chatline);
     if (doscroll==1) {

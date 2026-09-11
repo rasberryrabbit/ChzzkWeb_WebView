@@ -113,9 +113,9 @@ var chatsock1 = new ReconnectingWebSocket("ws://localhost:65002","chat");
 chatsock1.reconnectInterval=1000;
 chatsock1.onmessage = function (event) {
     var div = $("#chatbox");
-    chatline=$(event.data).find("button._nickname_1y6kj_37");
+    chatline=$(event.data).find("button._nickname_w9pvh_37");
     // replace alpha color
-    var chatid=chatline.find('span._nickname_zw6kq_57');
+    var chatid=chatline.find('span._nickname_1mc5x_57');
     if(chatid) {
         var userclr=chatid.css('color');
         if(userclr && userclr.indexOf('rgba')!=-1 ) {

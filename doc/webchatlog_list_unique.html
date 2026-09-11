@@ -62,7 +62,7 @@ chatsock1.onmessage = function (event) {
     var div = $("#chatbox");
     chatline=$(event.data);
     // replace alpha color
-    var chatid=chatline.find('span._nickname_1mc5x_57');
+    var chatid=chatline.find('span._nickname_1mc5x_80');
     if(chatid) {
         var userclr=chatid.css('color');
         if(userclr && userclr.indexOf('rgba')!=-1 ) {

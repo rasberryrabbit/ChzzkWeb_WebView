@@ -109,13 +109,20 @@ var sublist={};
 var selidlist={};
 var reviewuser;
 //
+userbutton="button._nickname_w9pvh_33";
+spannickname='span._nickname_1mc5x_80';
+spanusername="span._text_1iatj_2";
+spanicon="span._wrapper_zw6kq_23";
+spanicon2="span._container_1nwpy_2";
+spanuserchat='span._text_w9pvh_1';
+
 var chatsock1 = new ReconnectingWebSocket("ws://localhost:65002","chat");
 chatsock1.reconnectInterval=1000;
 chatsock1.onmessage = function (event) {
     var div = $("#chatbox");
-    chatline=$(event.data).find("button._nickname_w9pvh_37");
+    chatline=$(event.data).find(userbutton);
     // replace alpha color
-    var chatid=chatline.find('span._nickname_1mc5x_57');
+    var chatid=chatline.find(spannickname);
     if(chatid) {
         var userclr=chatid.css('color');
         if(userclr && userclr.indexOf('rgba')!=-1 ) {
@@ -124,15 +131,15 @@ chatsock1.onmessage = function (event) {
     } else {
       return;
     }
-    username=$(chatline).find("span._text_1iatj_2").text();
+    username=$(chatline).find(spanusername).text();
     if(idlist[username]==undefined) {
       //console.log(username);
       div.append(chatline);
       idlist[username]=chatline;
       // subscriber
-      iconinfo=$(chatline).find("span._wrapper_zw6kq_23");
+      iconinfo=$(chatline).find(spanicon);
       if(iconinfo) {
-        sub=$(iconinfo).find("span._container_1nwpy_2");
+        sub=$(iconinfo).find(spanicon2);
         if(sub) {
           $(sub).each(function (index, item) {
             ipos=$(item).children("img").attr("src").indexOf("/subscription/badge/");
@@ -168,7 +175,7 @@ chatsock1.onmessage = function (event) {
         var userchat=$(event.data).clone();
         $("#seluserchat").append(userchat[0]);
         // tts
-        var temp=userchat.find('span._text_1y6kj_1');
+        var temp=userchat.find(spanuserchat);
         if(temp) {
             var text=temp.text();
             const speech = new SpeechSynthesisUtterance(text);

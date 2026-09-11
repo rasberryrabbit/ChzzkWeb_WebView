@@ -45,6 +45,7 @@ type
     MenuItem11: TMenuItem;
     MenuItem12: TMenuItem;
     MenuItem13: TMenuItem;
+    MenuItemNickname: TMenuItem;
     MenuItemGift: TMenuItem;
     MenuItemDonationID: TMenuItem;
     MenuItemItemID: TMenuItem;
@@ -171,9 +172,10 @@ const
   expr_chatting = '_chatting_message_(.{5})_\d+';
   expr_chatitem = '_item_(.{5})_\d+';
   expr_giftitem = '_header_(.{5})_\d+';
+  expr_nickname = '_nickname_(.{5}_\d+)';
 
-  expr_script_username = '(span\._nickname)_(.{5})_(\d+)';
-  expr_script_nickname = '(button\._nickname)_(.{5})_(\d+)';
+  expr_span_nickname = '(span\._nickname)_(.{5})_(\d+)';
+  expr_button_nickname = '(button\._nickname)_(.{5})_(\d+)';
 
   ChzzkURL ='chzzk.naver.com/live/';
 
@@ -204,6 +206,7 @@ var
   chat_chatitem : string = '';
   chat_donation : string = '';
   chat_giftmsg  : string = '';
+  chat_nickname : string = '';
   filter_expr : TRegExpr;
 
 { TFormChzzkWeb }
@@ -335,6 +338,7 @@ begin
   syschat_guide := '';
   chat_username := '';
   chat_username_sub := '';
+  chat_nickname := '';
   chat_chatting := '';
   chat_chatting_id:= '';
   chat_chatitem := '';
@@ -589,6 +593,21 @@ begin
         filter_expr.Free;
       end;
     end;
+    // nickname
+    if chat_nickname='' then
+    begin
+      filter_expr:=TRegExpr.Create(expr_nickname);
+      try
+        if filter_expr.Exec(buf) then
+        if filter_expr.ExecNext then
+        begin
+          chat_nickname:=filter_expr.Match[1];
+          MenuItemNickname.Caption:='_nickname_'+chat_nickname;
+        end;
+      finally
+        filter_expr.Free;
+      end;
+    end;
     //
     if (chat_chatitem='') or (Pos(UTF8Decode(chat_chatitem),buf)>0) then
     begin
@@ -776,10 +795,11 @@ begin
   try
     sbuf.LoadFromFile(Filename);
     stext := sbuf.DataString;
-    retemp:=TRegExpr.Create(expr_script_username);
+    retemp:=TRegExpr.Create(expr_span_nickname);
     try
-      stext:=retemp.Replace(sbuf.DataString, '$1_'+chat_username_sub
-        +'_$3', True);
+      if chat_nickname<>'' then
+        stext:=retemp.Replace(sbuf.DataString, '$1_'+chat_nickname
+          , True);
       sbuf.Clear;
       sbuf.Write(stext[1], Length(stext));
     finally
@@ -787,10 +807,10 @@ begin
     end;
     if chat_chatting_id<>'' then
     begin
-      retemp:=TRegExpr.Create(expr_script_nickname);
+      retemp:=TRegExpr.Create(expr_button_nickname);
       try
         stext:=retemp.Replace(sbuf.DataString, '$1_'+chat_chatting_id
-          +'_$3', True);
+          +'_$3' , True);
         sbuf.Clear;
         sbuf.Write(stext[1], Length(stext));
       finally

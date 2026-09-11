@@ -279,6 +279,9 @@ object FormChzzkWeb: TFormChzzkWeb
       object MenuItemGift: TMenuItem
         Caption = ' '
       end
+      object MenuItemNickname: TMenuItem
+        Caption = 'MenuItemNickname'
+      end
       object MenuItem13: TMenuItem
         Action = ActionReplaceUsernameScript
       end

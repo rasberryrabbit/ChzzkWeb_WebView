@@ -57,7 +57,7 @@ object FormCssTable: TFormCssTable
     Width = 528
     Lines.Strings = (
       '/* custom */'
-      '._container_1y6kj_1:not(._is_overlay_1y6kj_1) ._chatting_message_1y6kj_21 {'
+      '._container_w9pvh_1:not(._is_overlay_w9pvh_1) ._chatting_message_w9pvh_21 {'
       '    text-align: left;'
       '    word-wrap: break-word;'
       '    word-break: break-all;'

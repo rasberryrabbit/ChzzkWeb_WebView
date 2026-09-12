@@ -112,7 +112,7 @@ var reviewuser;
 userbutton="button._nickname_w9pvh_33";
 spannickname='span._nickname_1mc5x_80';
 spanusername="span._text_1iatj_2";
-spanicon2="span._container_1nwpy_2";
+spanicon2="span._icon_1mc5x_15";
 spanuserchat='span._text_w9pvh_1';
 
 var chatsock1 = new ReconnectingWebSocket("ws://localhost:65002","chat");
@@ -140,7 +140,7 @@ chatsock1.onmessage = function (event) {
       sub=$(chatline).find(spanicon2);
       if(sub) {
         $(sub).each(function (index, item) {
-          ipos=$(item).children("img").attr("src").indexOf("/subscription/badge/");
+          ipos=$(item).children("span").children("img").attr("src").indexOf("/subscription/badge/");
           if(ipos>-1) {
             if(sublist[username]==undefined) {
               sublist[username]=1;

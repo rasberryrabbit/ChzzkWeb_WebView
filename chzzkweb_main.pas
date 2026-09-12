@@ -175,7 +175,6 @@ const
   expr_chatting = '_chatting_message_(.{5})_\d+';
   expr_chatitem = '_item_(.{5})_\d+';
   expr_giftitem = '_header_(.{5})_\d+';
-  expr_nickname = '_nickname_(.{5}_\d+)';
   expr_text = '_text_(.{5}_\d+)';
   expr_info = '_information_';
   expr_icon = '_icon_';
@@ -609,10 +608,9 @@ begin
     // nickname
     if chat_nickname='' then
     begin
-      filter_expr:=TRegExpr.Create(expr_nickname);
+      filter_expr:=TRegExpr.Create('_nickname_('+chat_username_sub+'_\d+)');
       try
         if filter_expr.Exec(buf) then
-        if filter_expr.ExecNext then
         begin
           chat_nickname:=filter_expr.Match[1];
           MenuItemNickname.Caption:='_nickname_'+chat_nickname;

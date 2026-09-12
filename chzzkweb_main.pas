@@ -45,6 +45,9 @@ type
     MenuItem11: TMenuItem;
     MenuItem12: TMenuItem;
     MenuItem13: TMenuItem;
+    MenuItemIconCont: TMenuItem;
+    MenuItemText: TMenuItem;
+    MenuItemTextUser: TMenuItem;
     MenuItemNickname: TMenuItem;
     MenuItemGift: TMenuItem;
     MenuItemDonationID: TMenuItem;
@@ -173,9 +176,14 @@ const
   expr_chatitem = '_item_(.{5})_\d+';
   expr_giftitem = '_header_(.{5})_\d+';
   expr_nickname = '_nickname_(.{5}_\d+)';
+  expr_text = '_text_(.{5}_\d+)';
+  expr_info = '_information_';
+  expr_icon = '_icon_';
 
   expr_span_nickname = '(span\._nickname)_(.{5})_(\d+)';
   expr_button_nickname = '(button\._nickname)_(.{5})_(\d+)';
+  expr_span_text = 'span\._text_.{5}_\d+';
+  expr_span_icon = 'span\._icon_.{5}_\d+';
 
   ChzzkURL ='chzzk.naver.com/live/';
 
@@ -207,6 +215,9 @@ var
   chat_donation : string = '';
   chat_giftmsg  : string = '';
   chat_nickname : string = '';
+  chat_text_user: string = '';
+  chat_text     : string = '';
+  chat_icon : string = '';
   filter_expr : TRegExpr;
 
 { TFormChzzkWeb }
@@ -339,6 +350,8 @@ begin
   chat_username := '';
   chat_username_sub := '';
   chat_nickname := '';
+  chat_text_user:= '';
+  chat_icon := '';
   chat_chatting := '';
   chat_chatting_id:= '';
   chat_chatitem := '';
@@ -608,6 +621,46 @@ begin
         filter_expr.Free;
       end;
     end;
+    // text user
+    if chat_text_user='' then
+    begin
+      chat_text:='';
+      filter_expr:=TRegExpr.Create(expr_text);
+      try
+        if filter_expr.Exec(buf) then
+        begin
+          chat_text:=filter_expr.Match[0];
+          while filter_expr.ExecNext do
+          begin
+            if chat_text_user<>chat_text then
+              chat_text_user:=chat_text;
+            chat_text:=filter_expr.Match[0];
+          end;
+        end;
+        if Pos(expr_info ,buf)>0 then
+          chat_text_user:=''
+          else
+           begin
+             MenuItemTextUser.Caption:=chat_text_user;
+             MenuItemText.Caption:=chat_text;
+           end;
+      finally
+        filter_expr.Free;
+      end;
+    end;
+    // icon
+    if chat_icon='' then
+    begin
+      filter_expr:=TRegExpr.Create(expr_icon+chat_username_sub+'_\d+');
+      try
+        if filter_expr.Exec(buf) then
+          chat_icon:=filter_expr.Match[0];
+        if chat_icon<>'' then
+          MenuItemIconCont.Caption:=chat_icon;
+      finally
+        filter_expr.Free;
+      end;
+    end;
     //
     if (chat_chatitem='') or (Pos(UTF8Decode(chat_chatitem),buf)>0) then
     begin
@@ -811,6 +864,42 @@ begin
       try
         stext:=retemp.Replace(sbuf.DataString, '$1_'+chat_chatting_id
           +'_$3' , True);
+        sbuf.Clear;
+        sbuf.Write(stext[1], Length(stext));
+      finally
+        retemp.Free;
+      end;
+    end;
+    // user name text
+    if chat_text_user<>'' then
+    begin
+      retemp:=TRegExpr.Create('"'+expr_span_text);
+      try
+        stext:=retemp.Replace(sbuf.DataString, '"span.'+chat_text_user);
+        sbuf.Clear;
+        sbuf.Write(stext[1], Length(stext));
+      finally
+        retemp.Free;
+      end;
+    end;
+    // user chat text
+    if chat_text<>'' then
+    begin
+      retemp:=TRegExpr.Create(''''+expr_span_text);
+      try
+        stext:=retemp.Replace(sbuf.DataString, '''span.'+chat_text);
+        sbuf.Clear;
+        sbuf.Write(stext[1], Length(stext));
+      finally
+        retemp.Free;
+      end;
+    end;
+    // user icon
+    if chat_icon<>'' then
+    begin
+      retemp:=TRegExpr.Create(expr_span_icon);
+      try
+        stext:=retemp.Replace(sbuf.DataString, 'span.'+chat_icon);
         sbuf.Clear;
         sbuf.Write(stext[1], Length(stext));
       finally

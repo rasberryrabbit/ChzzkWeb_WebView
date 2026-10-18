@@ -1,345 +1,1415 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 
 <head>
   <meta charset="utf-8">
-  <title>Roulette - 룰렛</title>
+  <title>룰렛 - Roulette</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
   <!--link type="text/css" rel="stylesheet" href="index-B3xGXYAr-dark.css" /-->
   <style>
+    /* ===== 뷰포트/다크 테마 기본 ===== */
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      background: #0f0f12;
+      color: #e6e6e6;
+      font-family: "Noto Sans KR", "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ===== 상단 헤더 ===== */
+    #header {
+      flex: 0 0 auto;
+      padding: 10px 16px;
+      background: linear-gradient(180deg, #1a1a20 0%, #15151a 100%);
+      border-bottom: 1px solid #2a2a30;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    #header h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      color: #f0a830;
+      letter-spacing: 0.5px;
+    }
+    #header .count-badge {
+      background: #1f1f26;
+      border: 1px solid #2f2f38;
+      color: #aaa;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+    #header .count-badge b { color: #f0a830; }
+
+    /* ===== 메인 레이아웃 ===== */
+    #main {
+      flex: 1 1 auto;
+      display: flex;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    /* 룰렛 영역 */
     .wheel-wrapper {
-      float: left;
-      width: 80%;
+      flex: 1 1 60%;
+      position: relative;
+      padding: 16px;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
+    #wheelCanvas {
+      width: 100%;
+      height: 100%;
+      max-width: 600px;
+      max-height: 600px;
+      display: block;
+      cursor: pointer;
+    }
+    /* 빈 상태 플레이스홀더 */
+    .wheel-empty {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      color: #444;
+      font-size: 15px;
+      font-style: italic;
+      text-align: center;
+    }
+    .wheel-empty.hidden { display: none; }
+
+    /* 우측 패널 */
     .gui-wrapper {
-        display: flow-root;
+      flex: 1 1 40%;
+      min-width: 320px;
+      max-width: 540px;
+      background: #15151a;
+      border-left: 1px solid #2a2a30;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
-    .rbutton {
-        border-radius: 10px;
-        width: 80px;
-        height: 30px;
+    .gui-section {
+      padding: 12px 16px;
+      border-bottom: 1px solid #1f1f26;
     }
-    #itemList {
-        list-style-type: none;
-        padding: 0;
+    .gui-section:last-child { border-bottom: none; flex: 1 1 auto; overflow-y: auto; }
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin: 0 0 8px;
+    }
+
+    /* ===== 버튼 ===== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      height: 32px;
+      padding: 0 14px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      cursor: pointer;
+      transition: filter 0.15s ease, transform 0.05s ease;
+      user-select: none;
+    }
+    .btn:hover  { filter: brightness(1.15); }
+    .btn:active { transform: translateY(1px); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; filter: none; }
+    .btn-spin   { background: #f0a830; color: #1a1a20; }
+    .btn-stop   { background: #e0463c; }
+    .btn-clear  { background: #4a4a55; }
+    .btn-add    { background: #2d7bf4; min-width: 36px; padding: 0; }
+    .btn-icon {
+      min-width: 28px;
+      padding: 0 8px;
+      height: 24px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .btn-icon.green  { background: #3aa55a; }
+    .btn-icon.red    { background: #d04030; }
+
+    .btn-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    /* ===== 체크박스/인풋 ===== */
+    .opt-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      font-size: 13px;
+      color: #ccc;
+    }
+    .opt-row label { cursor: pointer; }
+    .opt-row input[type="number"],
+    .opt-row input[type="text"] {
+      background: #0a0a0d;
+      border: 1px solid #2f2f38;
+      color: #e6e6e6;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 13px;
+      width: 90px;
+    }
+    .opt-row input[type="text"]:focus {
+      outline: none;
+      border-color: #2d7bf4;
+    }
+    /* 토글 스위치 */
+    .switch {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      appearance: none;
+      -webkit-appearance: none;
+      background: #3a3a45;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      flex: 0 0 auto;
+    }
+    .switch::before {
+      content: "";
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 16px; height: 16px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.2s ease;
+    }
+    .switch:checked { background: #2d7bf4; }
+    .switch:checked::before { transform: translateX(16px); }
+
+    /* ===== 항목 입력 행 ===== */
+    .item-input-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
     }
     #itemInput {
-        display: inline;
-        width: 80%;
+      flex: 1 1 auto;
+      background: #0a0a0d;
+      border: 1px solid #2f2f38;
+      color: #e6e6e6;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    #itemInput:focus {
+      outline: none;
+      border-color: #2d7bf4;
+      box-shadow: 0 0 0 2px rgba(45,123,244,0.2);
+    }
+    #itemInput::placeholder { color: #555; }
+
+    /* ===== 항목 리스트 ===== */
+    #itemList {
+      list-style-type: none;
+      padding: 0;
+      margin: 8px 0 0;
     }
     .item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin: 5px 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px 6px 12px;
+      margin: 4px 0;
+      background: #1f1f26;
+      border: 1px solid #2f2f38;
+      border-left: 4px solid #888;
+      border-radius: 8px;
+      transition: background 0.12s ease, border-color 0.12s ease;
+      animation: cardIn 0.25s ease;
     }
-    .add-btn {
-        background-color: lightgreen;
-        color: black;
-        border-collapse: collapse;
-        cursor: pointer;
-        padding: 5px 10px;
-        outline-color: black;
-        border-radius: 8px;
+    .item:hover { background: #2a2a32; }
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateX(-4px); }
+      to   { opacity: 1; transform: translateX(0); }
     }
-    .remove-btn {
-        background-color: red;
-        color: black;
-        border-collapse: collapse;
-        cursor: pointer;
-        padding: 5px 10px;
-        outline-color: black;
-        border-radius: 8px;
+    .item .textlabel {
+      flex: 1 1 auto;
+      color: #e6e6e6;
+      word-break: break-all;
+      font-size: 13px;
     }
-    .iweight {
-        margin-left: auto;
-        margin-right: 5px;        
+    .item .iweight {
+      flex: 0 0 auto;
+      min-width: 24px;
+      height: 22px;
+      line-height: 22px;
+      text-align: center;
+      background: #0a0a0d;
+      border: 1px solid #2f2f38;
+      color: #f0a830;
+      font-weight: 700;
+      border-radius: 4px;
+      padding: 0 4px;
+      font-size: 12px;
     }
-    .reshead {
-        display: flow-root;
-        background-color: aqua;
-        text-align: center;
+    #itemList:empty::after {
+      content: "항목이 없습니다. 위 입력창에 추가하세요.";
+      display: block;
+      padding: 12px;
+      color: #555;
+      font-size: 13px;
+      font-style: italic;
+      text-align: center;
     }
-    .reshead p {
-        display: inline;
-        background-color: #000000;
-        color: #eeeeee;
+
+    /* ===== 결과 표시 ===== */
+    .result-section {
+      padding: 16px;
+      background: linear-gradient(180deg, #1a1a20 0%, #15151a 100%);
+      border-bottom: 1px solid #2a2a30;
+      text-align: center;
+    }
+    .result-section .label {
+      font-size: 11px;
+      color: #888;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
     }
     #restext {
-        display: inline-block;
+      display: inline-block;
+      min-width: 60%;
+      padding: 12px 20px;
+      background: #0a0a0d;
+      border: 1px solid #2f2f38;
+      border-radius: 12px;
+      color: #888;
+      font-size: 18px;
+      font-weight: 700;
+      transition: background 0.3s ease, color 0.3s ease, transform 0.3s ease;
     }
+    #restext.has-result {
+      color: #fff;
+      transform: scale(1.05);
+      box-shadow: 0 0 16px rgba(240,168,48,0.4);
+    }
+
+    /* ===== 결과 이력 ===== */
+    .history-list {
+      list-style: none;
+      padding: 0;
+      margin: 8px 0 0;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+    .history-list::-webkit-scrollbar { width: 6px; }
+    .history-list::-webkit-scrollbar-thumb { background: #3a3a45; border-radius: 3px; }
+    .history-list li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 8px;
+      font-size: 12px;
+      color: #aaa;
+      border-bottom: 1px solid #1a1a20;
+    }
+    .history-list li:last-child { border-bottom: none; }
+    .history-list .h-time { color: #666; font-family: monospace; flex: 0 0 50px; }
+    .history-list .h-name { flex: 1 1 auto; word-break: break-all; }
+
+    /* ===== 알림 토스트 ===== */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(0,0,0,0.85);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      z-index: 200;
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* 스크롤바 공통 (다크) */
+    .gui-section:last-child::-webkit-scrollbar { width: 8px; }
+    .gui-section:last-child::-webkit-scrollbar-track { background: #15151a; }
+    .gui-section:last-child::-webkit-scrollbar-thumb { background: #3a3a45; border-radius: 4px; }
   </style>
-  <script src = "./jquery/jquery-3.7.1.min.js"></script>
-  <script src="./spinwheel/spin-wheel-iife.js"></script>
+  <script src="./jquery/jquery-3.7.1.min.js"></script>
   <script type="text/javascript" src="reconnecting-websocket.min.js"></script>
   <script>
-    let prop={items:[]};
-    var doremoveitem=false;
-    var docheckcheese=false;
-    var wheeldospin=false;
-    var lastitemtext='';
-    var wheelmaxitem=50;
+    // ===== 상태 =====
+    let prop = { items: [] };
+    var doremoveitem = false;
+    var docheckcheese = false;
+    var wheeldospin = false;
+    var lastitemtext = '';
+    var wheelmaxitem = 50;
+    var resultHistory = [];
 
-    let whimg=new Image(300,300);
-    whimg.src="./spinwheel/wheel_overlay.svg";
+    // ===== 룰렛 엔진 상태 =====
+    var wheelCanvas = null;
+    var wheelCtx = null;
+    var wheelRotation = 0;          // 현재 회전 각도 (라디안)
+    var wheelVelocity = 0;          // 현재 각속도 (라디안/프레임)
+    var wheelRAF = null;            // requestAnimationFrame 핸들
+    var wheelSize = 0;              // 캔버스 실제 픽셀 크기
+    var wheelDPR = 1;
+    var forceStopping = false;     // 강제 감속 모드 (멈추기 버튼)
 
-    window.onload = () => {
-
-      const container = document.querySelector('.wheel-wrapper');
-
-      window.wheel = new spinWheel.Wheel(container);
-      initwheel();
+    // ===== 토스트 알림 =====
+    var toastTimer = null;
+    function showToast(msg, ms) {
+      ms = ms || 2000;
+      var t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(function(){ t.classList.remove('show'); }, ms);
     }
-    
+
+    // ===== 빈 상태 토글 =====
+    function updateWheelEmpty() {
+      var empty = document.querySelector('.wheel-empty');
+      if (!empty) return;
+      if (prop.items.length === 0) empty.classList.remove('hidden');
+      else empty.classList.add('hidden');
+    }
+
+    // ===== 카운터 업데이트 =====
+    function updateCount() {
+      document.querySelector('#header .count-badge b').textContent = prop.items.length;
+    }
+
+    // ===== 항목 삭제 =====
     function deleteitem(itext) {
-        var li=null;
-        for(vi of document.getElementById('itemList').children) {
-            if(vi.children[0].innerText==itext) {
-                li=vi;
-            }
-        }
-        var item=null;
-        prop.items.forEach((ele) => {
-           if(ele.label==itext) {
-             item=ele;
-           }
-        });
-        // delete item when weight==0
-        if(item) {
-            var ix=prop.items.indexOf(item);
-            if(ix>-1) {
-                item.weight-=1;
-                if(item.weight==0) {
-                  if(confirm(item.label+' 항목을 지우시겠습니까?')==true) {
-                    prop.items.splice(ix,1);
-                    li.remove();
-                  } else {
-                    item.weight=1;
-                  }
-                } else {
-                  li.children[1].innerText=item.weight;
-                }
-                initwheel();
-            }
-        }
-    }
-        
-    function spinwheel() {
-      wheel.stop();
-      if(doremoveitem==true && lastitemtext!='') {
-        deleteitem(lastitemtext);
-        lastitemtext='';
-        initwheel();
+      // 회전 중 잠금
+      if (wheeldospin) {
+        showToast('회전 중에는 항목을 삭제할 수 없습니다');
+        return;
       }
-      wheel.spin(Math.random(1)*360+360);
-      document.getElementById('restext').innerText='';
+      var li = null;
+      var children = document.getElementById('itemList').children;
+      for (var i = 0; i < children.length; i++) {
+        if (children[i].querySelector('.textlabel').innerText == itext) {
+          li = children[i];
+          break;
+        }
+      }
+      var item = null;
+      prop.items.forEach(function(ele){
+        if (ele.label == itext) item = ele;
+      });
+      if (item) {
+        var ix = prop.items.indexOf(item);
+        if (ix > -1) {
+          item.weight -= 1;
+          if (item.weight <= 0) {
+            if (confirm(item.label + ' 항목을 지우시겠습니까?') == true) {
+              prop.items.splice(ix, 1);
+              if (li) li.remove();
+            } else {
+              item.weight = 1;
+            }
+          } else {
+            if (li) li.querySelector('.iweight').innerText = item.weight;
+          }
+          drawWheel();
+          updateCount();
+          updateWheelEmpty();
+          saveItems();
+        }
+      }
     }
-    
-    function stopwheel() {
-      wheel.stop();
-      wheeldospin=false;
-      document.getElementById('restext').innerText=lastitemtext;
-    }
-    
-    // get pastel color
-    function randomHSLA(){
-      var hue = Math.floor(Math.random() * 360);
-      var lum = Math.floor(Math.random() * 15)+65;
-      return 'hsl(' + hue + ', 100%, '+lum+'%)';
-    }
-    
-    function showCurrent(event) {
-        var item=prop.items[event.currentIndex];
-        var itemText=item.label;
-        lastitemtext=itemText;
-        var res=document.getElementById('restext');
-        res.innerText=itemText;
-        res.style.backgroundColor=item.backgroundColor;
-    }
-    
-    function wheelrest(event) {
-        wheeldospin=false;
-        showCurrent(event);
-    }
-    
-    function wheelspin(event) {
-        //console.log('spin');
-        wheeldospin=true;
-    }
-    
-    function initwheel() {
-      wheel.stop();
-      lastitemtext='';
-      wheel.init(prop);
-      wheel.rotationSpeedMax = 720;
-      wheel.itemLabelFontSizeMax = 70;
-      wheel.itemLabelRadiusMax = 0.1;
-      wheel.itemLabelRadius = 0.99;
-      wheel.overlayImage=whimg;
-      wheel.onRest=wheelrest;
-      wheel.onCurrentIndexChange=showCurrent;
-      wheel.onSpin=wheelspin;
-      //var res=document.getElementById('restext');
-      //res.innerText='';
-      wheeldospin=false;
-    }
-  </script>
 
+    // ===== 가중치 기반 항목 분할 =====
+    // 각 항목이 차지하는 라디안 비율을 가중치에 비례하게 분배
+    function getWheelSegments() {
+      var total = 0;
+      prop.items.forEach(function(it){ total += Math.max(1, it.weight); });
+      var segments = [];
+      var startAngle = 0;
+      prop.items.forEach(function(it){
+        var w = Math.max(1, it.weight);
+        var ratio = w / total;
+        var endAngle = startAngle + ratio * Math.PI * 2;
+        segments.push({
+          item: it,
+          startAngle: startAngle,
+          endAngle: endAngle,
+          midAngle: (startAngle + endAngle) / 2
+        });
+        startAngle = endAngle;
+      });
+      return segments;
+    }
+
+    // ===== 캔버스 크기 측정/설정 (HiDPI 대응) =====
+    function resizeCanvas() {
+      if (!wheelCanvas) return;
+      var rect = wheelCanvas.getBoundingClientRect();
+      var size = Math.max(200, Math.min(rect.width, rect.height));
+      wheelSize = size;
+      wheelDPR = window.devicePixelRatio || 1;
+      wheelCanvas.width  = Math.floor(size * wheelDPR);
+      wheelCanvas.height = Math.floor(size * wheelDPR);
+      wheelCtx.setTransform(wheelDPR, 0, 0, wheelDPR, 0, 0);
+      drawWheel();
+    }
+
+    // ===== 룰렛 그리기 =====
+    function drawWheel() {
+      if (!wheelCtx) return;
+      var ctx = wheelCtx;
+      var size = wheelSize;
+      var cx = size / 2;
+      var cy = size / 2;
+      var r  = size / 2 - 8;
+
+      // 캔버스 클리어
+      ctx.clearRect(0, 0, size, size);
+
+      // 외곽 원 (어두운 링)
+      ctx.beginPath();
+      ctx.arc(cx, cy, r + 6, 0, Math.PI * 2);
+      ctx.fillStyle = '#1f1f26';
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#2f2f38';
+      ctx.stroke();
+
+      if (prop.items.length === 0) {
+        // 빈 룰렛: 중앙 메시지는 .wheel-empty div 가 담당하므로 여기서는 생략
+        return;
+      }
+
+      var segments = getWheelSegments();
+
+      // 각 섹터 그리기
+      segments.forEach(function(seg){
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, r, seg.startAngle + wheelRotation, seg.endAngle + wheelRotation);
+        ctx.closePath();
+        ctx.fillStyle = seg.item.backgroundColor || '#333';
+        ctx.fill();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        ctx.stroke();
+
+        // ===== 텍스트 렌더링 (방사형, 자동 폰트 크기 조정) =====
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(seg.midAngle + wheelRotation);
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = seg.item.labelColor || '#000';
+
+        var label = seg.item.label;
+
+        // 섹터 호 길이 (방사형 텍스트가 차지할 수 있는 가로 폭)
+        // 회전축(중심)에서 바깥쪽으로 텍스트가 나열되므로,
+        // 텍스트 한 줄의 가로 폭이 r - 12(외곽 여백)까지만 가능.
+        // 동시에 인접 섹터와 겹치지 않도록 호 길이도 제한.
+        var arcLength = r * (seg.endAngle - seg.startAngle);  // 호 길이
+        // 텍스트가 인접 섹터로 넘치지 않도록 호 길이의 약 92% 까지만 허용
+        var maxTextWidth = Math.min(r - 12, arcLength * 0.92);
+
+        // 기본 폰트 크기 (항목 수 기반)
+        var baseFontSize = Math.max(10, Math.min(20, 240 / prop.items.length + 8));
+        var minFontSize = 8;
+        var fontSize = baseFontSize;
+
+        // 이진 탐색으로 폰트 크기 최적화
+        // 텍스트 너비가 maxTextWidth 이하가 될 때까지 폰트 축소
+        ctx.font = '600 ' + fontSize + 'px "Noto Sans KR", sans-serif';
+        var textWidth = ctx.measureText(label).width;
+        if (textWidth > maxTextWidth && fontSize > minFontSize) {
+          var lo = minFontSize, hi = fontSize, mid;
+          // 최대 8회 반복 (충분한 정밀도)
+          for (var i = 0; i < 8; i++) {
+            mid = (lo + hi) / 2;
+            ctx.font = '600 ' + mid + 'px "Noto Sans KR", sans-serif';
+            if (ctx.measureText(label).width <= maxTextWidth) {
+              lo = mid;   // mid는 가능 → 더 크게 시도
+            } else {
+              hi = mid;   // mid는 불가 → 더 작게
+            }
+          }
+          fontSize = lo;
+          ctx.font = '600 ' + fontSize + 'px "Noto Sans KR", sans-serif';
+        }
+
+        // 최소 폰트로도 안 들어가면 말줄임
+        if (ctx.measureText(label).width > maxTextWidth) {
+          ctx.font = '600 ' + minFontSize + 'px "Noto Sans KR", sans-serif';
+          while (label.length > 1 && ctx.measureText(label + '…').width > maxTextWidth) {
+            label = label.slice(0, -1);
+          }
+          label = label + '…';
+        }
+
+        ctx.fillText(label, r - 12, 0);
+        ctx.restore();
+      });
+
+      // 중앙 허브 (작게)
+      ctx.beginPath();
+      ctx.arc(cx, cy, Math.max(4, r * 0.04), 0, Math.PI * 2);
+      ctx.fillStyle = '#15151a';
+      ctx.fill();
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = '#f0a830';
+      ctx.stroke();
+
+      // 상단 포인터 (삼각형)
+      ctx.beginPath();
+      ctx.moveTo(cx, 4);
+      ctx.lineTo(cx - 14, 4 + 22);
+      ctx.lineTo(cx + 14, 4 + 22);
+      ctx.closePath();
+      ctx.fillStyle = '#f0a830';
+      ctx.fill();
+      ctx.strokeStyle = '#1a1a20';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    // ===== 룰렛 돌리기 =====
+    function spinwheel() {
+      if (prop.items.length === 0) {
+        showToast('항목을 먼저 추가하세요');
+        return;
+      }
+      stopWheelAnimation();   // 진행 중이면 정지
+
+      if (doremoveitem == true && lastitemtext != '') {
+        deleteitem(lastitemtext);
+        lastitemtext = '';
+      }
+
+      // 초기 각속도: 0.5 ~ 0.8 라디안/프레임 (약 28~46 RPM 시작)
+      wheelVelocity = 0.5 + Math.random() * 0.3;
+      wheeldospin = true;
+      forceStopping = false;     // 강제 멈춤 모드 초기화
+      // 회전 중에는 UI 잠금
+      setUILocked(true);
+      var res = document.getElementById('restext');
+      res.innerText = '...';
+      res.className = '';
+      res.style.backgroundColor = '';
+      res.style.color = '#aaa';
+
+      animateWheel();
+    }
+
+    // ===== UI 잠금/해제 =====
+    function setUILocked(locked) {
+      // 항목 추가/삭제 관련 요소
+      var $input = $('#itemInput');
+      var $addBtn = $('#addItemBtn');
+      var $cheese = $('#cheeselow');
+      var $chkCheese = $('#chkcheese');
+      var $chkRemove = $('#chkremove');
+
+      $input.prop('disabled', locked);
+      $addBtn.prop('disabled', locked);
+      $cheese.prop('disabled', locked);
+      $chkCheese.prop('disabled', locked);
+      $chkRemove.prop('disabled', locked);
+      // 항목 리스트의 +/- 버튼들도 잠금
+      $('#itemList .btn-icon').prop('disabled', locked);
+      // 지우기 버튼도 잠금 (회전 중 초기화 방지)
+      // 단, 멈추기 버튼은 잠금 해제 상태 유지해야 함
+      $('button.btn-clear').prop('disabled', locked);
+      if (locked) {
+        $input.attr('placeholder', '회전 중에는 항목을 추가할 수 없습니다');
+      } else {
+        $input.attr('placeholder', '추가할 내용 (Enter 입력)');
+      }
+    }
+
+    // ===== 강제 멈추기 =====
+    function stopwheel() {
+      // 진행 중인 회전을 빠르게 감속시켜 정지
+      if (wheeldospin) {
+        // 1) 속도를 즉시 낮춤 (이미 느리면 그대로)
+        wheelVelocity = Math.min(wheelVelocity, 0.08);
+        // 2) 강제 감속 모드 ON → animateWheel 의 감속 계수가 더 강해짐
+        forceStopping = true;
+      } else {
+        drawWheel();
+        var res = document.getElementById('restext');
+        if (lastitemtext) {
+          applyResultStyle(lastitemtext);
+        } else {
+          res.innerText = '(멈춤)';
+          res.className = '';
+        }
+      }
+    }
+
+    // ===== 회전 애니메이션 =====
+    function animateWheel() {
+      if (!wheeldospin) return;
+
+      // 감속: 기본 0.995 배, 강제 멈춤 모드일 때 0.85 배 (매 프레임 15% 감소)
+      if (forceStopping) {
+        wheelVelocity *= 0.85;
+      } else {
+        wheelVelocity *= 0.995;
+      }
+      wheelRotation += wheelVelocity;
+      // 회전각이 무한히 커지지 않도록 [0, 2π) 로 정규화 (결과 판정 안전)
+      wheelRotation = wheelRotation % (Math.PI * 2);
+      if (wheelRotation < 0) wheelRotation += Math.PI * 2;
+
+      drawWheel();
+
+      // 정지 조건: 각속도가 임계값 이하
+      // 강제 멈춤 모드일 때는 임계값을 높여서 더 빨리 정지
+      var stopThreshold = forceStopping ? 0.005 : 0.0015;
+      if (wheelVelocity < stopThreshold) {
+        wheeldospin = false;
+        wheelVelocity = 0;
+        forceStopping = false;   // 모드 해제
+        // UI 잠금 해제
+        setUILocked(false);
+        determineResult();
+      } else {
+        wheelRAF = requestAnimationFrame(animateWheel);
+      }
+    }
+
+    function stopWheelAnimation() {
+      if (wheelRAF) {
+        cancelAnimationFrame(wheelRAF);
+        wheelRAF = null;
+      }
+      wheeldospin = false;
+      wheelVelocity = 0;
+      forceStopping = false;
+    }
+
+    // ===== 결과 판정 =====
+    // 포인터는 상단(12시 방향)에 고정. 캔버스 좌표계에서 12시 = -π/2 (또는 3π/2)
+    // 룰렛이 wheelRotation 만큼 회전했으므로,
+    // 포인터가 가리키는 룰렛-내부-좌표계 각도 = (-π/2 - wheelRotation) 을 [0, 2π) 로 정규화
+    function determineResult() {
+      if (prop.items.length === 0) return;
+      var segments = getWheelSegments();
+      // 포인터의 룰렛 내부 각도
+      var pointerAngle = (-Math.PI / 2 - wheelRotation) % (Math.PI * 2);
+      if (pointerAngle < 0) pointerAngle += Math.PI * 2;
+      // wheelRotation 이 누적되어 클 수 있으므로 추가 보정
+      pointerAngle = pointerAngle % (Math.PI * 2);
+
+      var chosen = segments[0];
+      for (var i = 0; i < segments.length; i++) {
+        // startAngle 은 0부터 순차 증가, 마지막 endAngle 은 2π
+        if (pointerAngle >= segments[i].startAngle && pointerAngle < segments[i].endAngle) {
+          chosen = segments[i];
+          break;
+        }
+      }
+
+      lastitemtext = chosen.item.label;
+      applyResultStyle(lastitemtext);
+      addHistory(lastitemtext);
+      showToast('🎉 당첨: ' + lastitemtext, 2500);
+    }
+
+    // ===== 결과 스타일 적용 =====
+    function applyResultStyle(label) {
+      var res = document.getElementById('restext');
+      var item = null;
+      prop.items.forEach(function(ele){
+        if (ele.label == label) item = ele;
+      });
+      res.innerText = label;
+      if (item) {
+        res.style.backgroundColor = item.backgroundColor;
+        res.style.color = '#000';
+      } else {
+        res.style.backgroundColor = '';
+        res.style.color = '';
+      }
+      res.className = 'has-result';
+    }
+
+    // ===== 결과 이력 추가 =====
+    function addHistory(label) {
+      var now = new Date();
+      var hh = String(now.getHours()).padStart(2, '0');
+      var mm = String(now.getMinutes()).padStart(2, '0');
+      var ss = String(now.getSeconds()).padStart(2, '0');
+      var time = hh + ':' + mm + ':' + ss;
+      resultHistory.unshift({ time: time, label: label });
+      if (resultHistory.length > 20) resultHistory.pop();
+      renderHistory();
+      saveHistory();   // localStorage 저장
+    }
+    function renderHistory() {
+      var ul = document.getElementById('historyList');
+      if (!ul) return;
+      ul.innerHTML = '';
+      resultHistory.forEach(function(h){
+        var li = document.createElement('li');
+        li.innerHTML = '<span class="h-time"></span><span class="h-name"></span>';
+        li.querySelector('.h-time').textContent = h.time;
+        li.querySelector('.h-name').textContent = h.label;
+        ul.appendChild(li);
+      });
+    }
+
+    // ===== 파스텔 색상 =====
+    function randomHSLA() {
+      var hue = Math.floor(Math.random() * 360);
+      var lum = Math.floor(Math.random() * 15) + 65;
+      return 'hsl(' + hue + ', 100%, ' + lum + '%)';
+    }
+    // hsl() 문자열을 캔버스에 사용 가능한 hex 로 변환
+    function hslToHex(hsl) {
+      var m = hsl.match(/hsl\(\s*(\d+)\s*,\s*(\d+)%\s*,\s*(\d+)%\s*\)/);
+      if (!m) return '#888888';
+      var h = +m[1], s = +m[2] / 100, l = +m[3] / 100;
+      var c = (1 - Math.abs(2 * l - 1)) * s;
+      var x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+      var m2 = l - c / 2;
+      var r, g, b;
+      if (h < 60)       { r = c; g = x; b = 0; }
+      else if (h < 120) { r = x; g = c; b = 0; }
+      else if (h < 180) { r = 0; g = c; b = x; }
+      else if (h < 240) { r = 0; g = x; b = c; }
+      else if (h < 300) { r = x; g = 0; b = c; }
+      else              { r = c; g = 0; b = x; }
+      var toHex = function(v){
+        var n = Math.round((v + m2) * 255);
+        return ('0' + n.toString(16)).slice(-2);
+      };
+      return '#' + toHex(r) + toHex(g) + toHex(b);
+    }
+
+    // ===== 초기화 =====
+    function initwheel() {
+      // 더 이상 외부 라이브러리 초기화 불필요
+      lastitemtext = '';
+      wheeldospin = false;
+      stopWheelAnimation();
+      drawWheel();
+      updateWheelEmpty();
+      updateCount();
+    }
+
+    // ===== localStorage 저장/로드 =====
+    var STORAGE_KEY_ITEMS = 'roulette_items';
+    var STORAGE_KEY_HISTORY = 'roulette_history';
+    var STORAGE_KEY_FLAGS = 'roulette_flags';
+
+    // 자동 저장 플래그
+    //   true  → 항목/이력/플래그 변경 시 자동 저장
+    //   false → "저장 데이터 삭제" 후 상태. 변경 시에는 저장 안 함.
+    //           단, 페이지 닫기 직전(beforeunload)에는 강제 저장하여 보존.
+    var autoSave = true;
+
+    // 디바운스 헬퍼 (과도한 localStorage 쓰기 방지)
+    function debounce(fn, delay) {
+      var t;
+      var wrapped = function() {
+        var ctx = this, args = arguments;
+        clearTimeout(t);
+        t = setTimeout(function(){ fn.apply(ctx, args); }, delay);
+      };
+      wrapped.flush = function() {
+        if (t) { clearTimeout(t); t = null; fn.apply(null); }
+      };
+      return wrapped;
+    }
+
+    // 항목 저장 (배경색, 가중치 포함)
+    var saveItems = debounce(function() {
+      if (!autoSave) return;   // 자동 저장 꺼져 있으면 스킵
+      try {
+        localStorage.setItem(STORAGE_KEY_ITEMS, JSON.stringify(prop.items));
+      } catch(e) { /* 쿼터 초과 등 무시 */ }
+    }, 200);
+
+    // 결과 이력 저장
+    var saveHistory = debounce(function() {
+      if (!autoSave) return;
+      try {
+        localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(resultHistory));
+      } catch(e) {}
+    }, 200);
+
+    // 체크박스 상태 저장
+    var saveFlags = debounce(function() {
+      if (!autoSave) return;
+      try {
+        localStorage.setItem(STORAGE_KEY_FLAGS, JSON.stringify({
+          doremoveitem: doremoveitem,
+          docheckcheese: docheckcheese,
+          cheeselow: document.getElementById('cheeselow') ? document.getElementById('cheeselow').value : '1000'
+        }));
+      } catch(e) {}
+    }, 200);
+
+    // ===== 강제 저장 (페이지 닫기 직전 호출) =====
+    // autoSave 상태와 무관하게 현재 상태를 모두 저장
+    function forceSaveAll() {
+      try {
+        localStorage.setItem(STORAGE_KEY_ITEMS, JSON.stringify(prop.items));
+        localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(resultHistory));
+        localStorage.setItem(STORAGE_KEY_FLAGS, JSON.stringify({
+          doremoveitem: doremoveitem,
+          docheckcheese: docheckcheese,
+          cheeselow: document.getElementById('cheeselow') ? document.getElementById('cheeselow').value : '1000'
+        }));
+      } catch(e) {}
+      // 보류 중인 디바운스 저장도 즉시 flush (이미 forceSaveAll 이 저장했으므로 영향 없음)
+      // 단, autoSave=false 인 상태에서 flush 호출해도 내부에서 return 하므로 안전
+    }
+
+    // 항목 로드
+    function loadItems() {
+      try {
+        var raw = localStorage.getItem(STORAGE_KEY_ITEMS);
+        if (!raw) return [];
+        var arr = JSON.parse(raw);
+        if (!Array.isArray(arr)) return [];
+        // 정제: 각 항목은 {label, weight, backgroundColor, labelColor} 가져야 함
+        return arr.filter(function(it){
+          return it && typeof it.label === 'string' && it.label.length > 0;
+        }).map(function(it){
+          return {
+            label: it.label,
+            labelColor: it.labelColor || '#000000',
+            backgroundColor: it.backgroundColor || '#888888',
+            weight: Math.max(1, parseInt(it.weight, 10) || 1)
+          };
+        });
+      } catch(e) { return []; }
+    }
+
+    // 결과 이력 로드
+    function loadHistory() {
+      try {
+        var raw = localStorage.getItem(STORAGE_KEY_HISTORY);
+        if (!raw) return [];
+        var arr = JSON.parse(raw);
+        return Array.isArray(arr) ? arr.slice(0, 20) : [];
+      } catch(e) { return []; }
+    }
+
+    // 체크박스 상태 로드
+    function loadFlags() {
+      try {
+        var raw = localStorage.getItem(STORAGE_KEY_FLAGS);
+        if (!raw) return null;
+        return JSON.parse(raw);
+      } catch(e) { return null; }
+    }
+
+    // ===== 항목 리스트 DOM 복원 =====
+    function rebuildItemList() {
+      var ul = document.getElementById('itemList');
+      ul.innerHTML = '';
+      prop.items.forEach(function(it) {
+        var li = document.createElement('li');
+        li.className = 'item';
+
+        var labelSpan = document.createElement('span');
+        labelSpan.className = 'textlabel';
+        labelSpan.textContent = it.label;
+
+        var weightSpan = document.createElement('span');
+        weightSpan.className = 'iweight';
+        weightSpan.textContent = it.weight;
+
+        var plusBtn = document.createElement('button');
+        plusBtn.className = 'btn-icon green';
+        plusBtn.textContent = '+';
+        plusBtn.title = '가중치 증가';
+
+        var minusBtn = document.createElement('button');
+        minusBtn.className = 'btn-icon red';
+        minusBtn.textContent = '−';
+        minusBtn.title = '가중치 감소';
+
+        li.appendChild(labelSpan);
+        li.appendChild(weightSpan);
+        li.appendChild(plusBtn);
+        li.appendChild(minusBtn);
+
+        li.style.borderLeftColor = it.backgroundColor;
+        li.style.background = 'linear-gradient(90deg, ' + it.backgroundColor + '22 0%, #1f1f26 30%)';
+
+        ul.appendChild(li);
+
+        // +/- 이벤트 바인딩
+        plusBtn.addEventListener('click', function () {
+          if (wheeldospin) return;
+          var txt = labelSpan.innerText;
+          var item = null;
+          prop.items.forEach(function(ele){
+            if (ele.label == txt) item = ele;
+          });
+          if (item) {
+            item.weight += 1;
+            weightSpan.innerText = item.weight;
+            drawWheel();
+            saveItems();
+          }
+        });
+
+        minusBtn.addEventListener('click', function () {
+          if (wheeldospin) return;
+          var txt = labelSpan.innerText;
+          deleteitem(txt);
+        });
+      });
+    }
+
+    // ===== 캔버스 클릭으로 룰렛 돌리기 =====
+    function onWheelClick() {
+      if (!wheeldospin) spinwheel();
+    }
+
+    // ===== 초기 진입 =====
+    window.addEventListener('load', function(){
+      wheelCanvas = document.getElementById('wheelCanvas');
+      wheelCtx = wheelCanvas.getContext('2d');
+      // 클릭 이벤트
+      wheelCanvas.addEventListener('click', onWheelClick);
+
+      // ===== 저장된 데이터 로드 =====
+      prop.items = loadItems();
+      resultHistory = loadHistory();
+      var flags = loadFlags();
+      if (flags) {
+        if (typeof flags.doremoveitem === 'boolean') {
+          doremoveitem = flags.doremoveitem;
+          document.getElementById('chkremove').checked = doremoveitem;
+        }
+        if (typeof flags.docheckcheese === 'boolean') {
+          docheckcheese = flags.docheckcheese;
+          document.getElementById('chkcheese').checked = docheckcheese;
+        }
+        if (flags.cheeselow) {
+          document.getElementById('cheeselow').value = flags.cheeselow;
+        }
+      }
+
+      // ===== 자동 저장 설정 복원 =====
+      try {
+        var savedAutoSave = localStorage.getItem('roulette_autosave');
+        // '0' 이면 자동 저장 끔, 그 외(없음/1)는 켬
+        if (savedAutoSave === '0') {
+          autoSave = false;
+          document.getElementById('chkautosave').checked = false;
+        } else {
+          autoSave = true;
+          document.getElementById('chkautosave').checked = true;
+        }
+      } catch(e) {}
+
+      // 항목 리스트 DOM 복원
+      rebuildItemList();
+      // 결과 이력 렌더
+      renderHistory();
+
+      // 초기 크기 설정
+      resizeCanvas();
+      updateCount();
+      updateWheelEmpty();
+    });
+
+    // 창 크기 변경 시 캔버스 재측정
+    var resizeT = null;
+    window.addEventListener('resize', function(){
+      if (resizeT) clearTimeout(resizeT);
+      resizeT = setTimeout(resizeCanvas, 150);
+    });
+
+    // ===== 페이지 닫기 직전 강제 저장 =====
+    // autoSave=true 인 경우에만 저장. 꺼져 있으면 아무것도 안 함.
+    window.addEventListener('beforeunload', function(){
+      if (autoSave) {
+        forceSaveAll();
+      }
+    });
+
+    // ===== 페이지 숨김(mobile/sleep) 시에도 강제 저장 =====
+    // autoSave=true 인 경우에만 저장
+    document.addEventListener('visibilitychange', function(){
+      if (document.visibilityState === 'hidden' && autoSave) {
+        forceSaveAll();
+      }
+    });
+  </script>
 </head>
 
 <body>
+
+<!-- ===== 상단 헤더 ===== -->
+<div id="header">
+  <h1>🎯 룰렛</h1>
+  <span class="count-badge">항목 <b>0</b> / 50</span>
+</div>
+
+<!-- ===== 메인 ===== -->
+<div id="main">
+  <!-- 룰렛 영역 -->
   <div class="wheel-wrapper">
+    <canvas id="wheelCanvas"></canvas>
+    <div class="wheel-empty">항목을 추가하면 룰렛이 표시됩니다</div>
   </div>
 
+  <!-- 우측 패널 -->
   <div class="gui-wrapper">
-  <button class='rbutton' onclick="spinwheel()">돌리기</button>
-  <button class='rbutton' onclick="stopwheel()">멈추기</button>
-  <button class='rbutton' onclick="clearwheel()">지우기</button>
-  <button class='rbutton' onclick="initwheel()" style="display: none">테스트</button>
-  <div>
-  <input type="checkbox" id="chkremove" onclick="checkremoveclick()">
-  <label for="chkremove">추첨된 항목 줄이기</label>
+
+    <!-- 결과 표시 -->
+    <div class="result-section">
+      <div class="label">결과</div>
+      <p id="restext">—</p>
+    </div>
+
+    <!-- 컨트롤 -->
+    <div class="gui-section">
+      <p class="section-title">컨트롤</p>
+      <div class="btn-group">
+        <button class="btn btn-spin" onclick="spinwheel()">🎲 돌리기</button>
+        <button class="btn btn-stop" onclick="stopwheel()">⏹ 멈추기</button>
+        <button class="btn btn-clear" onclick="clearwheel()">🗑 전체 지우기</button>
+      </div>
+      <div class="opt-row">
+        <input type="checkbox" id="chkremove" class="switch" onclick="checkremoveclick()">
+        <label for="chkremove">추첨된 항목 줄이기</label>
+      </div>
+      <div class="opt-row" style="margin-top:6px;">
+        <input type="checkbox" id="chkautosave" class="switch" onclick="toggleAutoSave()" checked>
+        <label for="chkautosave">자동 저장 (닫을 때 현재 상태 보존)</label>
+      </div>
+    </div>
+
+    <!-- 항목 추가 -->
+    <div class="gui-section">
+      <p class="section-title">항목 추가</p>
+      <div class="item-input-row">
+        <input type="text" id="itemInput" placeholder="추가할 내용 (Enter 입력)">
+        <button id="addItemBtn" class="btn btn-add">+</button>
+      </div>
+
+      <div class="opt-row" style="margin-top:12px;">
+        <label for="cheeselow">치즈 최소:</label>
+        <input type="number" id="cheeselow" value="1000" min="1">
+        <input type="checkbox" id="chkcheese" class="switch" onclick="chkcheeseclick()">
+        <label for="chkcheese">도네이션 자동 추가</label>
+      </div>
+    </div>
+
+    <!-- 항목 리스트 + 이력 -->
+    <div class="gui-section">
+      <p class="section-title">항목 목록</p>
+      <ul id="itemList"></ul>
+
+      <p class="section-title" style="margin-top:12px;">최근 결과</p>
+      <ul class="history-list" id="historyList"></ul>
+    </div>
+
   </div>
-  <div>
-  <p style="display: block; background-color: coral; text-align: center;">목록</p>
-  <label for="cheeselow">치즈 : </label>  
-  <input type="text" id="cheeselow" name="cheesel" value="1000" />
-  <input type="checkbox" id="chkcheese" onclick="chkcheeseclick()">
-  <input type="text" id="itemInput" onkeyup="enterKey(this)" placeholder="추가할 내용">
-  <button id="addItemBtn">+</button>
-  <ul id="itemList"></ul>
-  <p class="reshead">결과 : </p>
-  <p id="restext"></p>
-  </div>
-  </div>
+</div>
+
+<!-- 토스트 -->
+<div id="toast"></div>
+
 <script>
-    function clearwheel() {
-        if(wheeldospin==false && confirm('모든 항목을 지우시겠습니까?')==true) {
-            prop={items:[]};
-            doremoveitem=false;
-            wheeldospin=false;
-            lastitemtext='';
-            initwheel();
-            document.getElementById('itemList').innerHTML='';
-            var res=document.getElementById('restext');
-            res.innerText=''
-        }
+  // ===== 전체 초기화 =====
+  function clearwheel() {
+    if (wheeldospin) {
+      showToast('회전 중에는 지울 수 없습니다');
+      return;
     }
-    
-    function enterKey() {
-        if (window.event.keyCode == 13) {
-            additembutton();
-        }
+    if (confirm('모든 항목을 지우시겠습니까?') == true) {
+      prop = { items: [] };
+      doremoveitem = false;
+      wheeldospin = false;
+      lastitemtext = '';
+      initwheel();
+      document.getElementById('itemList').innerHTML = '';
+      var res = document.getElementById('restext');
+      res.innerText = '—';
+      res.className = '';
+      res.style.backgroundColor = '';
+      res.style.color = '';
+      // localStorage 도 초기화
+      try {
+        localStorage.removeItem(STORAGE_KEY_ITEMS);
+        localStorage.removeItem(STORAGE_KEY_HISTORY);
+        localStorage.removeItem(STORAGE_KEY_FLAGS);
+      } catch(e) {}
+      resultHistory = [];
+      renderHistory();
+      document.getElementById('chkremove').checked = false;
+      saveFlags();
+    }
+  }
+
+  // ===== 자동 저장 토글 =====
+  // - 켜짐: 항목/이력/플래그 변경 시 자동 저장 + 닫을 때도 저장
+  // - 꺼짐: 자동 저장 안 함 + 닫을 때도 저장 안 함
+  function toggleAutoSave() {
+    var chk = document.getElementById('chkautosave');
+    autoSave = chk.checked;
+    if (autoSave) {
+      // 다시 켜는 순간 현재 상태를 즉시 한 번 저장
+      saveItems();
+      saveHistory();
+      saveFlags();
+      // 단, autoSave=true 로 바뀐 직후엔 위 debounce 호출이 정상 작동
+      // autoSave 플래그 자체도 저장 (다음 방문 시 설정 복원)
+      try {
+        localStorage.setItem('roulette_autosave', '1');
+      } catch(e) {}
+      showToast('자동 저장 켜짐');
+    } else {
+      try {
+        localStorage.setItem('roulette_autosave', '0');
+      } catch(e) {}
+      showToast('자동 저장 꺼짐 (변경 사항 저장 안 함)');
+    }
+  }
+
+  // ===== Enter 키 입력 =====
+  function enterKey(e) {
+    e = e || window.event;
+    if (e.keyCode == 13) {
+      additembutton();
+    }
+  }
+
+  function checkremoveclick() {
+    var chk = document.getElementById("chkremove");
+    doremoveitem = chk.checked;
+    saveFlags();
+  }
+
+  function chkcheeseclick() {
+    var chkcheese = document.getElementById("chkcheese");
+    docheckcheese = chkcheese.checked;
+    saveFlags();
+  }
+
+  // ===== 치즈 임계값 변경 시 저장 =====
+  document.addEventListener('DOMContentLoaded', function(){
+    var cheeseEl = document.getElementById('cheeselow');
+    if (cheeseEl) {
+      cheeseEl.addEventListener('change', saveFlags);
+    }
+  });
+
+  // ===== 항목 추가 =====
+  function additembutton() {
+    // 회전 중 잠금
+    if (wheeldospin) {
+      showToast('회전 중에는 항목을 추가할 수 없습니다');
+      return;
+    }
+    var itemInput = document.getElementById('itemInput');
+    var itemText = itemInput.value.trim();
+    if (!itemText) return;
+
+    if (document.getElementById('itemList').childElementCount >= wheelmaxitem) {
+      showToast('최대 ' + wheelmaxitem + '개까지 추가할 수 있습니다');
+      itemInput.value = '';
+      return;
     }
 
-    function checkremoveclick() {
-        var chk=document.getElementById("chkremove");
-        doremoveitem=chk.checked;
-    }
-    
-    function chkcheeseclick() {
-        var chkcheese=document.getElementById("chkcheese");
-        docheckcheese=chkcheese.checked;
-    }
-
-    function additembutton() {
-        var itemInput = document.getElementById('itemInput');
-        var itemText = itemInput.value.trim();
-        if(document.getElementById('itemList').childElementCount>=wheelmaxitem) {
-          itemInput.value='';
-          return
-        }
-        if (itemText) {
-            // find item
-            var aitem=null;
-            prop.items.forEach((ele) => {
-                if(ele.label==itemText) {
-                  aitem=ele;
-                }
-            });
-            if(aitem) {
-                // add weight on existing item
-                aitem.weight+=1;
-                for(vi of document.getElementById('itemList').children) {
-                    if(vi.children[0].innerText==itemText) {
-                        vi.children[1].innerText=aitem.weight; 
-                    }
-                }
-            } else {
-                // add new item
-                var li = document.createElement('li');
-                li.className = 'item';
-                li.innerHTML = '<span class="textlabel">'+itemText+'</span><span class="iweight">1</span><button class="add-btn">+</button><button class="remove-btn">-</button>';
-                document.getElementById('itemList').appendChild(li);
-                var bgcolor=randomHSLA();
-                prop.items.push({label: itemText, labelColor: '#000000', backgroundColor: bgcolor, weight: 1});
-                li.style.backgroundColor=bgcolor;
-                // add weight event
-                li.querySelector('.add-btn').addEventListener('click', function () {
-                    var txt=li.children[0].innerText;
-                    var item=null;
-                    prop.items.forEach((ele) => {
-                       if(ele.label==txt) {
-                         item=ele;
-                       }
-                    });
-                    // add item weight
-                    if(item) {
-                        var ix=prop.items.indexOf(item);
-                        if(ix>-1) {
-                            item.weight+=1;
-                            li.children[1].innerText=item.weight;
-                            initwheel();
-                        }
-                    }
-                });
-                // add remove event
-                li.querySelector('.remove-btn').addEventListener('click', function () {
-                    var txt=li.children[0].innerText;
-                    deleteitem(txt);
-                });
-            }
-            itemInput.value = '';
-            initwheel();
-        }
-    }
-
-    document.getElementById('addItemBtn').addEventListener('click', function() {
-        additembutton();
+    // 기존 항목 찾기
+    var aitem = null;
+    prop.items.forEach(function(ele){
+      if (ele.label == itemText) aitem = ele;
     });
 
-    var chatsock = new ReconnectingWebSocket("ws://localhost:65003","chat");
-    chatsock.reconnectInterval=2000;
-    chatsock.onmessage = function (event) {
-      if(docheckcheese==true /*&& wheeldospin==false*/) {
-        chatline=$(event.data);
-        var msg=chatline.find('p._text_gb6rb_36');
-        var cheese=chatline.find('em._money_gb6rb_69');
-        if(msg) {
-          var itemInput = document.getElementById('itemInput');
-          var icheese = document.getElementById('cheeselow');
-          var vcheese='';
-          if(cheese) {
-            vcheese=cheese.text();
-            vcheese=vcheese.replace(',','');
-            vcheese=vcheese.replace('치즈','');
-            vcheese=vcheese.replace('\"','');            
-          }
-          if(!vcheese) {
-            vcheese='1000';
-            donlvl=event.data.match('_level\d+_gb6rb_10');
-            if(donlvl) {
-              console.log(donlvl);
-            }
-          }
-          if(parseInt(vcheese)>=parseint(icheese.value)) {
-            itemInput.value=msg.text();
-            additembutton();
-            //console.log(vcheese);
-          }
+    if (aitem) {
+      aitem.weight += 1;
+      var lis = document.getElementById('itemList').children;
+      for (var i = 0; i < lis.length; i++) {
+        if (lis[i].querySelector('.textlabel').innerText == itemText) {
+          lis[i].querySelector('.iweight').innerText = aitem.weight;
         }
       }
+    } else {
+      var li = document.createElement('li');
+      li.className = 'item';
+      var hslColor = randomHSLA();
+      var hexColor = hslToHex(hslColor);
+
+      var labelSpan = document.createElement('span');
+      labelSpan.className = 'textlabel';
+      labelSpan.textContent = itemText;
+
+      var weightSpan = document.createElement('span');
+      weightSpan.className = 'iweight';
+      weightSpan.textContent = '1';
+
+      var plusBtn = document.createElement('button');
+      plusBtn.className = 'btn-icon green';
+      plusBtn.textContent = '+';
+      plusBtn.title = '가중치 증가';
+
+      var minusBtn = document.createElement('button');
+      minusBtn.className = 'btn-icon red';
+      minusBtn.textContent = '−';
+      minusBtn.title = '가중치 감소';
+
+      li.appendChild(labelSpan);
+      li.appendChild(weightSpan);
+      li.appendChild(plusBtn);
+      li.appendChild(minusBtn);
+
+      li.style.borderLeftColor = hexColor;
+      li.style.background = 'linear-gradient(90deg, ' + hexColor + '22 0%, #1f1f26 30%)';
+
+      document.getElementById('itemList').appendChild(li);
+
+      prop.items.push({
+        label: itemText,
+        labelColor: '#000000',
+        backgroundColor: hexColor,
+        weight: 1
+      });
+
+      plusBtn.addEventListener('click', function () {
+        if (wheeldospin) {
+          showToast('회전 중에는 가중치를 변경할 수 없습니다');
+          return;
+        }
+        var txt = labelSpan.innerText;
+        var item = null;
+        prop.items.forEach(function(ele){
+          if (ele.label == txt) item = ele;
+        });
+        if (item) {
+          item.weight += 1;
+          weightSpan.innerText = item.weight;
+          drawWheel();
+          saveItems();
+        }
+      });
+
+      minusBtn.addEventListener('click', function () {
+        if (wheeldospin) {
+          showToast('회전 중에는 가중치를 변경할 수 없습니다');
+          return;
+        }
+        var txt = labelSpan.innerText;
+        deleteitem(txt);
+      });
     }
+
+    itemInput.value = '';
+    drawWheel();
+    updateCount();
+    updateWheelEmpty();
+    // localStorage 저장
+    saveItems();
+  }
+
+  document.getElementById('addItemBtn').addEventListener('click', function() {
+    additembutton();
+  });
+
+  document.getElementById('itemInput').addEventListener('keyup', function(e){
+    enterKey(e);
+  });
+
+  // ===== WebSocket: 도네이션 자동 항목 추가 =====
+  var chatsock = new ReconnectingWebSocket("ws://localhost:65003","chat");
+  chatsock.reconnectInterval = 2000;
+  chatsock.onmessage = function (event) {
+    if (docheckcheese != true) return;
+
+    chatline = $(event.data);
+    var msg = chatline.find('p._text_gb6rb_36');
+    var cheese = chatline.find('em._money_gb6rb_69');
+    if (!msg || !msg.length) return;
+
+    var icheese = document.getElementById('cheeselow');
+    var vcheese = '';
+    if (cheese && cheese.length) {
+      vcheese = cheese.text();
+      vcheese = vcheese.replace(/,/g, '');
+      vcheese = vcheese.replace(/치즈/g, '');
+      vcheese = vcheese.replace(/"/g, '');
+      vcheese = vcheese.trim();
+    }
+    if (!vcheese) {
+      vcheese = '1000';
+      var donlvl = event.data.match(/_level\d+_gb6rb_10/);
+      if (donlvl) {
+        // 도네이션 레벨 확장 포인트
+      }
+    }
+
+    var cheeseVal = parseInt(vcheese, 10);
+    var threshold = parseInt(icheese.value, 10);
+    if (isNaN(cheeseVal)) cheeseVal = 0;
+    if (isNaN(threshold)) threshold = 1000;
+
+    if (cheeseVal >= threshold) {
+      var itemInput = document.getElementById('itemInput');
+      itemInput.value = msg.text();
+      additembutton();
+      showToast('도네이션 자동 추가: ' + msg.text() + ' (' + cheeseVal + '치즈)', 2500);
+    }
+  };
+
+  // ===== 키보드 단축키 =====
+  document.addEventListener('keydown', function(e){
+    var tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea') return;
+
+    if (e.key === ' ' || e.code === 'Space') {
+      e.preventDefault();
+      spinwheel();
+    } else if (e.key === 'Escape') {
+      stopwheel();
+    } else if (e.key === 'c' || e.key === 'C') {
+      clearwheel();
+    }
+  });
 </script>
 </body>
 

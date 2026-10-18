@@ -10,65 +10,324 @@
 <script src = "./jquery/jquery-ui.js"></script>
 <!-- link href="https://ssl.pstatic.net/static/nng/glive/resource/p/static/css/main.cb0f9f29.css" rel="stylesheet"-->
     <style>
+        /* ===== 기본 채팅 박스 스타일 ===== */
+        /* #chatbox 는 외형 프레임 역할만. 자식인 #chat-list 가 스크롤 컨테이너. */
         #chatbox {
             width: 400px;
             height: 600px;
+            min-width: 250px;          /* 최소 너비 제한 */
+            min-height: 200px;         /* 최소 높이 제한 */
+            max-width: 90vw;           /* 최대 너비: 화면 너비의 90% */
+            max-height: 90vh;          /* 최대 높이: 화면 높이의 90% */
+            padding: 0;                /* 패딩은 #chat-list 에서 처리 */
+            overflow: hidden;          /* 외형 클립만, 스크롤은 #chat-list 가 담당 */
+            position: relative;         /* UI 요소(absolute)들의 기준 */
+
+            /* 항상 리사이즈 가능 (mouseenter/leave로 토글하지 않음) */
+            resize: both;
+
+            /* 기본은 투명, 호버/드래그 시에만 border 표시 */
+            border: 1px solid transparent;
+            box-sizing: border-box;
+            transition: border-color 0.15s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 내부 스크롤 컨테이너: 채팅 메시지들이 이 안에서만 스크롤됨.
+           이 요소는 #chatbox 의 flex 자식으로 패딩 박스를 꽉 채운다. */
+        #chat-list {
+            flex: 1 1 auto;
+            min-height: 0;             /* flex 자식 스크롤 위해 필수 */
+            overflow-y: auto;
+            overflow-x: hidden;
             padding: 5px;
-            overflow: hidden;
-            align-content: flex-end; 
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end; /* 메시지를 하단 정렬 */
+            align-content: flex-end;
+        }
+        /* 스크롤바 다크 테마 */
+        #chat-list::-webkit-scrollbar { width: 8px; }
+        #chat-list::-webkit-scrollbar-track { background: transparent; }
+        #chat-list::-webkit-scrollbar-thumb { background: #3a3a45; border-radius: 4px; }
+        #chat-list::-webkit-scrollbar-thumb:hover { background: #4a4a55; }
+
+        /* 브라우저 기본 리사이즈 핸들(우하단 대각선 빗금) 숨기기
+           - Chrome/Safari/Edge: ::-webkit-resizer
+           - Firefox: ::-moz-resizer (지원 제한적)
+           - 리사이즈 기능 자체는 resize: both 로 유지 → 모서리 드래그 시 동작 */
+        #chatbox::-webkit-resizer {
+            background: transparent;
+            display: none;
+        }
+        #chatbox::-moz-resizer {
+            background: transparent;
+            opacity: 0;
+        }
+
+        /* 호버 시 border 표시 */
+        #chatbox:hover {
+            border-color: #5f5f5f7f;
+        }
+
+        /* 드래그(리사이즈) 중에는 border 유지 */
+        #chatbox.is-resizing {
+            border-color: #5f5f5f7f;
+        }
+
+        /* ===== 우하단 리사이즈 가능 표시 (호버/드래그 중에만 표시) ===== */
+        /* 대각선 빗금 대신 작은 점 3개로 구성된 미니멀한 그립 표시 */
+        #chatbox::after {
+            content: "";
+            position: absolute;
+            right: 3px;
+            bottom: 3px;
+            width: 12px;
+            height: 12px;
+            pointer-events: none;          /* 리사이즈 영역 클릭 방해 금지 */
+            opacity: 0;                     /* 기본 숨김 */
+            transition: opacity 0.15s ease;
+            /* 작은 점 3개 (대각선 배열) — 라디얼 그라디언트로 표현 */
+            background-image:
+                radial-gradient(circle 1.5px at 2px 10px, #aaa 99%, transparent 100%),
+                radial-gradient(circle 1.5px at 6px 6px,  #aaa 99%, transparent 100%),
+                radial-gradient(circle 1.5px at 10px 2px, #aaa 99%, transparent 100%);
+            background-repeat: no-repeat;
+        }
+        /* 호버 또는 드래그 중일 때만 표시 */
+        #chatbox:hover::after,
+        #chatbox.is-resizing::after {
+            opacity: 0.85;
+        }
+
+        /* ===== 크기 초기화 버튼 ===== */
+        #chatbox-reset {
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            width: 18px;
+            height: 18px;
+            line-height: 16px;
+            text-align: center;
+            font-size: 13px;
+            color: #bbb;
+            background: rgba(0,0,0,0.35);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 3px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.15s ease, color 0.15s ease;
+            user-select: none;
+            z-index: 5;
+            font-family: monospace;
+        }
+        #chatbox:hover #chatbox-reset,
+        #chatbox.is-resizing #chatbox-reset {
+            opacity: 0.8;
+        }
+        #chatbox-reset:hover {
+            opacity: 1 !important;
+            color: #fff;
+            background: rgba(0,0,0,0.6);
+        }
+
+        /* ===== 크기 표시 툴팁 (리사이즈 중에만 잠깐 표시) ===== */
+        #chatbox-size-tip {
+            position: absolute;
+            bottom: 6px;
+            right: 22px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #e8ecf5;                /* 약간 푸른빛이 도는 흰색 */
+            background: rgba(20, 28, 50, 0.95);   /* 진한 남색 (거의 불투명) */
+            padding: 4px 10px;
+            border: 1px solid rgba(100, 130, 200, 0.45);  /* 남색 테두리 */
+            border-radius: 6px;
+            font-family: "Noto Sans KR", monospace;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 5;
+            /* 그림자: 남색 톤으로 떠 있는 느낌 */
+            box-shadow: 0 2px 10px rgba(20, 40, 80, 0.7);
+            /* 텍스트 그림자: 가독성 극대화 */
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+            /* 글자 간격 약간 */
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+        #chatbox.is-resizing #chatbox-size-tip {
+            opacity: 1;
         }
     </style>
 <script>
 try {
-var chatsize = JSON.parse(localStorage.getItem('chatsize') || "{}");
+    var chatsize = JSON.parse(localStorage.getItem('chatsize') || "{}");
 } catch(e) {
-var chatsize = JSON.parse("{}");
+    var chatsize = {};
 }
-var windowname='chatwindowchzzk';    // 단일 이름을 지정.
+var windowname = 'chatwindowchzzk';    // 단일 이름을 지정.
+
+// 기본 크기 상수
+var DEFAULT_WIDTH  = 400;
+var DEFAULT_HEIGHT = 600;
+
+// 허용 범위 (CSS min/max 와 일치)
+var MIN_WIDTH  = 250;
+var MIN_HEIGHT = 200;
+var MAX_WIDTH  = Math.floor(window.innerWidth  * 0.9);
+var MAX_HEIGHT = Math.floor(window.innerHeight * 0.9);
+
+// 저장된 크기가 유효한지 검증
+function getValidSize() {
+    var s = chatsize[windowname];
+    if (s && typeof s.width === 'number' && typeof s.height === 'number'
+        && s.width  >= MIN_WIDTH  && s.width  <= MAX_WIDTH
+        && s.height >= MIN_HEIGHT && s.height <= MAX_HEIGHT) {
+        return s;
+    }
+    return null;
+}
+
+// 디바운스 헬퍼 (과도한 localStorage 쓰기 방지)
+function debounce(fn, delay) {
+    var t;
+    var wrapped = function() {
+        var ctx = this, args = arguments;
+        clearTimeout(t);
+        t = setTimeout(function(){ fn.apply(ctx, args); }, delay);
+    };
+    // 대기 중인 호출을 즉시 실행
+    wrapped.flush = function() {
+        if (t) {
+            clearTimeout(t);
+            t = null;
+            fn.apply(null);
+        }
+    };
+    return wrapped;
+}
+
 $(document).ready(function(){
-  // load/save size  
-  if(chatsize[windowname]) {
-    $("#chatbox").width(chatsize[windowname].width);
-    $("#chatbox").height(chatsize[windowname].height);  
-    //console.log(chatsize[windowname]);
-  } else {
-    $("#chatbox").width("400px");
-    $("#chatbox").height("600px");
-    //chatsize[windowname]={width:$("#chatbox").width(),height:$("#chatbox").height()};
-    //localStorage.setItem('chatsize',JSON.stringify(chatsize));
-  }
+    var $box = $("#chatbox");
+
+    // 1) 저장된 크기 로드 (검증 후)
+    var saved = getValidSize();
+    if (saved) {
+        $box.width(saved.width);
+        $box.height(saved.height);
+    } else {
+        $box.width(DEFAULT_WIDTH + "px");
+        $box.height(DEFAULT_HEIGHT + "px");
+    }
+
+    // 2) 초기화 버튼 및 크기 툴팁 DOM 추가
+    $box.append('<div id="chatbox-reset" title="기본 크기로 복원 (더블클릭 가능)">↺</div>');
+    $box.append('<div id="chatbox-size-tip"></div>');
+
+    var $tip = $("#chatbox-size-tip");
+
+    // 3) 크기 저장 (디바운싱)
+    var saveSize = debounce(function() {
+        var w = Math.round($box.width());
+        var h = Math.round($box.height());
+        // 범위 재검증 후 저장
+        if (w >= MIN_WIDTH && w <= MAX_WIDTH && h >= MIN_HEIGHT && h <= MAX_HEIGHT) {
+            chatsize[windowname] = { width: w, height: h };
+            try {
+                localStorage.setItem('chatsize', JSON.stringify(chatsize));
+            } catch(e) { /* 저장 실패 무시 (쿼터 초과 등) */ }
+        }
+    }, 200);
+
+    // 4) 툴팁 갱신
+    function updateTip() {
+        $tip.text(Math.round($box.width()) + " × " + Math.round($box.height()));
+    }
+
+    // 5) ResizeObserver 로 크기 변경 감지 (mousemove 폴링보다 효율적)
+    var isResizing = false;
+    if (window.ResizeObserver) {
+        var ro = new ResizeObserver(function(entries) {
+            if (isResizing) {
+                updateTip();
+            }
+            saveSize();
+        });
+        ro.observe($box[0]);
+    }
+
+    // 6) 리사이즈 드래그 상태 감지 (mousedown on border / mousemove)
+    //    - ResizeObserver는 "변했다"는 사실만 알려주므로, 드래그 시작/끝을 별도 추적
+    $box.on('mousedown', function(e) {
+        // 마우스가 박스 안에서 눌렸을 때, 리사이즈 시작 가능성 열어둠
+        isResizing = true;
+        $box.addClass('is-resizing');
+        updateTip();
+    });
+
+    // 7) document 레벨 mouseup → 박스 밖에서 떼어도 저장/상태 종료
+    $(document).on('mouseup', function() {
+        if (isResizing) {
+            isResizing = false;
+            $box.removeClass('is-resizing');
+            saveSize(); // 즉시 1회 저장 (디바운스 대기 없이)
+            saveSize.flush ? saveSize.flush() : null;
+        }
+    });
+
+    // 8) 더블클릭으로 기본 크기 복원
+    $box.on('dblclick', function(e) {
+        // 텍스트 영역 더블클릭(단어 선택)과 충돌 방지: 모서리 근처에서만 동작
+        var offset = $box.offset();
+        var fromRight  = (offset.left + $box.outerWidth())  - e.pageX;
+        var fromBottom = (offset.top  + $box.outerHeight()) - e.pageY;
+        if (fromRight < 30 && fromBottom < 30) {
+            $box.width(DEFAULT_WIDTH + "px");
+            $box.height(DEFAULT_HEIGHT + "px");
+            updateTip();
+            saveSize();
+            e.preventDefault();
+        }
+    });
+
+    // 9) 초기화 버튼 클릭
+    $(document).on('click', '#chatbox-reset', function(e) {
+        e.stopPropagation();
+        $box.width(DEFAULT_WIDTH + "px");
+        $box.height(DEFAULT_HEIGHT + "px");
+        updateTip();
+        saveSize();
+    });
+
+    // 10) 창 크기 변화 시 max 제한 재계산
+    $(window).on('resize', function() {
+        MAX_WIDTH  = Math.floor(window.innerWidth  * 0.9);
+        MAX_HEIGHT = Math.floor(window.innerHeight * 0.9);
+        // 현재 크기가 새 max를 초과하면 축소
+        if ($box.width()  > MAX_WIDTH)  $box.width(MAX_WIDTH);
+        if ($box.height() > MAX_HEIGHT) $box.height(MAX_HEIGHT);
+    });
 });
 
 </script>
 </head> 
 <body>
-<div id="chatbox">   
+<div id="chatbox">
+    <!-- UI 요소들은 #chatbox 자식이지만 #chat-list(스크롤 컨테이너) 밖에 위치 → 스크롤에 영향 안 받음 -->
+    <div id="chat-list"></div>
 </div>
 <script type="text/javascript" src="reconnecting-websocket.min.js"></script>
 <script type="text/javascript">
 
-$("#chatbox").mouseenter(function(){
-  $("#chatbox").css("border", "1px solid #5f5f5f7f");
-  $("#chatbox").css("resize", "both");  
-});
+// (리사이즈 로직은 위쪽 <script> 로 이동・정리됨)
 
-$("#chatbox").mouseleave(function(){
-  $("#chatbox").css("border", "hidden");
-  $("#chatbox").css("resize", "None");
-});
-
-$("#chatbox").mouseup(function(){
-  chatsize[windowname]={width:$("#chatbox").width(),height:$("#chatbox").height()};
-  localStorage.setItem('chatsize',JSON.stringify(chatsize));
-  //console.log(chatsize);
-});
-
-//
 var randomcolor=1;
 var chatsock = new ReconnectingWebSocket("ws://localhost:65002","chat");
 chatsock.reconnectInterval=2000;
 chatsock.onmessage = function (event) {
-    var div = $("#chatbox");
+    var div = $("#chat-list");
     chatline=$(event.data);
     // replace alpha color
     var chatid=chatline.find('span._nickname_1mc5x_80');
@@ -80,10 +339,13 @@ chatsock.onmessage = function (event) {
         chatid.css('background-image', '');
     }
     div.append(chatline);
-    if (div.children('div').length>50) {
-      div.children('div')[0].remove();
+    // #chat-list 의 모든 자식 = 채팅 메시지 (UI 요소는 이제 #chatbox 자식)
+    var msgs = div.children('div');
+    if (msgs.length > 50) {
+      msgs[0].remove();
     }
-    var le=document.querySelector('#chatbox').lastChild;
+    // 방금 추가한 채팅 메시지를 기준으로 스크롤
+    var le = chatline[0];
     le.scrollIntoView({behavior: "smooth", block: "end"});
     // disappear
     setTimeout(function () {

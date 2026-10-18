@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="utf-8">
+  <title>룰렛 - Roulette</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <!--link type="text/css" rel="stylesheet" href="index-B3xGXYAr-dark.css" /-->
+  <style>
+    /* ===== 뷰포트/다크 테마 기본 ===== */
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      background: #0f0f12;
+      color: #e6e6e6;
+      font-family: "Noto Sans KR", "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ===== 상단 헤더 ===== */
+    #header {
+      flex: 0 0 auto;
+      padding: 10px 16px;
+      background: linear-gradient(180deg, #1a1a20 0%, #15151a 100%);
+      border-bottom: 1px solid #2a2a30;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    #header h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      color: #f0a830;
+      letter-spacing: 0.5px;
+    }
+    #header .count-badge {
+      background: #1f1f26;
+      border: 1px solid #2f2f38;
+      color: #aaa;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+    #header .count-badge b { color: #f0a830; }
+
+    /* ===== 메인 레이아웃 ===== */
+    #main {
+      flex: 1 1 auto;
+      display: flex;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    /* 룰렛 영역 */
+    .wheel-wrapper {
+      flex: 1 1 60%;
+      position: relative;
+      padding: 16px;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* 룰렛 컨테이너: 명시적 크기 부여 (spin-wheel 라이브러리가 컨테이너 크기 기반으로 캔버스 생성) */
+    .wheel-wrapper > #wheel-container {
+      width: 100%;
+      height: 100%;
+      min-height: 320px;
+      min-width: 320px;
+      position: relative;
+    }
+    .wheel-wrapper canvas,
+    .wheel-wrapper svg {
+      max-width: 100%;
+      max-height: 100%;
+      display: block;
+    }
+    /* 빈 상태 플레이스홀더 */
+    .wheel-empty {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      color: #444;
+      font-size: 15px;
+      font-style: italic;
+      text-align: center;
+    }
+    .wheel-empty.hidden { display: none; }
+
+    /* 우측 패널 */
+    .gui-wrapper {
+      flex: 1 1 40%;
+      min-width: 320px;
+      max-width: 540px;
+      background: #15151a;
+      border-left: 1px solid #2a2a30;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .gui-section {
+      padding: 12px 16px;
+      border-bottom: 1px solid #1f1f26;
+    }
+    .gui-section:last-child { border-bottom: none; flex: 1 1 auto; overflow-y: auto; }
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin: 0 0 8px;
+    }
+
+    /* ===== 버튼 ===== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      height: 32px;
+      padding: 0 14px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      cursor: pointer;
+      transition: filter 0.15s ease, transform 0.05s ease;
+      user-select: none;
+    }
+    .btn:hover  { filter: brightness(1.15); }
+    .btn:active { transform: translateY(1px); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; filter: none; }
+    .btn-spin   { background: #f0a830; color: #1a1a20; }
+    .btn-stop   { background: #e0463c; }
+    .btn-clear  { background: #4a4a55; }
+    .btn-add    { background: #2d7bf4; min-width: 36px; padding: 0; }
+    .btn-icon {
+      min-width: 28px;
+      padding: 0 8px;
+      height: 24px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .btn-icon.green  { background: #3aa55a; }
+    .btn-icon.red    { background: #d04030; }
+
+    .btn-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    /* ===== 체크박스/인풋 ===== */
+    .opt-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      font-size: 13px;
+      color: #ccc;
+    }
+    .opt-row label { cursor: pointer; }
+    .opt-row input[type="number"],
+    .opt-row input[type="text"] {
+      background: #0a0a0d;
+      border: 1px solid #2f2f38;
+      color: #e6e6e6;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 13px;
+      width: 90px;
+    }
+    .opt-row input[type="text"]:focus {
+      outline: none;
+      border-color: #2d7bf4;
+    }
+    /* 토글 스위치 스타일 체크박스 */
+    .switch {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      appearance: none;
+      -webkit-appearance: none;
+      background: #3a3a45;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      flex: 0 0 auto;
+    }
+    .switch::before {
+      content: "";
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 16px; height: 16px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.2s ease;
+    }
+    .switch:checked { background: #2d7bf4; }
+    .switch:checked::before { transform: translateX(16px); }
+
+    /* ===== 항목 입력 행 ===== */
+    .item-input-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    #itemInput {
+      flex: 1 1 auto;
+      background: #0a0a0d;
+      border: 1px solid #2f2f38;
+      color: #e6e6e6;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    #itemInput:focus {
+      outline: none;
+      border-color: #2d7bf4;
+      box-shadow: 0 0 0 2px rgba(45,123,244,0.2);
+    }
+    #itemInput::placeholder { color: #555; }
+
+    /* ===== 항목 리스트 ===== */
+    #itemList {
+      list-style-type: none;
+      padding: 0;
+      margin: 8px 0 0;
+    }
+    .item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px 6px 12px;
+      margin: 4px 0;
+      background: #1f1f26;
+      border: 1px solid #2f2f38;
+      border-left: 4px solid #888;
+      border-radius: 8px;
+      transition: background 0.12s ease, border-color 0.12s ease;
+      animation: cardIn 0.25s ease;
+    }
+    .item:hover {
+      background: #2a2a32;
+    }
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateX(-4px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    .item .textlabel {
+      flex: 1 1 auto;
+      color: #e6e6e6;
+      word-break: break-all;
+      font-size: 13px;
+    }
+    .item .iweight {
+      flex: 0 0 auto;
+      min-width: 24px;
+      height: 22px;
+      line-height: 22px;
+      text-align: center;
+      background: #0a0a0d;
+      border: 1px solid #2f2f38;
+      color: #f0a830;
+      font-weight: 700;
+      border-radius: 4px;
+      padding: 0 4px;
+      font-size: 12px;
+    }
+    #itemList:empty::after {
+      content: "항목이 없습니다. 위 입력창에 추가하세요.";
+      display: block;
+      padding: 12px;
+      color: #555;
+      font-size: 13px;
+      font-style: italic;
+      text-align: center;
+    }
+
+    /* ===== 결과 표시 ===== */
+    .result-section {
+      padding: 16px;
+      background: linear-gradient(180deg, #1a1a20 0%, #15151a 100%);
+      border-bottom: 1px solid #2a2a30;
+      text-align: center;
+    }
+    .result-section .label {
+      font-size: 11px;
+      color: #888;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    #restext {
+      display: inline-block;
+      min-width: 60%;
+      padding: 12px 20px;
+      background: #0a0a0d;
+      border: 1px solid #2f2f38;
+      border-radius: 12px;
+      color: #888;
+      font-size: 18px;
+      font-weight: 700;
+      transition: background 0.3s ease, color 0.3s ease, transform 0.3s ease;
+    }
+    #restext.has-result {
+      color: #fff;
+      transform: scale(1.05);
+      box-shadow: 0 0 16px rgba(240,168,48,0.4);
+    }
+
+    /* ===== 결과 이력 ===== */
+    .history-list {
+      list-style: none;
+      padding: 0;
+      margin: 8px 0 0;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+    .history-list::-webkit-scrollbar { width: 6px; }
+    .history-list::-webkit-scrollbar-thumb { background: #3a3a45; border-radius: 3px; }
+    .history-list li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 8px;
+      font-size: 12px;
+      color: #aaa;
+      border-bottom: 1px solid #1a1a20;
+    }
+    .history-list li:last-child { border-bottom: none; }
+    .history-list .h-time { color: #666; font-family: monospace; flex: 0 0 50px; }
+    .history-list .h-name { flex: 1 1 auto; word-break: break-all; }
+
+    /* ===== 알림 토스트 ===== */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(0,0,0,0.85);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      z-index: 200;
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* 스크롤바 공통 (다크) */
+    .gui-section:last-child::-webkit-scrollbar { width: 8px; }
+    .gui-section:last-child::-webkit-scrollbar-track { background: #15151a; }
+    .gui-section:last-child::-webkit-scrollbar-thumb { background: #3a3a45; border-radius: 4px; }
+  </style>
+  <script src="./jquery/jquery-3.7.1.min.js"></script>
+  <script src="./spinwheel/spin-wheel-iife.js"></script>
+  <script type="text/javascript" src="reconnecting-websocket.min.js"></script>
+  <script>
+    // ===== 상태 =====
+    let prop = { items: [] };
+    var doremoveitem = false;
+    var docheckcheese = false;
+    var wheeldospin = false;
+    var lastitemtext = '';
+    var wheelmaxitem = 50;
+    var resultHistory = [];   // 결과 이력
+
+    // ===== 룰렛 오버레이 이미지 =====
+    let whimg = new Image(300, 300);
+    whimg.src = "./spinwheel/wheel_overlay.svg";
+
+    // ===== 토스트 알림 =====
+    var toastTimer = null;
+    function showToast(msg, ms) {
+      ms = ms || 2000;
+      var t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(function(){ t.classList.remove('show'); }, ms);
+    }
+
+    // ===== 빈 상태 토글 =====
+    function updateWheelEmpty() {
+      var empty = document.querySelector('.wheel-empty');
+      if (!empty) return;
+      if (prop.items.length === 0) empty.classList.remove('hidden');
+      else empty.classList.add('hidden');
+    }
+
+    // ===== 카운터 업데이트 =====
+    function updateCount() {
+      document.querySelector('#header .count-badge b').textContent = prop.items.length;
+    }
+
+    // ===== 항목 삭제 =====
+    function deleteitem(itext) {
+      var li = null;
+      var children = document.getElementById('itemList').children;
+      for (var i = 0; i < children.length; i++) {
+        if (children[i].querySelector('.textlabel').innerText == itext) {
+          li = children[i];
+          break;
+        }
+      }
+      var item = null;
+      prop.items.forEach(function(ele){
+        if (ele.label == itext) item = ele;
+      });
+      if (item) {
+        var ix = prop.items.indexOf(item);
+        if (ix > -1) {
+          item.weight -= 1;
+          if (item.weight <= 0) {
+            if (confirm(item.label + ' 항목을 지우시겠습니까?') == true) {
+              prop.items.splice(ix, 1);
+              if (li) li.remove();
+            } else {
+              item.weight = 1;
+            }
+          } else {
+            if (li) li.querySelector('.iweight').innerText = item.weight;
+          }
+          initwheel();
+          updateCount();
+          updateWheelEmpty();
+        }
+      }
+    }
+
+    // ===== 룰렛 돌리기 =====
+    function spinwheel() {
+      if (prop.items.length === 0) {
+        showToast('항목을 먼저 추가하세요');
+        return;
+      }
+      wheel.stop();
+      // 추첨된 항목 줄이기 옵션
+      if (doremoveitem == true && lastitemtext != '') {
+        deleteitem(lastitemtext);
+        lastitemtext = '';
+        initwheel();
+      }
+      // [버그 수정] Math.random(1) → Math.random()*1
+      //   원본은 Math.random(1)*360+360 → 360~361도로 거의 제자리 회전
+      //   회전각을 5~8바퀴 + 무작위 오프셋으로 설정
+      var targetRotation = 360 * (5 + Math.random() * 3) + Math.random() * 360;
+      wheel.spin(targetRotation);
+      var res = document.getElementById('restext');
+      res.innerText = '...';
+      res.className = '';
+      res.style.backgroundColor = '';
+    }
+
+    // ===== 강제 멈추기 =====
+    function stopwheel() {
+      wheel.stop();
+      wheeldospin = false;
+      var res = document.getElementById('restext');
+      if (lastitemtext) {
+        res.innerText = lastitemtext;
+        applyResultStyle(lastitemtext);
+      } else {
+        res.innerText = '(멈춤)';
+        res.className = '';
+      }
+    }
+
+    // ===== 결과 스타일 적용 =====
+    function applyResultStyle(label) {
+      var res = document.getElementById('restext');
+      var item = null;
+      prop.items.forEach(function(ele){
+        if (ele.label == label) item = ele;
+      });
+      if (item) {
+        res.innerText = label;
+        res.style.backgroundColor = item.backgroundColor;
+        res.style.color = '#000';
+        res.className = 'has-result';
+      } else {
+        res.innerText = label;
+        res.className = 'has-result';
+      }
+    }
+
+    // ===== 결과 이력 추가 =====
+    function addHistory(label) {
+      var now = new Date();
+      var hh = String(now.getHours()).padStart(2, '0');
+      var mm = String(now.getMinutes()).padStart(2, '0');
+      var ss = String(now.getSeconds()).padStart(2, '0');
+      var time = hh + ':' + mm + ':' + ss;
+      resultHistory.unshift({ time: time, label: label });
+      if (resultHistory.length > 20) resultHistory.pop();
+      renderHistory();
+    }
+    function renderHistory() {
+      var ul = document.getElementById('historyList');
+      if (!ul) return;
+      ul.innerHTML = '';
+      resultHistory.forEach(function(h){
+        var li = document.createElement('li');
+        li.innerHTML = '<span class="h-time">' + h.time + '</span><span class="h-name"></span>';
+        li.querySelector('.h-name').textContent = h.label;
+        ul.appendChild(li);
+      });
+    }
+
+    // ===== 파스텔 색상 =====
+    function randomHSLA() {
+      var hue = Math.floor(Math.random() * 360);
+      var lum = Math.floor(Math.random() * 15) + 65;
+      return 'hsl(' + hue + ', 100%, ' + lum + '%)';
+    }
+
+    // ===== 룰렛 현재 항목 표시 =====
+    function showCurrent(event) {
+      var item = prop.items[event.currentIndex];
+      if (!item) return;
+      var itemText = item.label;
+      lastitemtext = itemText;
+      var res = document.getElementById('restext');
+      // 회전 중에는 미리보기로 표시 (스타일 미적용)
+      if (wheeldospin) {
+        res.innerText = itemText;
+        res.style.backgroundColor = '';
+        res.style.color = '#aaa';
+        res.className = '';
+      }
+    }
+
+    function wheelrest(event) {
+      wheeldospin = false;
+      var item = prop.items[event.currentIndex];
+      if (!item) return;
+      lastitemtext = item.label;
+      applyResultStyle(lastitemtext);
+      addHistory(lastitemtext);
+      showToast('🎉 당첨: ' + lastitemtext, 2500);
+    }
+
+    function wheelspin(event) {
+      wheeldospin = true;
+    }
+
+    // ===== 룰렛 초기화 =====
+    function initwheel() {
+      if (!window.wheel) return;
+      wheel.stop();
+      lastitemtext = '';
+      // 빈 항목이면 더미 1개를 넣어 캔버스가 그려지게 함 (사용자에게는 안 보임)
+      var propToInit = prop;
+      if (prop.items.length === 0) {
+        propToInit = { items: [{ label: '', backgroundColor: '#1f1f26', labelColor: '#1f1f26' }] };
+      }
+      wheel.init(propToInit);
+      wheel.rotationSpeedMax = 720;
+      wheel.itemLabelFontSizeMax = 70;
+      wheel.itemLabelRadiusMax = 0.1;
+      wheel.itemLabelRadius = 0.99;
+      wheel.overlayImage = whimg;
+      wheel.onRest = wheelrest;
+      wheel.onCurrentIndexChange = showCurrent;
+      wheel.onSpin = wheelspin;
+      wheeldospin = false;
+      // 캔버스 강제 갱신 (사이즈 재계산)
+      try { wheel.resize(); } catch(e) {}
+      updateWheelEmpty();
+      updateCount();
+    }
+
+    window.onload = function() {
+      // #wheel-container 에 룰렛 캔버스 생성
+      var container = document.getElementById('wheel-container');
+      if (!container) container = document.querySelector('.wheel-wrapper');
+      window.wheel = new spinWheel.Wheel(container);
+      initwheel();
+      // 페이지 로드 직후 컨테이너 크기가 확정된 후 캔버스 갱신
+      setTimeout(function(){
+        if (window.wheel) {
+          try { wheel.resize(); } catch(e) {}
+        }
+      }, 100);
+    };
+  </script>
+
+</head>
+
+<body>
+
+<!-- ===== 상단 헤더 ===== -->
+<div id="header">
+  <h1>🎯 룰렛</h1>
+  <span class="count-badge">항목 <b>0</b> / 50</span>
+</div>
+
+<!-- ===== 메인 ===== -->
+<div id="main">
+  <!-- 룰렛 영역 -->
+  <div class="wheel-wrapper">
+    <div id="wheel-container"></div>
+    <div class="wheel-empty">항목을 추가하면 룰렛이 표시됩니다</div>
+  </div>
+
+  <!-- 우측 패널 -->
+  <div class="gui-wrapper">
+
+    <!-- 결과 표시 -->
+    <div class="result-section">
+      <div class="label">결과</div>
+      <p id="restext">항목을 추가하세요</p>
+    </div>
+
+    <!-- 컨트롤 -->
+    <div class="gui-section">
+      <p class="section-title">컨트롤</p>
+      <div class="btn-group">
+        <button class="btn btn-spin" onclick="spinwheel()">🎲 돌리기</button>
+        <button class="btn btn-stop" onclick="stopwheel()">⏹ 멈추기</button>
+        <button class="btn btn-clear" onclick="clearwheel()">🗑 지우기</button>
+      </div>
+      <div class="opt-row">
+        <input type="checkbox" id="chkremove" class="switch" onclick="checkremoveclick()">
+        <label for="chkremove">추첨된 항목 줄이기</label>
+      </div>
+    </div>
+
+    <!-- 항목 추가 -->
+    <div class="gui-section">
+      <p class="section-title">항목 추가</p>
+      <div class="item-input-row">
+        <input type="text" id="itemInput" placeholder="추가할 내용 (Enter 입력)">
+        <button id="addItemBtn" class="btn btn-add">+</button>
+      </div>
+
+      <div class="opt-row" style="margin-top:12px;">
+        <label for="cheeselow">치즈 최소:</label>
+        <input type="number" id="cheeselow" value="1000" min="1">
+        <input type="checkbox" id="chkcheese" class="switch" onclick="chkcheeseclick()">
+        <label for="chkcheese">도네이션 자동 추가</label>
+      </div>
+    </div>
+
+    <!-- 항목 리스트 + 이력 -->
+    <div class="gui-section">
+      <p class="section-title">항목 목록</p>
+      <ul id="itemList"></ul>
+
+      <p class="section-title" style="margin-top:12px;">최근 결과</p>
+      <ul class="history-list" id="historyList"></ul>
+    </div>
+
+  </div>
+</div>
+
+<!-- 토스트 -->
+<div id="toast"></div>
+
+<script>
+  // ===== 전체 초기화 =====
+  function clearwheel() {
+    if (wheeldospin == false && confirm('모든 항목을 지우시겠습니까?') == true) {
+      prop = { items: [] };
+      doremoveitem = false;
+      wheeldospin = false;
+      lastitemtext = '';
+      initwheel();
+      document.getElementById('itemList').innerHTML = '';
+      var res = document.getElementById('restext');
+      res.innerText = '항목을 추가하세요';
+      res.className = '';
+      res.style.backgroundColor = '';
+      res.style.color = '';
+    }
+  }
+
+  // ===== Enter 키 입력 =====
+  function enterKey(e) {
+    e = e || window.event;
+    if (e.keyCode == 13) {
+      additembutton();
+    }
+  }
+
+  function checkremoveclick() {
+    var chk = document.getElementById("chkremove");
+    doremoveitem = chk.checked;
+  }
+
+  function chkcheeseclick() {
+    var chkcheese = document.getElementById("chkcheese");
+    docheckcheese = chkcheese.checked;
+  }
+
+  // ===== 항목 추가 =====
+  function additembutton() {
+    var itemInput = document.getElementById('itemInput');
+    var itemText = itemInput.value.trim();
+    if (!itemText) return;
+
+    if (document.getElementById('itemList').childElementCount >= wheelmaxitem) {
+      showToast('최대 ' + wheelmaxitem + '개까지 추가할 수 있습니다');
+      itemInput.value = '';
+      return;
+    }
+
+    // 기존 항목 찾기
+    var aitem = null;
+    prop.items.forEach(function(ele){
+      if (ele.label == itemText) aitem = ele;
+    });
+
+    if (aitem) {
+      // 가중치 증가
+      aitem.weight += 1;
+      var lis = document.getElementById('itemList').children;
+      for (var i = 0; i < lis.length; i++) {
+        if (lis[i].querySelector('.textlabel').innerText == itemText) {
+          lis[i].querySelector('.iweight').innerText = aitem.weight;
+        }
+      }
+    } else {
+      // 신규 항목
+      var li = document.createElement('li');
+      li.className = 'item';
+      var bgcolor = randomHSLA();
+
+      // span.textlabel (XSS 방지를 위해 textContent 사용)
+      var labelSpan = document.createElement('span');
+      labelSpan.className = 'textlabel';
+      labelSpan.textContent = itemText;
+
+      var weightSpan = document.createElement('span');
+      weightSpan.className = 'iweight';
+      weightSpan.textContent = '1';
+
+      var plusBtn = document.createElement('button');
+      plusBtn.className = 'btn-icon green';
+      plusBtn.textContent = '+';
+      plusBtn.title = '가중치 증가';
+
+      var minusBtn = document.createElement('button');
+      minusBtn.className = 'btn-icon red';
+      minusBtn.textContent = '−';
+      minusBtn.title = '가중치 감소';
+
+      li.appendChild(labelSpan);
+      li.appendChild(weightSpan);
+      li.appendChild(plusBtn);
+      li.appendChild(minusBtn);
+
+      // 좌측 보더 색 = 항목 색
+      li.style.borderLeftColor = bgcolor;
+      li.style.background = 'linear-gradient(90deg, ' + bgcolor + '22 0%, #1f1f26 30%)';
+
+      document.getElementById('itemList').appendChild(li);
+
+      prop.items.push({
+        label: itemText,
+        labelColor: '#000000',
+        backgroundColor: bgcolor,
+        weight: 1
+      });
+
+      // 가중치 증가 이벤트
+      plusBtn.addEventListener('click', function () {
+        var txt = labelSpan.innerText;
+        var item = null;
+        prop.items.forEach(function(ele){
+          if (ele.label == txt) item = ele;
+        });
+        if (item) {
+          item.weight += 1;
+          weightSpan.innerText = item.weight;
+          initwheel();
+        }
+      });
+
+      // 가중치 감소 이벤트
+      minusBtn.addEventListener('click', function () {
+        var txt = labelSpan.innerText;
+        deleteitem(txt);
+      });
+    }
+
+    itemInput.value = '';
+    initwheel();
+    // 항목 추가 직후 캔버스가 갱신되지 않는 경우를 대비해 약간의 지연 후 다시 갱신
+    setTimeout(function(){
+      if (window.wheel) {
+        try { wheel.resize(); } catch(e) {}
+      }
+    }, 50);
+  }
+
+  // 초기화: addItemBtn 클릭
+  document.getElementById('addItemBtn').addEventListener('click', function() {
+    additembutton();
+  });
+
+  // itemInput keyup → enterKey
+  document.getElementById('itemInput').addEventListener('keyup', function(e){
+    enterKey(e);
+  });
+
+  // ===== WebSocket: 도네이션 자동 항목 추가 =====
+  var chatsock = new ReconnectingWebSocket("ws://localhost:65003","chat");
+  chatsock.reconnectInterval = 2000;
+  chatsock.onmessage = function (event) {
+    if (docheckcheese != true) return;
+
+    chatline = $(event.data);
+    var msg = chatline.find('p._text_gb6rb_36');
+    var cheese = chatline.find('em._money_gb6rb_69');
+    if (!msg || !msg.length) return;
+
+    var icheese = document.getElementById('cheeselow');
+    var vcheese = '';
+    if (cheese && cheese.length) {
+      vcheese = cheese.text();
+      // [버그 수정] replace()는 첫 일치만 교체 → 정규식/g 로 모두 제거
+      vcheese = vcheese.replace(/,/g, '');
+      vcheese = vcheese.replace(/치즈/g, '');
+      vcheese = vcheese.replace(/"/g, '');
+      vcheese = vcheese.trim();
+    }
+    if (!vcheese) {
+      // 기본값 1000 (치즈 표시가 없는 도네이션)
+      vcheese = '1000';
+      // [버그 수정] 문자열 match 대신 정규식 리터럴 사용
+      var donlvl = event.data.match(/_level\d+_gb6rb_10/);
+      if (donlvl) {
+        // 도네이션 레벨에 따른 추가 처리 가능 (향후 확장)
+      }
+    }
+
+    // [버그 수정] parseint → parseInt (대소문자)
+    var cheeseVal = parseInt(vcheese, 10);
+    var threshold = parseInt(icheese.value, 10);
+    if (isNaN(cheeseVal)) cheeseVal = 0;
+    if (isNaN(threshold)) threshold = 1000;
+
+    if (cheeseVal >= threshold) {
+      var itemInput = document.getElementById('itemInput');
+      itemInput.value = msg.text();
+      additembutton();
+      showToast('도네이션 자동 추가: ' + msg.text() + ' (' + cheeseVal + '치즈)', 2500);
+    }
+  };
+
+  // ===== 키보드 단축키 =====
+  document.addEventListener('keydown', function(e){
+    // 입력 필드에 포커스 있을 때는 무시
+    var tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea') return;
+
+    if (e.key === ' ' || e.code === 'Space') {
+      e.preventDefault();
+      spinwheel();
+    } else if (e.key === 'Escape') {
+      stopwheel();
+    } else if (e.key === 'c' || e.key === 'C') {
+      clearwheel();
+    }
+  });
+
+  // ===== 창 크기 변경 시 룰렛 캔버스 갱신 =====
+  var resizeT = null;
+  window.addEventListener('resize', function(){
+    if (resizeT) clearTimeout(resizeT);
+    resizeT = setTimeout(function(){
+      if (window.wheel) {
+        try { wheel.resize(); } catch(e) {}
+      }
+    }, 150);
+  });
+</script>
+</body>
+
+</html>

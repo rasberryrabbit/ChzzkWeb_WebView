@@ -198,36 +198,47 @@ body {
     font-style: italic;
 }
 #choosen button._nickname_w9pvh_33 {
-    position: relative;
+    /* 카드 자체는 더 이상 position: relative 불필요 (wrapper 가 기준) */
     background: linear-gradient(135deg, #3a2a18 0%, #2a1f12 100%) !important;
     border: 1px solid #f0a830 !important;
     box-shadow: 0 0 8px rgba(240,168,48,0.25);
     animation: winnerIn 0.4s ease;
 }
+/* 당첨자 카드 wrapper: 카드와 삭제 버튼을 나란히 묶음 */
+#choosen .winner-card {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
 @keyframes winnerIn {
     from { opacity: 0; transform: scale(0.8); }
     to   { opacity: 1; transform: scale(1); }
 }
-/* 당첨자 카드에 삭제 버튼 추가 */
-#choosen button._nickname_w9pvh_33::after {
-    content: "×";
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    width: 16px;
-    height: 16px;
+/* 삭제 버튼: 카드 우측 바깥에 별도 요소로 배치 */
+#choosen .winner-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    margin-left: 4px;             /* 카드와의 간격 */
     background: #e0463c;
     color: #fff;
-    border-radius: 50%;
-    font-size: 12px;
-    line-height: 16px;
-    text-align: center;
-    font-weight: 700;
-    cursor: pointer;
     border: 1px solid #0f0f12;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.05s ease;
+    user-select: none;
 }
-#choosen button._nickname_w9pvh_33:hover::after {
+#choosen .winner-remove:hover {
     background: #ff5544;
+    transform: scale(1.1);
+}
+#choosen .winner-remove:active {
+    transform: scale(0.95);
 }
 
 /* ===== 오버레이 / 팝업 ===== */
@@ -573,24 +584,21 @@ function choosenclearuser() {
     updateCounters();
 }
 
-// ===== 당첨자 카드에서 삭제 (이벤트 위임) =====
+// ===== 당첨자 카드 이벤트 (이벤트 위임) =====
+// 1) 삭제 버튼(.winner-remove) 클릭 → 해당 당첨자 제거
+$('#choosen').on('click', '.winner-remove', function(e){
+    e.stopPropagation();
+    var $card = $(this).siblings('button._nickname_w9pvh_33');
+    var username = $card.find(spanusername).text();
+    delete selidlist[username];
+    // wrapper 전체(카드 + 삭제 버튼) 제거
+    $(this).closest('.winner-card').remove();
+    updateCounters();
+});
+
+// 2) 카드 본문 클릭 → 해당 유저 리뷰 모달 표시
 $('#choosen').on('click', 'button._nickname_w9pvh_33', function(e){
-    // × 영역 클릭 시 삭제 (우상단 16px)
-    var $card = $(this);
-    var offset = $card.offset();
-    var relX = e.pageX - offset.left;
-    var relY = e.pageY - offset.top;
-    // 카드 우상단 16×16 영역 클릭 시 삭제
-    if (relX > $card.outerWidth() - 6 && relY < 22) {
-        var username = $card.find(spanusername).text();
-        delete selidlist[username];
-        $card.remove();
-        updateCounters();
-        e.stopPropagation();
-        return;
-    }
-    // 본문 클릭 → 해당 유저 리뷰
-    var uname = $card.find(spanusername).text();
+    var uname = $(this).find(spanusername).text();
     if (idlist[uname]) {
         showUserReview(uname);
     }
@@ -722,9 +730,13 @@ function startRaffle() {
         var newuser = idlist[chosen].clone();
         selectedUser.append(newuser[0]);
 
-        // 당첨자 목록에 추가
+        // 당첨자 목록에 추가 (wrapper 안에 카드 + 삭제 버튼)
         var seluser = idlist[chosen].clone();
-        $("#choosen").append(seluser[0]);
+        var $wrapper = $('<div class="winner-card"></div>');
+        $wrapper.append(seluser[0]);
+        var $removeBtn = $('<button class="winner-remove" title="이 당첨자 제거">×</button>');
+        $wrapper.append($removeBtn);
+        $("#choosen").append($wrapper);
 
         // 리뷰 활성화 (이후 이 유저의 채팅이 팝업에 표시됨)
         reviewuser = chosen;

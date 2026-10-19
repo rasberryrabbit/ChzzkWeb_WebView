@@ -1,0 +1,1952 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>귀여운 캐릭터 채팅 무대</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="stylesheet" href="./jquery/jquery-ui.css" />
+<link type="text/css" rel="stylesheet" href="vendor-Zr7AVuQA.css" />
+<link type="text/css" rel="stylesheet" href="index-B3xGXYAr-dark.css" />
+<script src="./jquery/jquery-3.7.1.min.js"></script>
+<script src="./jquery/jquery-ui.js"></script>
+<script type="text/javascript" src="reconnecting-websocket.min.js"></script>
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #0f0f12;
+        font-family: "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    #stage {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
+    #header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        padding: 8px 16px;
+        background: linear-gradient(180deg, rgba(20,20,28,0.9) 0%, rgba(15,15,18,0.5) 100%);
+        backdrop-filter: blur(4px);
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 13px;
+        color: #ccc;
+        pointer-events: none;
+        /* 기본 숨김 + 부드러운 전환 */
+        opacity: 0;
+        transform: translateY(-100%);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    /* visible 클래스가 붙으면 표시 */
+    #header.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    #header .title {
+        color: #f0a830;
+        font-weight: 700;
+        font-size: 15px;
+    }
+    #header .count {
+        background: rgba(0,0,0,0.5);
+        padding: 3px 10px;
+        border-radius: 10px;
+        color: #aaa;
+        font-size: 12px;
+    }
+    #header .count b { color: #f0a830; }
+    #header .header-btn {
+        background: rgba(45, 123, 244, 0.3);
+        border: 1px solid rgba(100, 160, 240, 0.5);
+        color: #cfe1ff;
+        padding: 4px 10px;
+        border-radius: 8px;
+        font-size: 11px;
+        cursor: pointer;
+        pointer-events: auto;
+        transition: background 0.15s ease;
+        user-select: none;
+    }
+    #header .header-btn:hover { background: rgba(45, 123, 244, 0.6); }
+    #header .header-btn:active { transform: translateY(1px); }
+</style>
+</head>
+<body>
+    <canvas id="stage"></canvas>
+    <div id="header">
+        <span class="title">🐾 귀여운 캐릭터 채팅 무대</span>
+        <span class="count">활성 캐릭터 <b id="char-count">0</b></span>
+        <span class="count">메시지 대기 <b id="msg-queue">0</b></span>
+        <span class="count">말풍선 <b id="bubble-count">0</b></span>
+        <label class="header-btn" title="말풍선에 닉네임 표시 켜기/끄기">
+            <input type="checkbox" id="toggle-nickname" class="switch" checked style="vertical-align:middle;margin-right:4px;">
+            <span>닉네임</span>
+        </label>
+        <button class="header-btn" id="pick-folder-btn" title="이미지 폴더 선택 (Chrome/Edge 지원)">
+            📁 폴더 선택
+        </button>
+        <label class="header-btn" title="단일 이미지 파일로 캐릭터 외형 설정 (폴백)">
+            🖼 단일 이미지
+            <input type="file" id="image-input" accept="image/*" style="display:none;">
+        </label>
+        <button class="header-btn" id="clear-images-btn" title="모든 캐릭터 이미지 설정 초기화">
+            🗑 이미지 초기화
+        </button>
+    </div>
+
+<script>
+(function(){
+    'use strict';
+
+    // ============================================================
+    //  캔버스 설정
+    // ============================================================
+    var canvas = document.getElementById('stage');
+    var ctx = canvas.getContext('2d');
+    var W = 0, H = 0;
+    var DPR = 1;
+
+    function resize() {
+        DPR = window.devicePixelRatio || 1;
+        W = window.innerWidth;
+        H = window.innerHeight;
+        canvas.width = Math.floor(W * DPR);
+        canvas.height = Math.floor(H * DPR);
+        canvas.style.width = W + 'px';
+        canvas.style.height = H + 'px';
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // ============================================================
+    //  색상 팔레트 (파스텔 톤, 12종)
+    // ============================================================
+    var BODY_COLORS = [
+        '#f0a830', // 골드
+        '#5ec8f0', // 스카이
+        '#a8e85e', // 민트
+        '#f06e8a', // 로즈
+        '#b78af0', // 바이올렛
+        '#f0d76e', // 레몬
+        '#6ee8c8', // 아쿠아
+        '#f08e6e', // 코랄
+        '#8ec8f0', // 베이비 블루
+        '#e88ec8', // 핑크
+        '#c8f08e', // 라임
+        '#f0a8c8'  // 피치
+    ];
+
+    // 액세서리 종류 (닉네임 해시로 결정)
+    var ACCESSORIES = [
+        null,           // 없음
+        'hat',          // 모자
+        'crown',        // 왕관
+        'glasses',      // 안경
+        'bow',          // 리본
+        'flower',       // 꽃
+        'antenna'       // 안테나 (촉)
+    ];
+
+    // ============================================================
+    //  닉네임 → 해시 (안정적인 매핑용)
+    // ============================================================
+    function hashString(s) {
+        var h = 0;
+        for (var i = 0; i < s.length; i++) {
+            h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+        }
+        return Math.abs(h);
+    }
+
+    // 닉네임 → 캐릭터 외형 결정 (동일 닉네임은 항상 같은 외형)
+    function getCharacterAppearance(nickname) {
+        var h = hashString(nickname);
+        return {
+            bodyColor: BODY_COLORS[h % BODY_COLORS.length],
+            accessory: ACCESSORIES[h % ACCESSORIES.length],
+            accessoryColor: BODY_COLORS[(h >> 4) % BODY_COLORS.length],
+            // 작은 개성: 뺨 색상 (몸색보다 약간 진한 톤)
+            cheekColor: BODY_COLORS[(h >> 8) % BODY_COLORS.length]
+        };
+    }
+
+    // ============================================================
+    //  캐릭터 클래스 (귀여운 디자인)
+    // ============================================================
+    function Character(nickname, nicknameColor) {
+        this.nickname = nickname;
+        this.appearance = getCharacterAppearance(nickname);
+        this.nicknameColor = nicknameColor || '#f0a830';
+        // 이미지 (없으면 null → 기본 도형 렌더링)
+        this.image = null;
+
+        // 위치/이동
+        this.groundY = H - 60;
+        // 시작 위치를 화면 안쪽 랜덤 위치로 지정 (여백 80px ~ W-80px)
+        this.x = 80 + Math.random() * Math.max(0, W - 160);
+        // 첫 이동 방향도 랜덤
+        this.direction = Math.random() < 0.5 ? 1 : -1;
+        // 첫 목표 지점: 현재 위치에서 같은 방향으로 일정 거리 이동
+        // (이후에는 update()에서 자동으로 새 targetX 설정)
+        var initialDistance = 150 + Math.random() * 200;
+        this.targetX = this.x + this.direction * initialDistance;
+        // targetX 가 화면 밖이면 반대편으로 보정
+        if (this.targetX < 80) {
+            this.targetX = 80 + Math.random() * 200;
+            this.direction = 1;
+        } else if (this.targetX > W - 80) {
+            this.targetX = (W - 80) - Math.random() * 200;
+            this.direction = -1;
+        }
+        this.speed = 0.5 + Math.random() * 0.4;
+        this.bodyRadius = 28;        // 몸 반지름 (더 크고 귀여움)
+        this.headRadius = 22;        // 머리 반지름
+
+        // 애니메이션 상태
+        this.bouncePhase = Math.random() * Math.PI * 2;
+        this.blinkTimer = 1000 + Math.random() * 2000;
+        this.isBlinking = false;
+        this.talking = false;
+        this.talkingTimer = 0;
+
+        // 말풍선/메시지 큐
+        this.bubble = null;
+        this.messageQueue = [];
+
+        // 활동 추적 (비활성 시 자동 제거)
+        this.lastActiveAt = performance.now();
+
+        // 입장 애니메이션
+        this.entering = true;
+        this.enteringTimer = 600;   // 600ms 동안 페이드 인
+    }
+
+    Character.prototype.update = function(dt, now) {
+        // 입장 애니메이션
+        if (this.entering) {
+            this.enteringTimer -= dt;
+            if (this.enteringTimer <= 0) {
+                this.entering = false;
+            }
+        }
+
+        // 걷기: targetX 를 향해 이동, 도착하면 새 targetX 설정
+        var dx = this.targetX - this.x;
+        if (Math.abs(dx) < 5) {
+            // 도착 → 잠시 멈춤 후 새 목표
+            this.idleTimer = (this.idleTimer || 0) - dt;
+            if (this.idleTimer <= 0) {
+                this.targetX = 80 + Math.random() * (W - 160);
+                this.direction = this.targetX > this.x ? 1 : -1;
+                this.idleTimer = 1000 + Math.random() * 2000;
+            }
+        } else {
+            this.x += this.speed * Math.sign(dx);
+            this.bouncePhase += dt * 0.015 * (this.speed + 0.3);
+        }
+
+        // 화면 밖으로 나가지 않게
+        var margin = this.bodyRadius + 10;
+        if (this.x < margin) this.x = margin;
+        if (this.x > W - margin) this.x = W - margin;
+
+        // 눈 깜빡임
+        this.blinkTimer -= dt;
+        if (this.blinkTimer <= 0) {
+            if (this.isBlinking) {
+                this.isBlinking = false;
+                this.blinkTimer = 2000 + Math.random() * 3000;
+            } else {
+                this.isBlinking = true;
+                this.blinkTimer = 100;
+            }
+        }
+
+        // 말하는 중 타이머 (입 모양 변화 지속)
+        if (this.talkingTimer > 0) {
+            this.talkingTimer -= dt;
+            if (this.talkingTimer <= 0) {
+                this.talking = false;
+            }
+        }
+
+        // 말풍선 처리
+        if (this.bubble) {
+            this.bubble.life -= dt;
+            if (this.bubble.life <= 0) {
+                this.bubble = null;
+                if (this.messageQueue.length > 0) {
+                    this.showNextMessage();
+                }
+            }
+        } else if (this.messageQueue.length > 0) {
+            this.showNextMessage();
+        }
+    };
+
+    Character.prototype.showNextMessage = function() {
+        if (this.messageQueue.length === 0) return;
+        var msg = this.messageQueue.shift();
+        this.bubble = {
+            text: msg.text,
+            life: 5000,
+            maxLife: 5000
+        };
+        this.talking = true;
+        this.talkingTimer = 5000;   // 말풍선 표시 중에는 계속 입 벌림
+        this.lastActiveAt = performance.now();
+    };
+
+    Character.prototype.enqueueMessage = function(msg) {
+        if (this.messageQueue.length < 5) {
+            this.messageQueue.push(msg);
+            this.lastActiveAt = performance.now();
+        }
+    };
+
+    Character.prototype.isInactive = function(now, threshold) {
+        // 말풍선도 없고 큐도 비어 있고, threshold ms 동안 활동 없음
+        return !this.bubble && this.messageQueue.length === 0 &&
+               (now - this.lastActiveAt) > threshold;
+    };
+
+    // ============================================================
+    //  캐릭터 그리기 (귀여운 디자인)
+    // ============================================================
+    Character.prototype.draw = function(ctx, now) {
+        var x = this.x;
+        var bounceY = Math.sin(this.bouncePhase) * 3;
+        var y = this.groundY + bounceY;
+
+        // 입장 페이드 인
+        var alpha = 1;
+        if (this.entering) {
+            alpha = 1 - (this.enteringTimer / 600);
+            if (alpha < 0) alpha = 0;
+            if (alpha > 1) alpha = 1;
+        }
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+
+        // 그림자
+        ctx.beginPath();
+        ctx.ellipse(x, this.groundY + this.bodyRadius + 8, this.bodyRadius * 0.85, 4, 0, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        ctx.fill();
+
+        // ===== 이미지 캐릭터 모드 =====
+        // 이미지가 있으면 도형 대신 이미지를 그리고 바로 말풍선으로 이동
+        if (this.image && this.image.complete && this.image.naturalWidth > 0) {
+            var imgSize = this.bodyRadius * 2.5;   // 이미지 표시 크기 (몸의 약 2.5배)
+            var imgX = x - imgSize / 2;
+            var imgY = y - this.bodyRadius - imgSize * 0.3;   // 몸 중심보다 약간 위로 정렬
+
+            // 걷기 방향에 따라 이미지 좌우 반전
+            if (this.direction < 0) {
+                ctx.save();
+                ctx.translate(x, 0);
+                ctx.scale(-1, 1);
+                ctx.translate(-x, 0);
+                ctx.drawImage(this.image, x - imgSize / 2, imgY, imgSize, imgSize);
+                ctx.restore();
+            } else {
+                ctx.drawImage(this.image, imgX, imgY, imgSize, imgSize);
+            }
+            ctx.restore();
+
+            // 말풍선은 이미지 위에 표시
+            if (this.bubble) {
+                this.drawBubble(ctx, x, y - this.bodyRadius - imgSize * 0.3);
+            }
+            return;
+        }
+
+        // 작은 팔 (양쪽)
+        var armSwing = Math.sin(this.bouncePhase) * 3;
+        ctx.fillStyle = this.appearance.bodyColor;
+        ctx.strokeStyle = darkenColor(this.appearance.bodyColor, 0.4);
+        ctx.lineWidth = 2;
+        // 왼팔
+        ctx.beginPath();
+        ctx.arc(x - this.bodyRadius + 2, y - 2 + armSwing, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        // 오른팔
+        ctx.beginPath();
+        ctx.arc(x + this.bodyRadius - 2, y - 2 - armSwing, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // 몸 (큰 둥근 원)
+        ctx.beginPath();
+        ctx.arc(x, y, this.bodyRadius, 0, Math.PI * 2);
+        ctx.fillStyle = this.appearance.bodyColor;
+        ctx.fill();
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = darkenColor(this.appearance.bodyColor, 0.4);
+        ctx.stroke();
+
+        // 뺨 (분홍색 작은 원)
+        ctx.fillStyle = 'rgba(255, 150, 170, 0.55)';
+        ctx.beginPath();
+        ctx.arc(x - 9, y + 3, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(x + 9, y + 3, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 눈 (큰 둥근 눈)
+        var eyeY = y - 3;
+        var eyeSpacing = 7;
+        var eyeOffsetX = this.direction * 1.2;
+        ctx.fillStyle = '#1a1a1a';
+        if (this.isBlinking) {
+            // 깜빡임: 가로 선
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#1a1a1a';
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(x - eyeSpacing + eyeOffsetX - 3, eyeY);
+            ctx.lineTo(x - eyeSpacing + eyeOffsetX + 3, eyeY);
+            ctx.moveTo(x + eyeSpacing + eyeOffsetX - 3, eyeY);
+            ctx.lineTo(x + eyeSpacing + eyeOffsetX + 3, eyeY);
+            ctx.stroke();
+        } else {
+            // 큰 둥근 눈 + 하이라이트
+            ctx.beginPath();
+            ctx.arc(x - eyeSpacing + eyeOffsetX, eyeY, 3.5, 0, Math.PI * 2);
+            ctx.arc(x + eyeSpacing + eyeOffsetX, eyeY, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+            // 눈 하이라이트 (작은 흰 점)
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(x - eyeSpacing + eyeOffsetX + 1, eyeY - 1, 1, 0, Math.PI * 2);
+            ctx.arc(x + eyeSpacing + eyeOffsetX + 1, eyeY - 1, 1, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // 입 (말할 때는 벌어짐, 평소엔 작은 미소)
+        var mouthY = y + 7;
+        ctx.strokeStyle = '#1a1a1a';
+        ctx.lineWidth = 1.8;
+        ctx.lineCap = 'round';
+        if (this.talking) {
+            // 입 벌어짐: 작은 타원
+            ctx.fillStyle = '#3a1a1a';
+            ctx.beginPath();
+            ctx.ellipse(x, mouthY, 3.5, 2.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // 입술 윤곽
+            ctx.beginPath();
+            ctx.ellipse(x, mouthY, 3.5, 2.5, 0, 0, Math.PI * 2);
+            ctx.stroke();
+        } else {
+            // 작은 미소
+            ctx.beginPath();
+            ctx.arc(x, mouthY - 2, 4, 0.15 * Math.PI, 0.85 * Math.PI);
+            ctx.stroke();
+        }
+
+        // 작은 귀 (양쪽 위)
+        var earY = y - this.bodyRadius + 4;
+        ctx.fillStyle = this.appearance.bodyColor;
+        ctx.strokeStyle = darkenColor(this.appearance.bodyColor, 0.4);
+        ctx.lineWidth = 2;
+        // 왼귀
+        ctx.beginPath();
+        ctx.arc(x - this.bodyRadius + 4, earY, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        // 오른귀
+        ctx.beginPath();
+        ctx.arc(x + this.bodyRadius - 4, earY, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // 액세서리
+        this.drawAccessory(ctx, x, y);
+
+        ctx.restore();
+
+        // 말풍선 (알파 영향 받지 않게 별도)
+        if (this.bubble) {
+            this.drawBubble(ctx, x, y - this.bodyRadius - 15);
+        }
+    };
+
+    // 액세서리 그리기
+    Character.prototype.drawAccessory = function(ctx, x, y) {
+        var acc = this.appearance.accessory;
+        var accColor = this.appearance.accessoryColor;
+        // 액세서리는 머리(몸 위쪽)에 위치
+        var topY = y - this.bodyRadius - 2;
+
+        ctx.save();
+        switch(acc) {
+            case 'hat':
+                // 작은 모자
+                ctx.fillStyle = accColor;
+                ctx.strokeStyle = darkenColor(accColor, 0.4);
+                ctx.lineWidth = 2;
+                // 모자 둥근 윗부분
+                ctx.beginPath();
+                ctx.arc(x, topY - 5, 8, 0, Math.PI, true);
+                ctx.fill();
+                ctx.stroke();
+                // 모자 brim
+                ctx.beginPath();
+                ctx.ellipse(x, topY - 1, 13, 2.5, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                break;
+
+            case 'crown':
+                // 작은 왕관
+                ctx.fillStyle = '#f0d020';
+                ctx.strokeStyle = '#8a7a10';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(x - 10, topY - 2);
+                ctx.lineTo(x - 10, topY - 8);
+                ctx.lineTo(x - 6, topY - 4);
+                ctx.lineTo(x - 3, topY - 10);
+                ctx.lineTo(x, topY - 5);
+                ctx.lineTo(x + 3, topY - 10);
+                ctx.lineTo(x + 6, topY - 4);
+                ctx.lineTo(x + 10, topY - 8);
+                ctx.lineTo(x + 10, topY - 2);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                // 보석
+                ctx.fillStyle = '#f06e8a';
+                ctx.beginPath();
+                ctx.arc(x, topY - 4, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+                break;
+
+            case 'glasses':
+                // 안경
+                ctx.strokeStyle = '#1a1a1a';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(x - 7, y - 3, 5, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(x + 7, y - 3, 5, 0, Math.PI * 2);
+                ctx.stroke();
+                // 연결선
+                ctx.beginPath();
+                ctx.moveTo(x - 2, y - 3);
+                ctx.lineTo(x + 2, y - 3);
+                ctx.stroke();
+                break;
+
+            case 'bow':
+                // 리본 (왼쪽 귀 위)
+                var bowX = x - this.bodyRadius - 2;
+                var bowY = y - this.bodyRadius + 2;
+                ctx.fillStyle = accColor;
+                ctx.strokeStyle = darkenColor(accColor, 0.4);
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(bowX, bowY);
+                ctx.lineTo(bowX - 8, bowY - 5);
+                ctx.lineTo(bowX - 8, bowY + 5);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(bowX, bowY);
+                ctx.lineTo(bowX + 8, bowY - 5);
+                ctx.lineTo(bowX + 8, bowY + 5);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                // 중심
+                ctx.fillStyle = darkenColor(accColor, 0.3);
+                ctx.beginPath();
+                ctx.arc(bowX, bowY, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+                break;
+
+            case 'flower':
+                // 꽃 (오른쪽 귀 위)
+                var fx = x + this.bodyRadius + 2;
+                var fy = y - this.bodyRadius + 2;
+                ctx.fillStyle = accColor;
+                ctx.strokeStyle = darkenColor(accColor, 0.3);
+                ctx.lineWidth = 1;
+                // 꽃잎 5개
+                for (var p = 0; p < 5; p++) {
+                    var ang = (p / 5) * Math.PI * 2 - Math.PI / 2;
+                    var px = fx + Math.cos(ang) * 4;
+                    var py = fy + Math.sin(ang) * 4;
+                    ctx.beginPath();
+                    ctx.arc(px, py, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                }
+                // 중심
+                ctx.fillStyle = '#f0d020';
+                ctx.beginPath();
+                ctx.arc(fx, fy, 2, 0, Math.PI * 2);
+                ctx.fill();
+                break;
+
+            case 'antenna':
+                // 안테나 (촉) - 머리 위에서 위로 솟음
+                ctx.strokeStyle = darkenColor(this.appearance.bodyColor, 0.5);
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(x, topY);
+                ctx.lineTo(x - 1, topY - 12);
+                ctx.stroke();
+                // 끝에 작은 공
+                ctx.fillStyle = accColor;
+                ctx.strokeStyle = darkenColor(accColor, 0.4);
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.arc(x - 1, topY - 13, 3.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                break;
+        }
+        ctx.restore();
+    };
+
+    // ============================================================
+    //  말풍선 그리기
+    // ============================================================
+    Character.prototype.drawBubble = function(ctx, charX, charY) {
+        var b = this.bubble;
+        var text = b.text;
+        var nickname = this.nickname;
+        var nickColor = this.nicknameColor;
+        // 말풍선 닉네임 표시 여부 (전역 설정)
+        var showNick = showNickname;
+
+        var maxBubbleWidth = Math.min(300, W * 0.4);
+
+        ctx.font = '500 13px "Noto Sans KR", sans-serif';
+        var lines = wrapText(ctx, text, maxBubbleWidth - 24);
+        var lineHeight = 16;
+
+        var padding = 10;
+        ctx.font = '500 13px "Noto Sans KR", sans-serif';
+        var maxLineWidth = Math.max.apply(null, lines.map(function(l){
+            return ctx.measureText(l).width;
+        }));
+
+        // 닉네임 영역 높이 (표시할 때만 20px 추가)
+        var nicknameBlockHeight = showNick ? 20 : 0;
+        var nicknameWidth = 0;
+        if (showNick) {
+            ctx.font = '700 11px "Noto Sans KR", sans-serif';
+            nicknameWidth = ctx.measureText(nickname).width;
+        }
+
+        // 말풍선 너비 (닉네임 표시 여부에 따라 최소 너비 변경)
+        var minWidth = showNick ? 80 : 60;
+        var bubbleWidth = Math.max(maxLineWidth + 24, nicknameWidth + 24, minWidth);
+        bubbleWidth = Math.min(bubbleWidth, maxBubbleWidth);
+        // 높이 = 본문 라인 + 패딩 + 닉네임 영역
+        var bubbleHeight = lines.length * lineHeight + padding * 2 + nicknameBlockHeight;
+
+        var bubbleX = charX - bubbleWidth / 2;
+        var bubbleY = charY - bubbleHeight - 12;
+        if (bubbleX < 8) bubbleX = 8;
+        if (bubbleX + bubbleWidth > W - 8) bubbleX = W - 8 - bubbleWidth;
+        if (bubbleY < 50) bubbleY = 50;
+
+        // 페이드 인/아웃
+        var lifeRatio = b.life / b.maxLife;
+        var alpha = 1;
+        if (lifeRatio > 0.9) {
+            alpha = (1 - lifeRatio) / 0.1;
+        } else if (lifeRatio < 0.1) {
+            alpha = lifeRatio / 0.1;
+        }
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+
+        // 말풍선 본체 (둥근 사각형만, 꼬리 없음)
+        ctx.beginPath();
+        roundRect(ctx, bubbleX, bubbleY, bubbleWidth, bubbleHeight, 12);
+        ctx.fillStyle = 'rgba(20, 28, 50, 0.95)';
+        ctx.fill();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = 'rgba(100, 130, 200, 0.5)';
+        ctx.stroke();
+
+        // 닉네임 영역 (showNick 켜져 있을 때만)
+        var textStartY;
+        if (showNick) {
+            // 닉네임 색상 점 (닉네임 앞 작은 원)
+            ctx.fillStyle = nickColor;
+            ctx.beginPath();
+            ctx.arc(bubbleX + padding - 6, bubbleY + padding + 5, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 닉네임 텍스트
+            ctx.font = '700 11px "Noto Sans KR", sans-serif';
+            ctx.fillStyle = nickColor;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillText(nickname, bubbleX + padding, bubbleY + padding);
+
+            // 구분선
+            ctx.beginPath();
+            ctx.moveTo(bubbleX + padding, bubbleY + padding + 16);
+            ctx.lineTo(bubbleX + bubbleWidth - padding, bubbleY + padding + 16);
+            ctx.strokeStyle = 'rgba(100, 130, 200, 0.25)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            textStartY = bubbleY + padding + 22;
+        } else {
+            // 닉네임 영역 없음 → 본문을 패딩 바로 아래부터 표시
+            textStartY = bubbleY + padding;
+        }
+
+        // 본문
+        ctx.font = '500 13px "Noto Sans KR", sans-serif';
+        ctx.fillStyle = '#e8ecf5';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        for (var i = 0; i < lines.length; i++) {
+            ctx.fillText(lines[i], bubbleX + padding, textStartY + i * lineHeight);
+        }
+
+        ctx.restore();
+    };
+
+    // ============================================================
+    //  유틸리티
+    // ============================================================
+    function wrapText(ctx, text, maxWidth) {
+        var lines = [];
+        var current = '';
+        for (var i = 0; i < text.length; i++) {
+            var ch = text[i];
+            var test = current + ch;
+            if (ctx.measureText(test).width > maxWidth && current.length > 0) {
+                lines.push(current);
+                current = ch;
+            } else {
+                current = test;
+            }
+        }
+        if (current) lines.push(current);
+        if (lines.length === 0) lines.push('');
+        if (lines.length > 5) {
+            lines = lines.slice(0, 5);
+            lines[4] = lines[4].slice(0, Math.max(0, lines[4].length - 1)) + '…';
+        }
+        return lines;
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+        r = Math.min(r, w / 2, h / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.arcTo(x + w, y, x + w, y + r, r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+        ctx.lineTo(x + r, y + h);
+        ctx.arcTo(x, y + h, x, y + h - r, r);
+        ctx.lineTo(x, y + r);
+        ctx.arcTo(x, y, x + r, y, r);
+        ctx.closePath();
+    }
+
+    // 색상 어둡게 (hex → 어두운 hex)
+    function darkenColor(hex, factor) {
+        // hex 형식 #rrggbb 가정
+        var m = hex.match(/^#([0-9a-f]{6})$/i);
+        if (!m) return hex;
+        var num = parseInt(m[1], 16);
+        var r = (num >> 16) & 0xff;
+        var g = (num >> 8) & 0xff;
+        var b = num & 0xff;
+        r = Math.floor(r * (1 - factor));
+        g = Math.floor(g * (1 - factor));
+        b = Math.floor(b * (1 - factor));
+        return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    }
+
+    // ============================================================
+    //  캐릭터 매니저 (동적 풀)
+    // ============================================================
+    var MAX_CHARACTERS = 30;
+    var INACTIVE_TIMEOUT = 30000;   // 30초 비활성 시 퇴장
+    var characters = [];
+    var nicknameToCharacter = {};   // 닉네임 → 캐릭터 인스턴스 매핑
+
+    // ============================================================
+    //  말풍선 닉네임 표시 설정 (토글)
+    // ============================================================
+    var STORAGE_KEY_SHOW_NICKNAME = 'character_chat_show_nickname';
+    var showNickname = true;
+    try {
+        var savedShowNick = localStorage.getItem(STORAGE_KEY_SHOW_NICKNAME);
+        if (savedShowNick === '0') showNickname = false;
+    } catch(e) {}
+
+    // ============================================================
+    //  이미지 소스 관리 (두 가지 방식)
+    //   1) File System Access API (Chrome/Edge) - 폴더 핸들 저장
+    //   2) localStorage dataURL 폴백 (Firefox/Safari/구형)
+    // ============================================================
+    var STORAGE_KEY_CHAR_IMAGES = 'character_images';        // dataURL 폴백용
+    var STORAGE_KEY_DIR_HANDLE = 'character_image_dir_handle'; // 폴더 핸들 (IndexedDB)
+
+    // File System Access API 지원 여부
+    var HAS_FS_ACCESS = !!(window.showDirectoryPicker);
+
+    // 현재 선택된 폴더 핸들 (File System Access API)
+    var dirHandle = null;
+
+    // nickname → dataURL 매핑 (폴백 모드에서 사용)
+    var charImages = {};
+    // nickname → HTMLImageElement 캐시 (이미 로드된 이미지)
+    var charImageCache = {};
+
+    // ============================================================
+    //  IndexedDB 헬퍼 (FileSystemDirectoryHandle 저장용)
+    //  - localStorage에는 객체 저장 불가, IndexedDB 사용
+    // ============================================================
+    function idbOpen() {
+        return new Promise(function(resolve, reject){
+            var req = indexedDB.open('character_chat_db', 1);
+            req.onupgradeneeded = function(){
+                req.result.createObjectStore('handles');
+            };
+            req.onsuccess = function(){ resolve(req.result); };
+            req.onerror = function(){ reject(req.error); };
+        });
+    }
+    function idbSet(key, value) {
+        return new Promise(function(resolve, reject){
+            idbOpen().then(function(db){
+                var tx = db.transaction('handles', 'readwrite');
+                tx.objectStore('handles').put(value, key);
+                tx.oncomplete = function(){ resolve(); };
+                tx.onerror = function(){ reject(tx.error); };
+            });
+        });
+    }
+    function idbGet(key) {
+        return new Promise(function(resolve, reject){
+            idbOpen().then(function(db){
+                var tx = db.transaction('handles', 'readonly');
+                var req = tx.objectStore('handles').get(key);
+                req.onsuccess = function(){ resolve(req.result); };
+                req.onerror = function(){ reject(req.error); };
+            });
+        });
+    }
+    function idbDel(key) {
+        return new Promise(function(resolve, reject){
+            idbOpen().then(function(db){
+                var tx = db.transaction('handles', 'readwrite');
+                tx.objectStore('handles').delete(key);
+                tx.oncomplete = function(){ resolve(); };
+                tx.onerror = function(){ reject(tx.error); };
+            });
+        });
+    }
+
+    // 폴더 핸들 권한 검증 (사용자 제스처 필요 없으면 자동, 있으면 에러)
+    async function verifyDirPermission(handle, readWrite) {
+        if (!handle) return false;
+        var opts = { mode: readWrite ? 'readwrite' : 'read' };
+        if ((await handle.queryPermission(opts)) === 'granted') return true;
+        if ((await handle.requestPermission(opts)) === 'granted') return true;
+        return false;
+    }
+
+    // 저장된 폴더 핸들 복원 시도 (페이지 로드 시)
+    async function restoreDirHandle() {
+        if (!HAS_FS_ACCESS) return false;
+        try {
+            var saved = await idbGet(STORAGE_KEY_DIR_HANDLE);
+            if (!saved) return false;
+            // 권한 확인 (자동으로는 granted 안 됨 → 사용자 제스처 필요)
+            // queryPermission 만 호출하여 granted 인 경우만 사용
+            var perm = await saved.queryPermission({ mode: 'read' });
+            if (perm === 'granted') {
+                dirHandle = saved;
+                await scanDirectoryImages();
+                return true;
+            }
+            // 권한 없으면 저장은 유지하되, 사용자 클릭 시 requestPermission 호출
+            dirHandle = saved;
+            return false;
+        } catch(e) {
+            return false;
+        }
+    }
+
+    // 폴더 내 이미지 파일 스캔 → 닉네임(파일명) 매핑
+    async function scanDirectoryImages() {
+        if (!dirHandle) return;
+        try {
+            // 기존 캐시 초기화
+            charImageCache = {};
+            // 활성 캐릭터들에게 이미지 새로 적용
+            for (var i = 0; i < characters.length; i++) {
+                characters[i].image = null;
+                applyCharacterImage(characters[i]);
+            }
+        } catch(e) {
+            console.warn('폴더 스캔 중 오류:', e);
+        }
+    }
+
+    // 파일명에서 닉네임 추출 (확장자 제거)
+    // "Alice.png" → "Alice", "bob_avatar.jpg" → "bob_avatar"
+    function filenameToNickname(filename) {
+        var dot = filename.lastIndexOf('.');
+        if (dot > 0) return filename.substring(0, dot);
+        return filename;
+    }
+
+    // 지원 이미지 확장자 판별
+    function isImageFile(filename) {
+        var lower = filename.toLowerCase();
+        return /\.(png|jpg|jpeg|gif|webp|bmp|svg)$/.test(lower);
+    }
+
+    // 폴더에서 닉네임에 해당하는 이미지 파일을 찾아 HTMLImageElement 반환
+    // - 우선 정확한 닉네임 매칭 시도 (Alice.png → "Alice")
+    // - 실패 시 폴더 전체 순회하며 파일명 비교
+    async function loadCharacterImageFromDir(nickname) {
+        if (!dirHandle) return null;
+        try {
+            // 빠른 경로: 닉네임 + 일반적 확장자 시도
+            var exts = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp'];
+            for (var i = 0; i < exts.length; i++) {
+                try {
+                    var fileHandle = await dirHandle.getFileHandle(nickname + exts[i]);
+                    var file = await fileHandle.getFile();
+                    var url = URL.createObjectURL(file);
+                    var img = await loadImage(url, false);  // URL 사용 (캐시 안 함)
+                    return img;
+                } catch(e) {
+                    // 파일 없음 → 다음 확장자 시도
+                }
+            }
+            // 느린 경로: 폴더 순회하며 파일명(확장자 제외) 비교
+            for await (var entry of dirHandle.values()) {
+                if (entry.kind !== 'file') continue;
+                if (!isImageFile(entry.name)) continue;
+                var entryNickname = filenameToNickname(entry.name);
+                if (entryNickname === nickname) {
+                    var file2 = await entry.getFile();
+                    var url2 = URL.createObjectURL(file2);
+                    var img2 = await loadImage(url2, false);
+                    return img2;
+                }
+            }
+            return null;
+        } catch(e) {
+            return null;
+        }
+    }
+
+    // URL → HTMLImageElement 변환 (Promise)
+    function loadImage(url, revokeAfterLoad) {
+        return new Promise(function(resolve, reject){
+            var img = new Image();
+            img.onload = function(){
+                if (revokeAfterLoad) URL.revokeObjectURL(url);
+                resolve(img);
+            };
+            img.onerror = function(){
+                if (revokeAfterLoad) URL.revokeObjectURL(url);
+                reject(new Error('이미지 로드 실패'));
+            };
+            img.src = url;
+        });
+    }
+
+    // dataURL 매핑 로드 (폴백 모드)
+    function loadCharImages() {
+        try {
+            var raw = localStorage.getItem(STORAGE_KEY_CHAR_IMAGES);
+            if (raw) {
+                charImages = JSON.parse(raw) || {};
+            }
+        } catch(e) { charImages = {}; }
+    }
+    loadCharImages();
+
+    // 이미지 매핑 저장
+    function saveCharImages() {
+        try {
+            localStorage.setItem(STORAGE_KEY_CHAR_IMAGES, JSON.stringify(charImages));
+        } catch(e) {
+            // 쿼터 초과 시 가장 오래된 이미지 제거 시도 (단순화: 그냥 무시)
+            console.warn('이미지 저장 실패 (용량 초과 가능):', e);
+        }
+    }
+
+    // dataURL → HTMLImageElement 변환 (비동기)
+    function loadImageFromDataURL(dataURL, callback) {
+        var img = new Image();
+        img.onload = function(){
+            callback(img);
+        };
+        img.onerror = function(){
+            callback(null);
+        };
+        img.src = dataURL;
+    }
+
+    // 캐릭터에 이미지 할당
+    // - dataURL 을 localStorage 에 저장 (폴백용)
+    // - 폴더가 연결되어 있으면 폴더에도 PNG 파일로 저장
+    function setCharacterImage(nickname, dataURL) {
+        charImages[nickname] = dataURL;
+        saveCharImages();
+        // 캐시 무효화 후 다시 로드
+        delete charImageCache[nickname];
+        loadImageFromDataURL(dataURL, function(img){
+            charImageCache[nickname] = img;
+            // 이미 활성 캐릭터에게도 즉시 적용
+            if (nicknameToCharacter[nickname]) {
+                nicknameToCharacter[nickname].image = img;
+            }
+        });
+        // 폴더가 연결되어 있으면 폴더에도 파일로 저장
+        if (dirHandle) {
+            saveImageToDir(nickname, dataURL);
+        }
+    }
+
+    // 폴더에 이미지 파일 저장 (쓰기 권한 필요)
+    async function saveImageToDir(nickname, dataURL) {
+        if (!dirHandle) return false;
+        try {
+            // 쓰기 권한 확인
+            var perm = await dirHandle.queryPermission({ mode: 'readwrite' });
+            if (perm !== 'granted') {
+                perm = await dirHandle.requestPermission({ mode: 'readwrite' });
+            }
+            if (perm !== 'granted') {
+                console.warn('폴더 쓰기 권한 없음 - localStorage 에만 저장됨');
+                return false;
+            }
+            // dataURL → Blob 변환
+            var resp = await fetch(dataURL);
+            var blob = await resp.blob();
+            // 파일명: 닉네임.png (파일명에 사용 불가능한 문자 제거)
+            var safeName = nickname.replace(/[\\/:*?"<>|]/g, '_');
+            var filename = safeName + '.png';
+            // 파일 쓰기
+            var fileHandle = await dirHandle.getFileHandle(filename, { create: true });
+            var writable = await fileHandle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+            return true;
+        } catch(e) {
+            console.warn('폴더에 이미지 저장 실패:', e);
+            return false;
+        }
+    }
+
+    // 캐릭터 이미지 제거 (개별)
+    function removeCharacterImage(nickname) {
+        delete charImages[nickname];
+        delete charImageCache[nickname];
+        if (nicknameToCharacter[nickname]) {
+            nicknameToCharacter[nickname].image = null;
+        }
+        saveCharImages();
+    }
+
+    // 모든 캐릭터 이미지 초기화
+    function clearAllCharacterImages() {
+        charImages = {};
+        charImageCache = {};
+        for (var i = 0; i < characters.length; i++) {
+            characters[i].image = null;
+        }
+        try {
+            localStorage.removeItem(STORAGE_KEY_CHAR_IMAGES);
+        } catch(e) {}
+    }
+
+    // 캐릭터에게 이미지 적용 (이미지가 있으면 로드, 없으면 null)
+    // 캐릭터에게 이미지 적용
+    //   1순위: File System Access API (dirHandle)
+    //   2순위: localStorage dataURL (폴백)
+    //   3순위: 이미지 없음 (기본 도형 캐릭터)
+    function applyCharacterImage(c) {
+        // ===== 1순위: File System Access API =====
+        if (dirHandle) {
+            // 이미 캐시에 있으면 즉시 적용
+            if (charImageCache[c.nickname]) {
+                c.image = charImageCache[c.nickname];
+                return;
+            }
+            // 비동기로 폴더에서 로드
+            c.image = null;   // 로딩 중에는 일단 도형 표시
+            loadCharacterImageFromDir(c.nickname).then(function(img){
+                if (img) {
+                    charImageCache[c.nickname] = img;
+                    // 캐릭터가 아직 살아 있으면 적용
+                    if (nicknameToCharacter[c.nickname] === c) {
+                        c.image = img;
+                    }
+                } else {
+                    // 폴더에 없으면 dataURL 폴백 시도
+                    tryDataURLFallback(c);
+                }
+            }).catch(function(){
+                tryDataURLFallback(c);
+            });
+            return;
+        }
+        // ===== 2순위: dataURL 폴백 =====
+        tryDataURLFallback(c);
+    }
+
+    // dataURL 폴백 시도 (File System Access 미지원/폴더에 없는 경우)
+    function tryDataURLFallback(c) {
+        var dataURL = charImages[c.nickname];
+        if (!dataURL) {
+            c.image = null;
+            return;
+        }
+        if (charImageCache[c.nickname]) {
+            c.image = charImageCache[c.nickname];
+        } else {
+            loadImageFromDataURL(dataURL, function(img){
+                charImageCache[c.nickname] = img;
+                if (nicknameToCharacter[c.nickname] === c) {
+                    c.image = img;
+                }
+            });
+        }
+    }
+
+    function getOrCreateCharacter(nickname, color) {
+        // 기존 캐릭터가 있으면 반환
+        if (nicknameToCharacter[nickname]) {
+            return nicknameToCharacter[nickname];
+        }
+        // 최대 수 도달 시 가장 오래된 비활성 캐릭터 제거
+        if (characters.length >= MAX_CHARACTERS) {
+            var now = performance.now();
+            var oldestIdx = -1;
+            var oldestTime = Infinity;
+            for (var i = 0; i < characters.length; i++) {
+                if (characters[i].isInactive(now, 0) && characters[i].lastActiveAt < oldestTime) {
+                    oldestTime = characters[i].lastActiveAt;
+                    oldestIdx = i;
+                }
+            }
+            if (oldestIdx >= 0) {
+                removeCharacter(characters[oldestIdx]);
+            } else {
+                removeCharacter(characters[0]);
+            }
+        }
+        // 신규 캐릭터 생성
+        var c = new Character(nickname, color);
+        // 이미지 매핑 적용 (있으면)
+        applyCharacterImage(c);
+        characters.push(c);
+        nicknameToCharacter[nickname] = c;
+        return c;
+    }
+
+    function removeCharacter(c) {
+        var idx = characters.indexOf(c);
+        if (idx >= 0) characters.splice(idx, 1);
+        if (nicknameToCharacter[c.nickname] === c) {
+            delete nicknameToCharacter[c.nickname];
+        }
+    }
+
+    // 주기적으로 비활성 캐릭터 정리
+    function cleanupInactive(now) {
+        for (var i = characters.length - 1; i >= 0; i--) {
+            if (characters[i].isInactive(now, INACTIVE_TIMEOUT)) {
+                removeCharacter(characters[i]);
+            }
+        }
+    }
+
+    // 메시지를 적절한 캐릭터에게 할당 (동일 닉네임은 항상 같은 캐릭터)
+    function dispatchMessage(msg) {
+        var c = getOrCreateCharacter(msg.nickname, msg.color);
+        c.enqueueMessage(msg);
+    }
+
+    // ============================================================
+    //  배경 - 시간대별 낮/밤 자동 전환
+    // ============================================================
+    var stars = [];
+    var clouds = [];
+
+    function initStars() {
+        stars = [];
+        for (var i = 0; i < 60; i++) {
+            stars.push({
+                x: Math.random() * W,
+                y: Math.random() * H * 0.7,
+                r: Math.random() * 1.2 + 0.3,
+                twinklePhase: Math.random() * Math.PI * 2,
+                twinkleSpeed: 0.001 + Math.random() * 0.002
+            });
+        }
+    }
+
+    function initClouds() {
+        clouds = [];
+        for (var i = 0; i < 6; i++) {
+            clouds.push({
+                x: Math.random() * W,
+                y: 60 + Math.random() * (H * 0.35),
+                scale: 0.7 + Math.random() * 0.6,
+                speed: 0.05 + Math.random() * 0.1
+            });
+        }
+    }
+
+    initStars();
+    initClouds();
+    window.addEventListener('resize', function(){ initStars(); initClouds(); });
+
+    // 시간대 판정 (현재 시간의 시각 기준)
+    //   0~5: 깊은 밤    (deep night)
+    //   5~7: 새벽      (dawn)
+    //   7~17: 낮       (day)
+    //   17~19: 노을    (sunset)
+    //   19~21: 초저녁 (dusk)
+    //   21~24: 밤      (night)
+    // 반환: { phase, progress }
+    //   phase: 'deepnight' | 'dawn' | 'day' | 'sunset' | 'dusk' | 'night'
+    //   progress: 해당 phase 내에서의 진행도 (0~1)
+    function getTimePhase(date) {
+        var h = date.getHours() + date.getMinutes() / 60;
+        if (h >= 0 && h < 5) return { phase: 'deepnight', progress: (h - 0) / 5 };
+        if (h >= 5 && h < 7) return { phase: 'dawn',      progress: (h - 5) / 2 };
+        if (h >= 7 && h < 17) return { phase: 'day',      progress: (h - 7) / 10 };
+        if (h >= 17 && h < 19) return { phase: 'sunset',  progress: (h - 17) / 2 };
+        if (h >= 19 && h < 21) return { phase: 'dusk',    progress: (h - 19) / 2 };
+        return { phase: 'night', progress: (h - 21) / 3 };   // 21~24
+    }
+
+    // 시간대별 색상 팔레트
+    // 각 phase 의 (상단 색, 중단 색, 하단 색, 별 가시도, 태양/달 가시도, 태양/달 색)
+    var PHASE_PALETTES = {
+        deepnight: { top: '#05050f', mid: '#0a0a18', bot: '#10101e', starAlpha: 1.0,  bodyAlpha: 0.95, bodyColor: '#e8e8f0', bodyType: 'moon' },
+        dawn:      { top: '#1a1430', mid: '#3a2050', bot: '#604070', starAlpha: 0.6,  bodyAlpha: 0.9,  bodyColor: '#ffe8c0', bodyType: 'moon' },
+        day:       { top: '#5ec8f0', mid: '#90d8f0', bot: '#c0e8f8', starAlpha: 0.0,  bodyAlpha: 1.0,  bodyColor: '#fff070', bodyType: 'sun'  },
+        sunset:    { top: '#3a2050', mid: '#a04030', bot: '#e07050', starAlpha: 0.3,  bodyAlpha: 0.95, bodyColor: '#ff8050', bodyType: 'sun'  },
+        dusk:      { top: '#1a1840', mid: '#3a2060', bot: '#6040a0', starAlpha: 0.7,  bodyAlpha: 0.9,  bodyColor: '#ffc880', bodyType: 'moon' },
+        night:     { top: '#0a0a1a', mid: '#0f0f1a', bot: '#1a1a2a', starAlpha: 1.0,  bodyAlpha: 0.95, bodyColor: '#e8e8f0', bodyType: 'moon' }
+    };
+
+    // 두 색상 사이를 보간 (hex 형식 #rrggbb)
+    function lerpColor(c1, c2, t) {
+        var r1 = parseInt(c1.substr(1, 2), 16);
+        var g1 = parseInt(c1.substr(3, 2), 16);
+        var b1 = parseInt(c1.substr(5, 2), 16);
+        var r2 = parseInt(c2.substr(1, 2), 16);
+        var g2 = parseInt(c2.substr(3, 2), 16);
+        var b2 = parseInt(c2.substr(5, 2), 16);
+        var r = Math.round(r1 + (r2 - r1) * t);
+        var g = Math.round(g1 + (g2 - g1) * t);
+        var b = Math.round(b1 + (b2 - b1) * t);
+        return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    }
+
+    // 현재 시간의 보간된 팔레트 반환 (phase 경계에서 부드럽게 전환)
+    function getCurrentPalette() {
+        var now = new Date();
+        var info = getTimePhase(now);
+        var phase = info.phase;
+        var prog = info.progress;
+
+        // 다음 phase 찾기 (순환)
+        var order = ['deepnight', 'dawn', 'day', 'sunset', 'dusk', 'night', 'deepnight'];
+        var idx = order.indexOf(phase);
+        var nextPhase = order[idx + 1] || 'deepnight';
+
+        var cur = PHASE_PALETTES[phase];
+        var next = PHASE_PALETTES[nextPhase];
+
+        // 현재 phase 진행도에 따라 다음 phase 로 부드럽게 전환 (마지막 30%에서)
+        var blend = 0;
+        if (prog > 0.7) {
+            blend = (prog - 0.7) / 0.3;
+        }
+
+        return {
+            top: lerpColor(cur.top, next.top, blend),
+            mid: lerpColor(cur.mid, next.mid, blend),
+            bot: lerpColor(cur.bot, next.bot, blend),
+            starAlpha: cur.starAlpha + (next.starAlpha - cur.starAlpha) * blend,
+            bodyAlpha: cur.bodyAlpha + (next.bodyAlpha - cur.bodyAlpha) * blend,
+            bodyColor: lerpColor(cur.bodyColor, next.bodyColor, blend),
+            bodyType: prog > 0.5 ? next.bodyType : cur.bodyType,
+            phase: phase,
+            progress: prog
+        };
+    }
+
+    // 태양/달 그리기
+    function drawSunMoon(palette) {
+        var now = new Date();
+        var h = now.getHours() + now.getMinutes() / 60;
+        // 6시(동쪽 지평선) ~ 18시(서쪽 지평선) 사이를 하늘 위쪽 호로 표현
+        // 태양/달의 x, y 위치 계산
+        // - 6시: x=0 (좌측 끝), y=지평선
+        // - 12시: x=W/2, y=하늘 정중앙 (위쪽)
+        // - 18시: x=W (우측 끝), y=지평선
+        // - 18시~6시(밤): 달이 동쪽→서쪽으로 이동
+        var bodyX, bodyY, alpha = palette.bodyAlpha;
+        var type = palette.bodyType;
+
+        // 하늘 영역 (상단 70%)
+        var skyHeight = H * 0.7;
+        var horizonY = H - 30;
+
+        // 시간을 0~24 로 정규화하여 위치 계산
+        // 낮(6~18): 태양 / 밤(18~6): 달
+        var dayProgress;   // 0=동쪽 지평선, 0.5=정오/자정(정상), 1=서쪽 지평선
+        if (h >= 6 && h < 18) {
+            // 낮: 6→0, 12→0.5, 18→1
+            dayProgress = (h - 6) / 12;
+        } else {
+            // 밤: 18→0, 24→0.5, 6→1
+            if (h >= 18) dayProgress = (h - 18) / 12;
+            else dayProgress = (h + 6) / 12;
+        }
+
+        // x: dayProgress 0→W, y: sin 곡선으로 위쪽에 위치
+        bodyX = dayProgress * W;
+        // 포물선: y = horizonY - 4 * skyHeight * dayProgress * (1 - dayProgress)
+        bodyY = horizonY - 4 * skyHeight * dayProgress * (1 - dayProgress);
+
+        if (bodyY < 30) bodyY = 30;
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+
+        if (type === 'sun') {
+            // 태양: 노란 원 + 광선
+            var sunR = 24;
+            // 광선
+            ctx.strokeStyle = palette.bodyColor;
+            ctx.lineWidth = 2;
+            for (var i = 0; i < 8; i++) {
+                var ang = (i / 8) * Math.PI * 2;
+                var innerR = sunR + 6;
+                var outerR = sunR + 14;
+                ctx.beginPath();
+                ctx.moveTo(bodyX + Math.cos(ang) * innerR, bodyY + Math.sin(ang) * innerR);
+                ctx.lineTo(bodyX + Math.cos(ang) * outerR, bodyY + Math.sin(ang) * outerR);
+                ctx.stroke();
+            }
+            // 태양 본체
+            ctx.beginPath();
+            ctx.arc(bodyX, bodyY, sunR, 0, Math.PI * 2);
+            ctx.fillStyle = palette.bodyColor;
+            ctx.fill();
+            // 광채
+            var glow = ctx.createRadialGradient(bodyX, bodyY, sunR, bodyX, bodyY, sunR + 30);
+            glow.addColorStop(0, 'rgba(255, 240, 120, 0.4)');
+            glow.addColorStop(1, 'rgba(255, 240, 120, 0)');
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(bodyX, bodyY, sunR + 30, 0, Math.PI * 2);
+            ctx.fill();
+        } else {
+            // 달: 흰색 원 + 그림자(반달 효과)
+            var moonR = 20;
+            // 광채
+            var moonGlow = ctx.createRadialGradient(bodyX, bodyY, moonR, bodyX, bodyY, moonR + 24);
+            moonGlow.addColorStop(0, 'rgba(232, 232, 240, 0.3)');
+            moonGlow.addColorStop(1, 'rgba(232, 232, 240, 0)');
+            ctx.fillStyle = moonGlow;
+            ctx.beginPath();
+            ctx.arc(bodyX, bodyY, moonR + 24, 0, Math.PI * 2);
+            ctx.fill();
+            // 달 본체
+            ctx.beginPath();
+            ctx.arc(bodyX, bodyY, moonR, 0, Math.PI * 2);
+            ctx.fillStyle = palette.bodyColor;
+            ctx.fill();
+            // 반달 그림자 (왼쪽 어둠)
+            ctx.beginPath();
+            ctx.arc(bodyX - moonR * 0.3, bodyY - moonR * 0.2, moonR * 0.85, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 0, 20, 0.35)';
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+
+    // 구름 그리기 (낮에만 표시)
+    function drawClouds(dt, alpha) {
+        if (alpha <= 0.01) return;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        for (var i = 0; i < clouds.length; i++) {
+            var c = clouds[i];
+            c.x += c.speed * dt * 0.1;
+            if (c.x > W + 100) c.x = -100;
+
+            var w = 60 * c.scale;
+            var h = 20 * c.scale;
+            // 구름 = 3개 원 합친 형태
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, h * 0.8, 0, Math.PI * 2);
+            ctx.arc(c.x + w * 0.3, c.y - h * 0.3, h * 0.9, 0, Math.PI * 2);
+            ctx.arc(c.x + w * 0.6, c.y, h * 0.8, 0, Math.PI * 2);
+            ctx.arc(c.x + w * 0.45, c.y + h * 0.2, h * 0.7, 0, Math.PI * 2);
+            ctx.fill();
+            // 구름 그림자
+            ctx.fillStyle = 'rgba(180, 200, 220, 0.3)';
+            ctx.beginPath();
+            ctx.arc(c.x + w * 0.2, c.y + h * 0.4, h * 0.7, 0, Math.PI * 2);
+            ctx.arc(c.x + w * 0.5, c.y + h * 0.4, h * 0.7, 0, Math.PI * 2);
+            ctx.arc(c.x + w * 0.8, c.y + h * 0.4, h * 0.7, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+
+    function drawBackground(dt) {
+        var palette = getCurrentPalette();
+
+        // 하늘 그라디언트 (시간대별 색상)
+        var grad = ctx.createLinearGradient(0, 0, 0, H);
+        grad.addColorStop(0, palette.top);
+        grad.addColorStop(0.6, palette.mid);
+        grad.addColorStop(1, palette.bot);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+
+        // 별 (밤에만 표시 - starAlpha 로 조절)
+        if (palette.starAlpha > 0.01) {
+            ctx.save();
+            ctx.globalAlpha = palette.starAlpha;
+            for (var i = 0; i < stars.length; i++) {
+                var s = stars[i];
+                s.twinklePhase += s.twinkleSpeed * dt;
+                var alpha = 0.4 + Math.sin(s.twinklePhase) * 0.3 + 0.3;
+                ctx.fillStyle = 'rgba(255,255,255,' + alpha.toFixed(2) + ')';
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+
+        // 태양/달
+        drawSunMoon(palette);
+
+        // 구름 (낮에만 표시 - starAlpha 역수 사용)
+        // day phase 일 때 starAlpha=0 → cloudAlpha=1
+        // night phase 일 때 starAlpha=1 → cloudAlpha=0
+        var cloudAlpha = 1 - palette.starAlpha;
+        if (cloudAlpha > 0.05) {
+            drawClouds(dt, cloudAlpha);
+        }
+
+        // 하단 무대 (잔디/바닥) — 시간대별로 약간 다른 색
+        var floorY = H - 30;
+        var floorGrad = ctx.createLinearGradient(0, floorY, 0, H);
+        if (palette.phase === 'day') {
+            // 밝은 잔디
+            floorGrad.addColorStop(0, 'rgba(80, 130, 70, 0.8)');
+            floorGrad.addColorStop(1, 'rgba(50, 80, 40, 0.95)');
+        } else if (palette.phase === 'sunset' || palette.phase === 'dawn') {
+            // 노을빛 잔디
+            floorGrad.addColorStop(0, 'rgba(100, 90, 60, 0.7)');
+            floorGrad.addColorStop(1, 'rgba(60, 50, 40, 0.95)');
+        } else {
+            // 어두운 잔디 (밤)
+            floorGrad.addColorStop(0, 'rgba(40, 60, 40, 0.6)');
+            floorGrad.addColorStop(1, 'rgba(20, 30, 20, 0.9)');
+        }
+        ctx.fillStyle = floorGrad;
+        ctx.fillRect(0, floorY, W, H - floorY);
+        ctx.strokeStyle = 'rgba(100, 130, 200, 0.2)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, floorY);
+        ctx.lineTo(W, floorY);
+        ctx.stroke();
+    }
+
+    // ============================================================
+    //  메인 루프
+    // ============================================================
+    var lastTime = performance.now();
+    var $charCount = document.getElementById('char-count');
+    var $msgQueue = document.getElementById('msg-queue');
+    var $bubbleCount = document.getElementById('bubble-count');
+    var $header = document.getElementById('header');
+    var lastCleanup = 0;
+    var lastCountUpdate = 0;
+
+    // ============================================================
+    //  헤더 자동 숨김 (마우스 움직임 감지)
+    // ============================================================
+    var HEADER_TRIGGER_ZONE = 80;        // 화면 상단 80px 이내 진입 시 트리거
+    var HEADER_HIDE_DELAY = 2000;        // 마우스 정지 후 2초 뒤 숨김
+    var lastMouseMoveAt = 0;
+    var mouseOverHeader = false;
+    var headerTimer = null;
+
+    function showHeader() {
+        $header.classList.add('visible');
+        if (headerTimer) clearTimeout(headerTimer);
+        headerTimer = setTimeout(function(){
+            // 헤더 위에 마우스가 있으면 숨기지 않음
+            if (!mouseOverHeader) {
+                $header.classList.remove('visible');
+            }
+        }, HEADER_HIDE_DELAY);
+    }
+
+    function hideHeader() {
+        if (headerTimer) clearTimeout(headerTimer);
+        $header.classList.remove('visible');
+    }
+
+    // 마우스 이동 감지 (전역)
+    document.addEventListener('mousemove', function(e){
+        lastMouseMoveAt = performance.now();
+        // 마우스가 상단 트리거 영역에 있거나 헤더 위에 있으면 표시
+        if (e.clientY < HEADER_TRIGGER_ZONE || mouseOverHeader) {
+            showHeader();
+        } else {
+            // 영역을 벗어나면 타이머 리셋 (현재 표시 중이면 2초 후 숨김)
+            if ($header.classList.contains('visible')) {
+                if (headerTimer) clearTimeout(headerTimer);
+                headerTimer = setTimeout(function(){
+                    if (!mouseOverHeader) {
+                        $header.classList.remove('visible');
+                    }
+                }, HEADER_HIDE_DELAY);
+            }
+        }
+    });
+
+    // 마우스가 헤더 위에 있을 때는 계속 표시
+    $header.addEventListener('mouseenter', function(){
+        mouseOverHeader = true;
+        if (headerTimer) clearTimeout(headerTimer);
+        $header.classList.add('visible');
+    });
+    $header.addEventListener('mouseleave', function(){
+        mouseOverHeader = false;
+        // 헤더에서 마우스가 나가면 2초 후 숨김
+        if (headerTimer) clearTimeout(headerTimer);
+        headerTimer = setTimeout(function(){
+            $header.classList.remove('visible');
+        }, HEADER_HIDE_DELAY);
+    });
+
+    // 키보드 입력이 있으면 헤더 표시 (단축키 의도)
+    document.addEventListener('keydown', function(){
+        showHeader();
+    });
+
+    function loop(now) {
+        var dt = now - lastTime;
+        lastTime = now;
+        if (dt > 100) dt = 100;
+
+        drawBackground(dt);
+
+        // 1초마다 비활성 캐릭터 정리
+        if (now - lastCleanup > 1000) {
+            cleanupInactive(now);
+            lastCleanup = now;
+        }
+
+        // 캐릭터 업데이트
+        for (var i = 0; i < characters.length; i++) {
+            characters[i].update(dt, now);
+        }
+
+        // x 순 정렬 후 그리기
+        var sorted = characters.slice().sort(function(a, b){
+            return a.x - b.x;
+        });
+        for (var j = 0; j < sorted.length; j++) {
+            sorted[j].draw(ctx, now);
+        }
+
+        // 카운터 갱신 (10fps)
+        if (now - lastCountUpdate > 100) {
+            var totalQueue = 0;
+            var totalBubble = 0;
+            for (var k = 0; k < characters.length; k++) {
+                totalQueue += characters[k].messageQueue.length;
+                if (characters[k].bubble) totalBubble++;
+            }
+            $charCount.textContent = characters.length;
+            $msgQueue.textContent = totalQueue;
+            $bubbleCount.textContent = totalBubble;
+            lastCountUpdate = now;
+        }
+
+        requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+
+    // 창 크기 변경 시 캐릭터 groundY 갱신
+    window.addEventListener('resize', function(){
+        for (var i = 0; i < characters.length; i++) {
+            characters[i].groundY = H - 60;
+        }
+    });
+
+    // ============================================================
+    //  WebSocket 연동
+    // ============================================================
+    var SPAN_NICKNAME = 'span._nickname_1mc5x_80';
+    var SPAN_CHAT = 'span._text_w9pvh_1';
+
+    function extractNickname(chatline) {
+        var $nick = chatline.find(SPAN_NICKNAME);
+        if (!$nick || !$nick.length) return null;
+        var color = $nick.css('color');
+        if (color && color.indexOf('rgba') !== -1) {
+            color = '';
+        }
+        $nick.css('background-image', '');
+        var name = $nick.text().trim();
+        if (!name) return null;
+        return { name: name, color: color };
+    }
+
+    function extractChatText(eventData) {
+        var $chat = $(eventData).find(SPAN_CHAT);
+        if ($chat && $chat.length && $chat.text().trim()) {
+            return $chat.text().trim();
+        }
+        var $p = $(eventData).find('p._text_gb6rb_36, p');
+        if ($p && $p.length && $p.text().trim()) {
+            return $p.text().trim();
+        }
+        return $(eventData).text().trim();
+    }
+
+    // ============================================================
+    //  이미지 파일 입력 핸들러
+    // ============================================================
+    var $imageInput = document.getElementById('image-input');
+    var $clearImagesBtn = document.getElementById('clear-images-btn');
+    var $pickFolderBtn = document.getElementById('pick-folder-btn');
+    var $toggleNickname = document.getElementById('toggle-nickname');
+
+    // ============================================================
+    //  닉네임 표시 토글
+    // ============================================================
+    // 초기 상태 반영 (localStorage 에서 로드한 값)
+    $toggleNickname.checked = showNickname;
+    $toggleNickname.addEventListener('change', function(){
+        showNickname = $toggleNickname.checked;
+        try {
+            localStorage.setItem(STORAGE_KEY_SHOW_NICKNAME, showNickname ? '1' : '0');
+        } catch(e) {}
+        // 활성 말풍선들이 다음 프레임에 자동으로 갱신됨 (매 프레임 다시 그려지므로)
+        showToast(showNickname ? '닉네임 표시 켜짐' : '닉네임 표시 꺼짐');
+    });
+
+    // 파일 → 이미지 리사이즈 → dataURL 반환 (캔버스 기반)
+    //  - maxSize: 가로/세로 최대 픽셀 (용량 절감)
+    function fileToResizedDataURL(file, maxSize, callback) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var img = new Image();
+            img.onload = function() {
+                var w = img.naturalWidth;
+                var h = img.naturalHeight;
+                var scale = Math.min(1, maxSize / Math.max(w, h));
+                var tw = Math.round(w * scale);
+                var th = Math.round(h * scale);
+                // 오프스크린 캔버스에 그려서 dataURL 생성
+                var off = document.createElement('canvas');
+                off.width = tw;
+                off.height = th;
+                var offCtx = off.getContext('2d');
+                offCtx.drawImage(img, 0, 0, tw, th);
+                // PNG 보다 JPEG 이 용량 작음 (투명도 필요하면 PNG)
+                // 투명도 보존을 위해 PNG 사용
+                var dataURL = off.toDataURL('image/png');
+                callback(dataURL);
+            };
+            img.onerror = function() {
+                callback(null);
+            };
+            img.src = e.target.result;
+        };
+        reader.onerror = function() {
+            callback(null);
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // 토스트 알림 (이미지 적용 결과 등)
+    var $toast = null;
+    var toastTimer = null;
+    function showToast(msg, ms) {
+        ms = ms || 2000;
+        if (!$toast) {
+            $toast = document.createElement('div');
+            $toast.style.cssText =
+                'position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);' +
+                'background:rgba(0,0,0,0.85);color:#fff;padding:8px 16px;border-radius:8px;' +
+                'font-size:13px;opacity:0;pointer-events:none;transition:opacity 0.2s ease, transform 0.2s ease;' +
+                'z-index:200;font-family:"Noto Sans KR",sans-serif;';
+            document.body.appendChild($toast);
+        }
+        $toast.textContent = msg;
+        $toast.style.opacity = '1';
+        $toast.style.transform = 'translateX(-50%) translateY(0)';
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(function(){
+            $toast.style.opacity = '0';
+            $toast.style.transform = 'translateX(-50%) translateY(20px)';
+        }, ms);
+    }
+
+    // 이미지 파일 선택 처리
+    $imageInput.addEventListener('change', function(e){
+        var file = e.target.files && e.target.files[0];
+        if (!file) return;
+        // 파일 타입 검증
+        if (!file.type.startsWith('image/')) {
+            showToast('이미지 파일만 선택 가능합니다');
+            e.target.value = '';
+            return;
+        }
+        // 닉네임 입력 받기 (prompt 사용 — 헤더에 작은 모달을 만들 수도 있지만 단순화)
+        var nickname = prompt(
+            '이 이미지를 적용할 채팅 유저의 닉네임을 정확히 입력하세요.\n' +
+            '(같은 닉네임으로 채팅 시 이 이미지가 표시됩니다)',
+            ''
+        );
+        if (!nickname) {
+            e.target.value = '';
+            return;
+        }
+        nickname = nickname.trim();
+        if (!nickname) {
+            e.target.value = '';
+            return;
+        }
+        // 128px로 리사이즈하여 저장 (용량 절감)
+        fileToResizedDataURL(file, 128, function(dataURL){
+            if (!dataURL) {
+                showToast('이미지 변환 실패');
+                return;
+            }
+            setCharacterImage(nickname, dataURL);
+            showToast('"' + nickname + '" 캐릭터 이미지 적용됨', 2500);
+        });
+        // 입력 초기화 (같은 파일 다시 선택 가능하도록)
+        e.target.value = '';
+    });
+
+    // 이미지 전체 초기화 버튼
+    $clearImagesBtn.addEventListener('click', function(){
+        // 폴더 핸들도 함께 초기화
+        var hasFolder = !!dirHandle;
+        var hasDataURLs = Object.keys(charImages).length > 0;
+        if (!hasFolder && !hasDataURLs) {
+            showToast('초기화할 이미지가 없습니다');
+            return;
+        }
+        var msg = '모든 캐릭터 이미지 설정을 초기화하시겠습니까?';
+        if (hasFolder) msg += '\n(폴더 매핑도 해제됩니다)';
+        if (confirm(msg)) {
+            // 폴더 핸들 제거
+            dirHandle = null;
+            idbDel(STORAGE_KEY_DIR_HANDLE);
+            // dataURL 매핑 제거
+            clearAllCharacterImages();
+            // 캐시 초기화 → 활성 캐릭터들에 다시 적용 (이제 이미지 없음)
+            charImageCache = {};
+            for (var i = 0; i < characters.length; i++) {
+                characters[i].image = null;
+            }
+            showToast('모든 캐릭터 이미지가 초기화되었습니다');
+        }
+    });
+
+    // ============================================================
+    //  폴더 선택 핸들러 (File System Access API)
+    // ============================================================
+    $pickFolderBtn.addEventListener('click', async function(){
+        if (!HAS_FS_ACCESS) {
+            showToast('이 브라우저는 폴더 선택을 지원하지 않습니다. Chrome/Edge 사용 권장. 단일 이미지 버튼을 사용하세요.');
+            return;
+        }
+        try {
+            // 폴더 선택 다이얼로그
+            var handle = await window.showDirectoryPicker();
+            // 권한 확인 (read)
+            var perm = await handle.queryPermission({ mode: 'read' });
+            if (perm !== 'granted') {
+                perm = await handle.requestPermission({ mode: 'read' });
+            }
+            if (perm !== 'granted') {
+                showToast('폴더 읽기 권한이 거부되었습니다');
+                return;
+            }
+            dirHandle = handle;
+            // IndexedDB에 저장 (다음 방문 시 복원)
+            await idbSet(STORAGE_KEY_DIR_HANDLE, handle);
+            // 캐시 초기화 후 활성 캐릭터에 다시 적용
+            charImageCache = {};
+            for (var i = 0; i < characters.length; i++) {
+                characters[i].image = null;
+                applyCharacterImage(characters[i]);
+            }
+            // 폴더 내 이미지 개수 카운트
+            var imgCount = 0;
+            for await (var entry of handle.values()) {
+                if (entry.kind === 'file' && isImageFile(entry.name)) {
+                    imgCount++;
+                }
+            }
+            showToast('폴더 연결됨: ' + imgCount + '개 이미지 발견', 2500);
+        } catch(e) {
+            if (e && e.name === 'AbortError') {
+                // 사용자가 취소
+                return;
+            }
+            console.warn('폴더 선택 실패:', e);
+            showToast('폴더 선택 실패: ' + (e.message || e));
+        }
+    });
+
+    // ============================================================
+    //  페이지 로드 시 저장된 폴더 핸들 복원 시도
+    // ============================================================
+    //  (사용자 제스처 없이는 queryPermission 만 호출 가능)
+    //  - granted 상태이면 자동 사용
+    //  - 아니면 사용자가 "폴더 선택" 버튼 클릭 시 requestPermission
+    restoreDirHandle().then(function(restored){
+        if (restored) {
+            console.log('📁 저장된 폴더 핸들 복원됨');
+        } else if (HAS_FS_ACCESS) {
+            // 저장된 핸들은 있으나 권한 미획득 → 사용자 클릭 대기
+            // (버튼 텍스트를 "폴더 권한 재확인" 등으로 변경 가능)
+        }
+    });
+
+    // ============================================================
+    //  모드 결정: ?demo=1 이면 데모 모드 (WebSocket 연결 안 함)
+    // ============================================================
+    var params = new URLSearchParams(window.location.search);
+    var isDemoMode = params.get('demo') === '1';
+
+    if (!isDemoMode) {
+        // ===== WebSocket 모드 =====
+        var chatsock = new ReconnectingWebSocket('ws://localhost:65002', 'chat');
+        chatsock.reconnectInterval = 2000;
+        chatsock.onmessage = function(event) {
+            try {
+                var $data = $(event.data);
+                var nickInfo = extractNickname($data);
+                if (!nickInfo) return;
+                var text = extractChatText(event.data);
+                if (!text) return;
+                dispatchMessage({
+                    nickname: nickInfo.name,
+                    text: text,
+                    color: nickInfo.color || '#f0a830'
+                });
+            } catch(e) {
+                console.warn('메시지 파싱 실패:', e);
+            }
+        };
+    } else {
+        // ============================================================
+        //  데모 모드 (WebSocket 없이 작동)
+        // ============================================================
+        var demoNicks = ['Alice', 'Bob', 'Charlie', 'Dave', 'Eve', 'Frank', 'Grace', 'Heidi', 'Ivan', 'Judy'];
+        var demoTexts = [
+            '안녕하세요!',
+            '반갑습니다~',
+            '오늘 날씨 정말 좋네요',
+            '캐릭터마다 다른 모습이에요',
+            '같은 닉네임은 같은 캐릭터!',
+            '신기하다 ㅋㅋ',
+            '잘가요~',
+            '좀 더 긴 메시지를 보내봅니다. 말풍선이 자동으로 줄바꿈을 처리해요.',
+            '귀여운 캐릭터들',
+            '왕관 쓴 캐릭터도 있어요',
+            '꽃 달린 캐릭터도 있고요',
+            '안테나 캐릭터도 있대요',
+            '점심 뭐 먹지?',
+            '배고프다 ㅠㅠ',
+            '오늘도 화이팅!',
+            '캐릭터 움직임 귀여워요'
+        ];
+
+        // 시작 직후 즉시 몇 명 등장 (3명, 200ms 간격)
+        var initialDelay = 300;
+        for (var i = 0; i < 3; i++) {
+            (function(idx, delay) {
+                setTimeout(function(){
+                    var nick = demoNicks[idx];
+                    var text = demoTexts[Math.floor(Math.random() * demoTexts.length)];
+                    dispatchMessage({
+                        nickname: nick,
+                        text: text,
+                        color: BODY_COLORS[Math.floor(Math.random() * BODY_COLORS.length)]
+                    });
+                }, delay);
+            })(i, initialDelay + i * 200);
+        }
+
+        // 이후 1.8초 간격으로 계속 메시지 발생
+        setInterval(function(){
+            var nick = demoNicks[Math.floor(Math.random() * demoNicks.length)];
+            var text = demoTexts[Math.floor(Math.random() * demoTexts.length)];
+            dispatchMessage({
+                nickname: nick,
+                text: text,
+                color: BODY_COLORS[Math.floor(Math.random() * BODY_COLORS.length)]
+            });
+        }, 1800);
+
+        // 콘솔에 안내
+        console.log('🎭 데모 모드 활성화 — WebSocket 없이 동작합니다.');
+        console.log('   URL에서 ?demo=1 을 제거하면 실제 WebSocket 모드로 전환됩니다.');
+    }
+})();
+</script>
+</body>
+</html>

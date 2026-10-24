@@ -87,6 +87,11 @@
         <span class="title">▣ 채팅 매트릭스</span>
         <span class="count">메시지 <b id="msg-count">0</b></span>
         <span class="count">활성 열 <b id="col-count">0</b></span>
+        <label style="font-size:11px;color:#aaa;font-family:monospace;">방향:</label>
+        <select id="dir-select" class="mode-select" title="흐름 방향">
+            <option value="up">↑ 위로 (매트릭스)</option>
+            <option value="down">↓ 아래로 (떨어짐)</option>
+        </select>
         <label style="font-size:11px;color:#aaa;font-family:monospace;">배경:</label>
         <select id="bg-select" class="mode-select" title="배경 모드">
             <option value="black">검정 (#000)</option>
@@ -138,6 +143,20 @@
         var savedBg = localStorage.getItem(STORAGE_KEY_BG_MODE);
         if (savedBg && (savedBg === 'transparent' || BG_COLORS.hasOwnProperty(savedBg))) {
             bgMode = savedBg;
+        }
+    } catch(e) {}
+
+    // ============================================================
+    //  흐름 방향 설정 (localStorage 저장)
+    //  - 'up':   아래에서 위로 (매트릭스 스타일, 기본)
+    //  - 'down': 위에서 아래로 (떨어지는 효과)
+    // ============================================================
+    var STORAGE_KEY_DIR_MODE = 'matrix_dir_mode';
+    var dirMode = 'up';
+    try {
+        var savedDir = localStorage.getItem(STORAGE_KEY_DIR_MODE);
+        if (savedDir === 'up' || savedDir === 'down') {
+            dirMode = savedDir;
         }
     } catch(e) {}
 
@@ -200,15 +219,18 @@
             return;
         }
         var col = columns[colIdx];
-        // 메시지를 행들로 분할: 닉네임(1행) + 본문(여러 행)
+        // 메시지를 행들로 분할: 닉네임(한 글자씩 세로) + 본문(한 글자씩 세로)
         col.rows = [];
-        // 닉네임 행 (색상 강조)
-        col.rows.push({
-            text: msg.nickname,
-            color: msg.color,
-            isNickname: true
-        });
-        // 본문: COL_WIDTH 에 맞춰 자동 줄바꿈
+        // 닉네임: 한 글자씩 분리하여 각 행에 배치 (세로 표시)
+        var nickChars = splitToChars(msg.nickname);
+        for (var n = 0; n < nickChars.length; n++) {
+            col.rows.push({
+                text: nickChars[n],
+                color: msg.color,
+                isNickname: true
+            });
+        }
+        // 본문: COL_WIDTH 에 맞춰 자동 줄바꿈 (한 글자씩)
         if (msg.text) {
             var lines = wrapMessageText(msg.text, col);
             for (var i = 0; i < lines.length; i++) {
@@ -226,24 +248,40 @@
         col.active = true;
         col.speed = 0.8 + Math.random() * 1.2;   // 0.8 ~ 2.0 픽셀/프레임
         col.headGlow = 1;
-        col.lastScrollY = H;   // 첫 행이 화면 하단(H)에서 시작
-                                // 이후 행들은 자동으로 H + j*ROW_HEIGHT (화면 밖 아래)에 위치
-                                // 위로 스크롤 시 모든 행이 화면 안으로 올라옴
+        // 시작 위치: 방향에 따라 다름
+        // - 'up':   첫 행이 화면 하단(H)에서 시작 → 위로 이동
+        //           이후 행들은 H + j*ROW_HEIGHT (화면 밖 아래)에 위치 → 위로 올라옴
+        // - 'down': 첫 행이 화면 상단(0 - ROW_HEIGHT)에서 시작 → 아래로 이동
+        //           이후 행들은 음수 y 에 위치 → 아래로 떨어짐
+        if (dirMode === 'down') {
+            // 첫 행이 화면 바로 위에서 시작하도록 음수 offset
+            col.lastScrollY = -ROW_HEIGHT;
+        } else {
+            col.lastScrollY = H;
+        }
     }
 
-    // 텍스트를 컬럼 너비에 맞춰 줄바꿈
-    function wrapMessageText(text, col) {
-        ctx.font = FONT_SIZE + 'px monospace';
-        var maxWidth = COL_WIDTH * 2 - 4;   // 한 글자만 표시 (좁은 컬럼)
-        // 매트릭스 스타일: 한 글자씩 한 행으로 표시
+    // 텍스트를 한 글자씩 분리 (공백 제거)
+    // 닉네임/본문 모두 한 글자씩 세로 배치할 때 사용
+    function splitToChars(text) {
         var chars = [];
+        if (!text) return chars;
         for (var i = 0; i < text.length; i++) {
             var ch = text[i];
-            if (ch === ' ' || ch === '\t') continue;   // 공백 제거
+            if (ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r') continue;   // 공백/줄바꿈 제거
             chars.push(ch);
         }
-        // 한 컬럼당 최대 25행 (닉네임 1행 제외)
-        return chars.slice(0, MAX_ROWS_PER_COL - 1);
+        return chars;
+    }
+
+    // 본문 텍스트를 컬럼 너비에 맞춰 한 글자씩 분리
+    // (wrapMessageText 는 실제로 줄바꿈 없이 한 글자씩 분리만 수행)
+    function wrapMessageText(text, col) {
+        var chars = splitToChars(text);
+        // 한 컬럼당 최대 표시 행 수 제한
+        // 닉네임이 차지하는 행 수를 제외한 만큼만 본문에 할당
+        // (하지만 여기서는 닉네임 길이를 모르므로 그냥 MAX_ROWS_PER_COL 로 제한)
+        return chars.slice(0, MAX_ROWS_PER_COL);
     }
 
     // 컬럼 업데이트
@@ -252,12 +290,21 @@
         for (var i = 0; i < columns.length; i++) {
             var col = columns[i];
             if (!col.active) continue;
-            col.lastScrollY -= col.speed * scale;   // 위로 이동 (y 감소)
-            // 모든 행이 화면 위로 사라지면 비활성화
+            // 스크롤 방향: 방향 모드에 따라 다름
+            // - 'up':   lastScrollY 감소 (위로 이동)
+            // - 'down': lastScrollY 증가 (아래로 이동)
+            if (dirMode === 'down') {
+                col.lastScrollY += col.speed * scale;
+            } else {
+                col.lastScrollY -= col.speed * scale;
+            }
             var topRowY = col.lastScrollY;
             var bottomRowY = col.lastScrollY + col.rows.length * ROW_HEIGHT;
-            if (bottomRowY < 0) {
-                // 모두 화면 위로 나감
+            // 정지 조건: 방향에 따라 다름
+            // - 'up':   bottomRowY < 0 (모두 화면 위로 사라짐)
+            // - 'down': topRowY > H   (모두 화면 아래로 사라짐)
+            var shouldDeactivate = (dirMode === 'down') ? (topRowY > H) : (bottomRowY < 0);
+            if (shouldDeactivate) {
                 col.active = false;
                 col.rows = [];
                 // 큐에 대기 중인 메시지가 있으면 즉시 할당
@@ -276,7 +323,6 @@
 
     // 컬럼 그리기
     function drawColumns() {
-        ctx.font = FONT_SIZE + 'px monospace';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
@@ -284,53 +330,102 @@
             var col = columns[i];
             if (!col.active) continue;
 
+            // 선두 행 인덱스: 방향에 따라 다름
+            var headIdx = (dirMode === 'down') ? 0 : (col.rows.length - 1);
+
+            // 닉네임 영역 인덱스 파악 (연속된 닉네임 행들의 첫/끝)
+            var nickStart = -1, nickEnd = -1;
+            for (var k = 0; k < col.rows.length; k++) {
+                if (col.rows[k].isNickname) {
+                    if (nickStart === -1) nickStart = k;
+                    nickEnd = k;
+                } else if (nickStart !== -1) {
+                    break;   // 닉네임 영역 끝
+                }
+            }
+
             for (var j = 0; j < col.rows.length; j++) {
                 var row = col.rows[j];
                 var rowY = col.lastScrollY + j * ROW_HEIGHT;
                 // 화면 밖이면 스킵
                 if (rowY < -ROW_HEIGHT || rowY > H + ROW_HEIGHT) continue;
 
-                // 잔상 효과: 가장 아래(마지막) 행이 가장 밝고, 위로 갈수록 어두워짐
-                // 하지만 매트릭스는 보통 선두(위쪽)가 밝음 → 여기서는 선두가 화면 하단에서 위로 올라가므로
-                // rowY가 클수록(아래쪽) 최근에 추가된 것 → 밝게
-                // → 선두 글자(마지막 행)를 밝게, 오래된 것(첫 행)을 어둡게
-                var rowProgress = (j + 1) / col.rows.length;   // 0(오래됨) ~ 1(최근)
+                // 잔상 효과
+                var rowProgress;
+                if (dirMode === 'down') {
+                    rowProgress = (col.rows.length - j) / col.rows.length;
+                } else {
+                    rowProgress = (j + 1) / col.rows.length;
+                }
                 var alpha;
                 if (row.isNickname) {
-                    alpha = Math.min(1, 0.5 + rowProgress * 0.5);   // 닉네임은 항상 밝게
+                    alpha = Math.min(1, 0.7 + rowProgress * 0.3);   // 닉네임은 항상 밝게 (강조)
                 } else {
-                    alpha = rowProgress * 0.9;   // 위로 갈수록(과거) 어두워짐
+                    alpha = rowProgress * 0.85;
                 }
 
-                // 색상 처리
                 var rgb = hexToRgb(row.color || '#00ff66');
-                // 닉네임은 원본 색상, 본문은 매트릭스 그린
                 var drawR, drawG, drawB;
                 if (row.isNickname) {
                     drawR = rgb.r;
                     drawG = rgb.g;
                     drawB = rgb.b;
                 } else {
-                    // 본문은 매트릭스 그린 베이스 + 닉네임 색상 약간 혼합
                     drawR = Math.floor(rgb.r * 0.3 + 0 * 0.7);
                     drawG = Math.floor(rgb.g * 0.3 + 255 * 0.7);
                     drawB = Math.floor(rgb.b * 0.3 + 102 * 0.7);
                 }
 
-                ctx.fillStyle = 'rgba(' + drawR + ',' + drawG + ',' + drawB + ',' + alpha.toFixed(2) + ')';
-                ctx.fillText(row.text, col.x, rowY);
-
-                // 선두(가장 아래쪽, 가장 최근) 행에 발광 효과
-                if (j === col.rows.length - 1) {
+                // ===== 닉네임 강조 효과 =====
+                if (row.isNickname) {
+                    // 1) 닉네임 배경 (반투명 색상 박스)
                     ctx.save();
-                    ctx.shadowColor = 'rgba(' + drawR + ',' + drawG + ',' + drawB + ',1)';
-                    ctx.shadowBlur = 8;
-                    ctx.fillStyle = '#ffffff';   // 선두는 흰색
-                    if (row.isNickname) {
-                        ctx.fillStyle = 'rgb(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ')';
-                    }
+                    ctx.fillStyle = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.25)';
+                    ctx.fillRect(col.x - COL_WIDTH / 2 + 1, rowY - ROW_HEIGHT / 2 + 1,
+                                 COL_WIDTH - 2, ROW_HEIGHT - 2);
+                    ctx.restore();
+
+                    // 2) 닉네임 텍스트 (크게 + 발광, 굵기는 본문과 동일)
+                    ctx.save();
+                    ctx.font = (FONT_SIZE + 2) + 'px monospace';
+                    // 발광 효과 (닉네임은 항상 발광)
+                    ctx.shadowColor = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.9)';
+                    ctx.shadowBlur = 6;
+                    ctx.fillStyle = 'rgba(' + drawR + ',' + drawG + ',' + drawB + ',' + alpha.toFixed(2) + ')';
+                    ctx.fillText(row.text, col.x, rowY);
+                    // 추가 백색 하이라이트
+                    ctx.shadowBlur = 0;
+                    ctx.fillStyle = 'rgba(255, 255, 255, ' + (alpha * 0.3).toFixed(2) + ')';
                     ctx.fillText(row.text, col.x, rowY);
                     ctx.restore();
+
+                    // 3) 닉네임과 본문 경계에 구분선 (닉네임 마지막 행에만)
+                    if (j === nickEnd) {
+                        ctx.save();
+                        ctx.strokeStyle = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.6)';
+                        ctx.lineWidth = 1;
+                        var lineY = rowY + ROW_HEIGHT / 2;
+                        ctx.beginPath();
+                        ctx.moveTo(col.x - COL_WIDTH / 2 + 2, lineY);
+                        ctx.lineTo(col.x + COL_WIDTH / 2 - 2, lineY);
+                        ctx.stroke();
+                        ctx.restore();
+                    }
+                } else {
+                    // 본문: 기본 폰트
+                    ctx.font = FONT_SIZE + 'px monospace';
+                    ctx.fillStyle = 'rgba(' + drawR + ',' + drawG + ',' + drawB + ',' + alpha.toFixed(2) + ')';
+                    ctx.fillText(row.text, col.x, rowY);
+
+                    // 선두 행(본문) 발광
+                    if (j === headIdx) {
+                        ctx.save();
+                        ctx.shadowColor = 'rgba(' + drawR + ',' + drawG + ',' + drawB + ',1)';
+                        ctx.shadowBlur = 8;
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillText(row.text, col.x, rowY);
+                        ctx.restore();
+                    }
                 }
             }
         }
@@ -436,6 +531,29 @@
     });
 
     // ============================================================
+    //  흐름 방향 선택
+    // ============================================================
+    var $dirSelect = document.getElementById('dir-select');
+    $dirSelect.value = dirMode;
+    $dirSelect.addEventListener('change', function(){
+        var newDir = $dirSelect.value;
+        if (newDir !== 'up' && newDir !== 'down') return;
+        dirMode = newDir;
+        try {
+            localStorage.setItem(STORAGE_KEY_DIR_MODE, dirMode);
+        } catch(e) {}
+        // 활성 컬럼들의 시작 위치를 새 방향에 맞게 재조정
+        // (이미 진행 중인 컬럼은 그대로 두고, 다음 메시지부터 새 방향 적용)
+        // 단, 방향 전환 시 진행 중인 컬럼을 즉시 리셋하려면 아래 주석 해제:
+        // for (var i = 0; i < columns.length; i++) {
+        //     if (columns[i].active) {
+        //         columns[i].active = false;
+        //         columns[i].rows = [];
+        //     }
+        // }
+    });
+
+    // ============================================================
     //  WebSocket 메시지 파싱
     // ============================================================
     var SPAN_NICKNAME = 'span._nickname_1mc5x_80';
@@ -466,10 +584,10 @@
 
     function dispatchMessage(msg) {
         totalMessages++;
-        // 닉네임을 짧게 변환 (매트릭스 컬럼은 좁으므로)
-        // 닉네임이 4자 이상이면 첫 4자만 표시
-        if (msg.nickname.length > 4) {
-            msg.nickname = msg.nickname.substring(0, 4);
+        // 닉네임을 짧게 변환 (너무 길면 화면을 다 채우므로)
+        // 닉네임이 8자 이상이면 첫 8자만 표시 (세로 표시이므로 4자 → 8자로 완화)
+        if (msg.nickname.length > 8) {
+            msg.nickname = msg.nickname.substring(0, 8);
         }
         assignMessageToColumn(msg);
     }

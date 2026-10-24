@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>채팅 매트릭스</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="stylesheet" href="./jquery/jquery-ui.css" />
+<link type="text/css" rel="stylesheet" href="vendor-Zr7AVuQA.css" />
+<link type="text/css" rel="stylesheet" href="index-B3xGXYAr-dark.css" />
+<script src="./jquery/jquery-3.7.1.min.js"></script>
+<script src="./jquery/jquery-ui.js"></script>
+<script type="text/javascript" src="reconnecting-websocket.min.js"></script>
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+        font-family: "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Segoe UI", monospace;
+    }
+    #stage {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
+    #header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        padding: 8px 16px;
+        background: linear-gradient(180deg, rgba(20,20,28,0.9) 0%, rgba(15,15,18,0.5) 100%);
+        backdrop-filter: blur(4px);
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 13px;
+        color: #ccc;
+        pointer-events: none;
+        opacity: 0;
+        transform: translateY(-100%);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    #header.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    #header .title {
+        color: #00ff66;
+        font-weight: 700;
+        font-size: 15px;
+        font-family: monospace;
+        text-shadow: 0 0 8px rgba(0, 255, 102, 0.6);
+    }
+    #header .count {
+        background: rgba(0,0,0,0.5);
+        padding: 3px 10px;
+        border-radius: 10px;
+        color: #aaa;
+        font-size: 12px;
+        font-family: monospace;
+    }
+    #header .count b { color: #00ff66; }
+    #header select.mode-select {
+        background: rgba(0,0,0,0.5);
+        color: #ccc;
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 8px;
+        padding: 4px 8px;
+        font-size: 11px;
+        cursor: pointer;
+        pointer-events: auto;
+        font-family: monospace;
+    }
+    #header select.mode-select:focus { outline: none; border-color: #00ff66; }
+</style>
+</head>
+<body>
+    <canvas id="stage"></canvas>
+    <div id="header">
+        <span class="title">▣ 채팅 매트릭스</span>
+        <span class="count">메시지 <b id="msg-count">0</b></span>
+        <span class="count">활성 열 <b id="col-count">0</b></span>
+        <label style="font-size:11px;color:#aaa;font-family:monospace;">배경:</label>
+        <select id="bg-select" class="mode-select" title="배경 모드">
+            <option value="black">검정 (#000)</option>
+            <option value="transparent">투명</option>
+            <option value="dark">다크 (#0f0f12)</option>
+            <option value="navy">남색 (#1a1a3a)</option>
+            <option value="green">다크 그린 (#001a0a)</option>
+        </select>
+        <span class="count">?demo=1</span>
+    </div>
+
+<script>
+(function(){
+    'use strict';
+
+    // ============================================================
+    //  캔버스 설정
+    // ============================================================
+    var canvas = document.getElementById('stage');
+    var ctx = canvas.getContext('2d');
+    var W = 0, H = 0;
+    var DPR = 1;
+
+    function resize() {
+        DPR = window.devicePixelRatio || 1;
+        W = window.innerWidth;
+        H = window.innerHeight;
+        canvas.width = Math.floor(W * DPR);
+        canvas.height = Math.floor(H * DPR);
+        canvas.style.width = W + 'px';
+        canvas.style.height = H + 'px';
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        // 컬럼 재계산
+        rebuildColumns();
+    }
+
+    // ============================================================
+    //  배경 모드 설정 (localStorage 저장)
+    // ============================================================
+    var STORAGE_KEY_BG_MODE = 'matrix_bg_mode';
+    var BG_COLORS = {
+        dark:    '#0f0f12',
+        black:   '#000000',
+        navy:    '#1a1a3a',
+        green:   '#001a0a'
+    };
+    var bgMode = 'black';
+    try {
+        var savedBg = localStorage.getItem(STORAGE_KEY_BG_MODE);
+        if (savedBg && (savedBg === 'transparent' || BG_COLORS.hasOwnProperty(savedBg))) {
+            bgMode = savedBg;
+        }
+    } catch(e) {}
+
+    function applyBodyBackground() {
+        if (bgMode === 'transparent') {
+            document.body.style.background = 'transparent';
+        } else {
+            document.body.style.background = BG_COLORS[bgMode] || '#000000';
+        }
+    }
+    applyBodyBackground();
+
+    // ============================================================
+    //  매트릭스 컬럼 (열) 시스템
+    // ============================================================
+    var COL_WIDTH = 14;       // 각 열의 너비 (픽셀)
+    var ROW_HEIGHT = 18;     // 각 행의 높이 (픽셀) — 글자 한 줄
+    var FONT_SIZE = 14;
+    var MAX_ROWS_PER_COL = 30;   // 한 열당 최대 표시 행 수
+    var columns = [];        // 컬럼 객체 배열
+    var messageQueue = [];   // 대기 중인 메시지
+
+    function rebuildColumns() {
+        var numCols = Math.floor(W / COL_WIDTH);
+        // 기존 컬럼 유지하며 새로 추가/제거
+        if (columns.length < numCols) {
+            for (var i = columns.length; i < numCols; i++) {
+                columns.push({
+                    x: i * COL_WIDTH + COL_WIDTH / 2,
+                    rows: [],          // 이 컬럼에 표시 중인 문자열 행들
+                    speed: 0,           // 현재 스크롤 속도 (픽셀/프레임)
+                    headGlow: 0,         // 선두 글자 발광 강도
+                    active: false,       // 활성 여부
+                    lastScrollY: 0       // 스크롤 오프셋 (픽셀)
+                });
+            }
+        } else if (columns.length > numCols) {
+            columns.length = numCols;
+        }
+    }
+
+    // 빈 컬럼 찾기 (랜덤)
+    function findEmptyColumn() {
+        var emptyIdxs = [];
+        for (var i = 0; i < columns.length; i++) {
+            if (!columns[i].active) emptyIdxs.push(i);
+        }
+        if (emptyIdxs.length === 0) return -1;
+        return emptyIdxs[Math.floor(Math.random() * emptyIdxs.length)];
+    }
+
+    // 메시지를 컬럼에 배치
+    function assignMessageToColumn(msg) {
+        var colIdx = findEmptyColumn();
+        if (colIdx === -1) {
+            // 모든 컬럼이 사용 중 → 큐에 적재
+            if (messageQueue.length < 50) {
+                messageQueue.push(msg);
+            }
+            return;
+        }
+        var col = columns[colIdx];
+        // 메시지를 행들로 분할: 닉네임(1행) + 본문(여러 행)
+        col.rows = [];
+        // 닉네임 행 (색상 강조)
+        col.rows.push({
+            text: msg.nickname,
+            color: msg.color,
+            isNickname: true
+        });
+        // 본문: COL_WIDTH 에 맞춰 자동 줄바꿈
+        if (msg.text) {
+            var lines = wrapMessageText(msg.text, col);
+            for (var i = 0; i < lines.length; i++) {
+                col.rows.push({
+                    text: lines[i],
+                    color: msg.color,
+                    isNickname: false
+                });
+            }
+        }
+        // 열 제한 (최대 30행)
+        if (col.rows.length > MAX_ROWS_PER_COL) {
+            col.rows = col.rows.slice(0, MAX_ROWS_PER_COL);
+        }
+        col.active = true;
+        col.speed = 0.8 + Math.random() * 1.2;   // 0.8 ~ 2.0 픽셀/프레임
+        col.headGlow = 1;
+        col.lastScrollY = H;   // 첫 행이 화면 하단(H)에서 시작
+                                // 이후 행들은 자동으로 H + j*ROW_HEIGHT (화면 밖 아래)에 위치
+                                // 위로 스크롤 시 모든 행이 화면 안으로 올라옴
+    }
+
+    // 텍스트를 컬럼 너비에 맞춰 줄바꿈
+    function wrapMessageText(text, col) {
+        ctx.font = FONT_SIZE + 'px monospace';
+        var maxWidth = COL_WIDTH * 2 - 4;   // 한 글자만 표시 (좁은 컬럼)
+        // 매트릭스 스타일: 한 글자씩 한 행으로 표시
+        var chars = [];
+        for (var i = 0; i < text.length; i++) {
+            var ch = text[i];
+            if (ch === ' ' || ch === '\t') continue;   // 공백 제거
+            chars.push(ch);
+        }
+        // 한 컬럼당 최대 25행 (닉네임 1행 제외)
+        return chars.slice(0, MAX_ROWS_PER_COL - 1);
+    }
+
+    // 컬럼 업데이트
+    function updateColumns(dt) {
+        var scale = dt / 16.67;
+        for (var i = 0; i < columns.length; i++) {
+            var col = columns[i];
+            if (!col.active) continue;
+            col.lastScrollY -= col.speed * scale;   // 위로 이동 (y 감소)
+            // 모든 행이 화면 위로 사라지면 비활성화
+            var topRowY = col.lastScrollY;
+            var bottomRowY = col.lastScrollY + col.rows.length * ROW_HEIGHT;
+            if (bottomRowY < 0) {
+                // 모두 화면 위로 나감
+                col.active = false;
+                col.rows = [];
+                // 큐에 대기 중인 메시지가 있으면 즉시 할당
+                if (messageQueue.length > 0) {
+                    assignMessageToColumn(messageQueue.shift());
+                }
+            }
+        }
+        // 큐에 대기 중인 메시지가 있고 빈 컬럼이 있으면 할당
+        while (messageQueue.length > 0) {
+            var emptyIdx = findEmptyColumn();
+            if (emptyIdx === -1) break;
+            assignMessageToColumn(messageQueue.shift());
+        }
+    }
+
+    // 컬럼 그리기
+    function drawColumns() {
+        ctx.font = FONT_SIZE + 'px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        for (var i = 0; i < columns.length; i++) {
+            var col = columns[i];
+            if (!col.active) continue;
+
+            for (var j = 0; j < col.rows.length; j++) {
+                var row = col.rows[j];
+                var rowY = col.lastScrollY + j * ROW_HEIGHT;
+                // 화면 밖이면 스킵
+                if (rowY < -ROW_HEIGHT || rowY > H + ROW_HEIGHT) continue;
+
+                // 잔상 효과: 가장 아래(마지막) 행이 가장 밝고, 위로 갈수록 어두워짐
+                // 하지만 매트릭스는 보통 선두(위쪽)가 밝음 → 여기서는 선두가 화면 하단에서 위로 올라가므로
+                // rowY가 클수록(아래쪽) 최근에 추가된 것 → 밝게
+                // → 선두 글자(마지막 행)를 밝게, 오래된 것(첫 행)을 어둡게
+                var rowProgress = (j + 1) / col.rows.length;   // 0(오래됨) ~ 1(최근)
+                var alpha;
+                if (row.isNickname) {
+                    alpha = Math.min(1, 0.5 + rowProgress * 0.5);   // 닉네임은 항상 밝게
+                } else {
+                    alpha = rowProgress * 0.9;   // 위로 갈수록(과거) 어두워짐
+                }
+
+                // 색상 처리
+                var rgb = hexToRgb(row.color || '#00ff66');
+                // 닉네임은 원본 색상, 본문은 매트릭스 그린
+                var drawR, drawG, drawB;
+                if (row.isNickname) {
+                    drawR = rgb.r;
+                    drawG = rgb.g;
+                    drawB = rgb.b;
+                } else {
+                    // 본문은 매트릭스 그린 베이스 + 닉네임 색상 약간 혼합
+                    drawR = Math.floor(rgb.r * 0.3 + 0 * 0.7);
+                    drawG = Math.floor(rgb.g * 0.3 + 255 * 0.7);
+                    drawB = Math.floor(rgb.b * 0.3 + 102 * 0.7);
+                }
+
+                ctx.fillStyle = 'rgba(' + drawR + ',' + drawG + ',' + drawB + ',' + alpha.toFixed(2) + ')';
+                ctx.fillText(row.text, col.x, rowY);
+
+                // 선두(가장 아래쪽, 가장 최근) 행에 발광 효과
+                if (j === col.rows.length - 1) {
+                    ctx.save();
+                    ctx.shadowColor = 'rgba(' + drawR + ',' + drawG + ',' + drawB + ',1)';
+                    ctx.shadowBlur = 8;
+                    ctx.fillStyle = '#ffffff';   // 선두는 흰색
+                    if (row.isNickname) {
+                        ctx.fillStyle = 'rgb(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ')';
+                    }
+                    ctx.fillText(row.text, col.x, rowY);
+                    ctx.restore();
+                }
+            }
+        }
+    }
+
+    // ============================================================
+    //  색상 유틸리티
+    // ============================================================
+    function hexToRgb(hex) {
+        if (!hex || hex.indexOf('rgba') !== -1 || hex.indexOf('rgb') !== -1) {
+            var m = hex && hex.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+            if (m) return { r: +m[1], g: +m[2], b: +m[3] };
+            return { r: 0, g: 255, b: 102 };   // 매트릭스 그린 기본
+        }
+        var m = hex.match(/^#?([0-9a-f]{6})$/i);
+        if (!m) return { r: 0, g: 255, b: 102 };
+        var n = parseInt(m[1], 16);
+        return { r: (n >> 16) & 0xff, g: (n >> 8) & 0xff, b: n & 0xff };
+    }
+
+    // ============================================================
+    //  메인 루프
+    // ============================================================
+    function drawBackground() {
+        if (bgMode === 'transparent') {
+            ctx.clearRect(0, 0, W, H);
+        } else {
+            ctx.fillStyle = BG_COLORS[bgMode] || '#000000';
+            ctx.fillRect(0, 0, W, H);
+            // 매트릭스 잔상 효과: 매 프레임 약간 투명한 검정을 덮어서 잔상 남김
+            // (단, 투명 모드에서는 사용 불가 → 잔상 없이 매 프레임 클리어)
+            if (bgMode !== 'transparent') {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
+                ctx.fillRect(0, 0, W, H);
+            }
+        }
+    }
+
+    var lastTime = performance.now();
+    var $msgCount = document.getElementById('msg-count');
+    var $colCount = document.getElementById('col-count');
+    var $header = document.getElementById('header');
+    var lastCountUpdate = 0;
+    var totalMessages = 0;
+
+    function loop(now) {
+        var dt = now - lastTime;
+        lastTime = now;
+        if (dt > 100) dt = 100;
+
+        drawBackground();
+        updateColumns(dt);
+        drawColumns();
+
+        // 카운터 갱신 (10fps)
+        if (now - lastCountUpdate > 100) {
+            $msgCount.textContent = totalMessages;
+            var activeCols = 0;
+            for (var i = 0; i < columns.length; i++) {
+                if (columns[i].active) activeCols++;
+            }
+            $colCount.textContent = activeCols;
+            lastCountUpdate = now;
+        }
+
+        requestAnimationFrame(loop);
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+    requestAnimationFrame(loop);
+
+    // ============================================================
+    //  헤더 자동 숨김
+    // ============================================================
+    var HEADER_TRIGGER_ZONE = 80;
+    var HEADER_HIDE_DELAY = 2000;
+    var headerTimer = null;
+
+    function showHeader() {
+        $header.classList.add('visible');
+        if (headerTimer) clearTimeout(headerTimer);
+        headerTimer = setTimeout(function(){
+            $header.classList.remove('visible');
+        }, HEADER_HIDE_DELAY);
+    }
+    document.addEventListener('mousemove', function(e){
+        if (e.clientY < HEADER_TRIGGER_ZONE) showHeader();
+    });
+    document.addEventListener('keydown', showHeader);
+
+    // ============================================================
+    //  배경 모드 선택
+    // ============================================================
+    var $bgSelect = document.getElementById('bg-select');
+    $bgSelect.value = bgMode;
+    $bgSelect.addEventListener('change', function(){
+        bgMode = $bgSelect.value;
+        try {
+            localStorage.setItem(STORAGE_KEY_BG_MODE, bgMode);
+        } catch(e) {}
+        applyBodyBackground();
+    });
+
+    // ============================================================
+    //  WebSocket 메시지 파싱
+    // ============================================================
+    var SPAN_NICKNAME = 'span._nickname_1mc5x_80';
+    var SPAN_CHAT = 'span._text_w9pvh_1';
+
+    function extractNickname(chatline) {
+        var $nick = chatline.find(SPAN_NICKNAME);
+        if (!$nick || !$nick.length) return null;
+        var color = $nick.css('color');
+        if (color && color.indexOf('rgba') !== -1) color = '';
+        $nick.css('background-image', '');
+        var name = $nick.text().trim();
+        if (!name) return null;
+        return { name: name, color: color };
+    }
+
+    function extractChatText(eventData) {
+        var $chat = $(eventData).find(SPAN_CHAT);
+        if ($chat && $chat.length && $chat.text().trim()) {
+            return $chat.text().trim();
+        }
+        var $p = $(eventData).find('p._text_gb6rb_36, p');
+        if ($p && $p.length && $p.text().trim()) {
+            return $p.text().trim();
+        }
+        return '';
+    }
+
+    function dispatchMessage(msg) {
+        totalMessages++;
+        // 닉네임을 짧게 변환 (매트릭스 컬럼은 좁으므로)
+        // 닉네임이 4자 이상이면 첫 4자만 표시
+        if (msg.nickname.length > 4) {
+            msg.nickname = msg.nickname.substring(0, 4);
+        }
+        assignMessageToColumn(msg);
+    }
+
+    // ============================================================
+    //  모드 결정
+    // ============================================================
+    var params = new URLSearchParams(window.location.search);
+    var isDemoMode = params.get('demo') === '1';
+
+    if (!isDemoMode) {
+        var chatsock = new ReconnectingWebSocket('ws://localhost:65002', 'chat');
+        chatsock.reconnectInterval = 2000;
+        chatsock.onmessage = function(event) {
+            try {
+                var $data = $(event.data);
+                var nickInfo = extractNickname($data);
+                if (!nickInfo) return;
+                var text = extractChatText(event.data);
+                dispatchMessage({
+                    nickname: nickInfo.name,
+                    text: text,
+                    color: nickInfo.color || '#00ff66'
+                });
+            } catch(e) {
+                console.warn('메시지 파싱 실패:', e);
+            }
+        };
+    } else {
+        // 데모 모드
+        var demoNicks = ['Alice', 'Bob', 'Cy', 'Dave', 'Eve', 'Frank', 'Grace', 'Hyde', 'Ivan', 'Judy'];
+        var demoColors = ['#00ff66', '#5ec8f0', '#a8e85e', '#f06e8a', '#b78af0', '#f0d76e', '#6ee8c8', '#f08e6e', '#f0a830', '#8ec8f0'];
+        var demoTexts = [
+            '안녕하세요', '반갑습니다', '매트릭스', '신기하다',
+            '폭죽처럼', '위로올라', '채팅메시지', '시각화',
+            '잘가요', '축하해', '화이팅', '안녕',
+            'Hello', 'World', 'Matrix', '코드'
+        ];
+        // 즉시 첫 메시지
+        setTimeout(function(){
+            var idx = 0;
+            dispatchMessage({
+                nickname: demoNicks[idx],
+                text: demoTexts[Math.floor(Math.random() * demoTexts.length)],
+                color: demoColors[idx]
+            });
+        }, 300);
+        // 이후 400ms 간격 (매트릭스는 빠르게)
+        setInterval(function(){
+            var idx = Math.floor(Math.random() * demoNicks.length);
+            dispatchMessage({
+                nickname: demoNicks[idx],
+                text: demoTexts[Math.floor(Math.random() * demoTexts.length)],
+                color: demoColors[idx]
+            });
+        }, 400);
+        console.log('▣ 매트릭스 데모 모드 활성화');
+    }
+})();
+</script>
+</body>
+</html>

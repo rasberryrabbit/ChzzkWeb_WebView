@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>채팅 아이콘 폭죽 무대</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="stylesheet" href="./jquery/jquery-ui.css" />
+<link type="text/css" rel="stylesheet" href="vendor-Zr7AVuQA.css" />
+<link type="text/css" rel="stylesheet" href="index-B3xGXYAr-dark.css" />
+<script src="./jquery/jquery-3.7.1.min.js"></script>
+<script src="./jquery/jquery-ui.js"></script>
+<script type="text/javascript" src="reconnecting-websocket.min.js"></script>
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        /* 배경은 JS에서 bg mode 에 따라 동적 설정 */
+        font-family: "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    #stage {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+        /* 캔버스 자체는 투명 — 배경은 body 또는 canvas clear 로 표현 */
+    }
+    #header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        padding: 8px 16px;
+        background: linear-gradient(180deg, rgba(20,20,28,0.9) 0%, rgba(15,15,18,0.5) 100%);
+        backdrop-filter: blur(4px);
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 13px;
+        color: #ccc;
+        pointer-events: none;
+        opacity: 0;
+        transform: translateY(-100%);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    #header.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    #header .title {
+        color: #f0a830;
+        font-weight: 700;
+        font-size: 15px;
+    }
+    #header .count {
+        background: rgba(0,0,0,0.5);
+        padding: 3px 10px;
+        border-radius: 10px;
+        color: #aaa;
+        font-size: 12px;
+    }
+    #header .count b { color: #f0a830; }
+    #header .header-btn {
+        background: rgba(45, 123, 244, 0.3);
+        border: 1px solid rgba(100, 160, 240, 0.5);
+        color: #cfe1ff;
+        padding: 4px 10px;
+        border-radius: 8px;
+        font-size: 11px;
+        cursor: pointer;
+        pointer-events: auto;
+        transition: background 0.15s ease;
+        user-select: none;
+    }
+    #header .header-btn:hover { background: rgba(45, 123, 244, 0.6); }
+    #header .header-btn:active { transform: translateY(1px); }
+    #header select.bg-select {
+        background: rgba(0,0,0,0.5);
+        color: #ccc;
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 8px;
+        padding: 4px 8px;
+        font-size: 11px;
+        cursor: pointer;
+        pointer-events: auto;
+        font-family: inherit;
+    }
+    #header select.bg-select:focus { outline: none; border-color: #2d7bf4; }
+</style>
+</head>
+<body>
+    <canvas id="stage"></canvas>
+    <div id="header">
+        <span class="title">🎆 채팅 아이콘 폭죽 무대</span>
+        <span class="count">발사 <b id="fire-count">0</b></span>
+        <span class="count">활성 파티클 <b id="particle-count">0</b></span>
+        <label style="font-size:11px;color:#aaa;">배경:</label>
+        <select id="bg-select" class="bg-select" title="배경 모드 선택">
+            <option value="transparent">투명</option>
+            <option value="time">시간대별</option>
+            <option value="dark">다크 (#0f0f12)</option>
+            <option value="light">라이트 (#f5f5f5)</option>
+            <option value="black">검정 (#000)</option>
+            <option value="navy">남색 (#1a1a3a)</option>
+        </select>
+        <span class="count">?demo=1 로 데모</span>
+    </div>
+
+<script>
+(function(){
+    'use strict';
+
+    // ============================================================
+    //  캔버스 설정
+    // ============================================================
+    var canvas = document.getElementById('stage');
+    var ctx = canvas.getContext('2d');
+    var W = 0, H = 0;
+    var DPR = 1;
+
+    function resize() {
+        DPR = window.devicePixelRatio || 1;
+        W = window.innerWidth;
+        H = window.innerHeight;
+        canvas.width = Math.floor(W * DPR);
+        canvas.height = Math.floor(H * DPR);
+        canvas.style.width = W + 'px';
+        canvas.style.height = H + 'px';
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // ============================================================
+    //  시간대별 배경 (character_chat.html 에서 재사용)
+    // ============================================================
+    var stars = [];
+
+    function initStars() {
+        stars = [];
+        for (var i = 0; i < 60; i++) {
+            stars.push({
+                x: Math.random() * W,
+                y: Math.random() * H * 0.7,
+                r: Math.random() * 1.2 + 0.3,
+                twinklePhase: Math.random() * Math.PI * 2,
+                twinkleSpeed: 0.001 + Math.random() * 0.002
+            });
+        }
+    }
+    initStars();
+    window.addEventListener('resize', initStars);
+
+    function getTimePhase(date) {
+        var h = date.getHours() + date.getMinutes() / 60;
+        if (h >= 0 && h < 5) return { phase: 'deepnight', progress: (h - 0) / 5 };
+        if (h >= 5 && h < 7) return { phase: 'dawn',      progress: (h - 5) / 2 };
+        if (h >= 7 && h < 17) return { phase: 'day',      progress: (h - 7) / 10 };
+        if (h >= 17 && h < 19) return { phase: 'sunset',  progress: (h - 17) / 2 };
+        if (h >= 19 && h < 21) return { phase: 'dusk',    progress: (h - 19) / 2 };
+        return { phase: 'night', progress: (h - 21) / 3 };
+    }
+
+    var PHASE_PALETTES = {
+        deepnight: { top: '#05050f', mid: '#0a0a18', bot: '#10101e', starAlpha: 1.0,  bodyAlpha: 0.95, bodyColor: '#e8e8f0', bodyType: 'moon' },
+        dawn:      { top: '#1a1430', mid: '#3a2050', bot: '#604070', starAlpha: 0.6,  bodyAlpha: 0.9,  bodyColor: '#ffe8c0', bodyType: 'moon' },
+        day:       { top: '#5ec8f0', mid: '#90d8f0', bot: '#c0e8f8', starAlpha: 0.0,  bodyAlpha: 1.0,  bodyColor: '#fff070', bodyType: 'sun'  },
+        sunset:    { top: '#3a2050', mid: '#a04030', bot: '#e07050', starAlpha: 0.3,  bodyAlpha: 0.95, bodyColor: '#ff8050', bodyType: 'sun'  },
+        dusk:      { top: '#1a1840', mid: '#3a2060', bot: '#6040a0', starAlpha: 0.7,  bodyAlpha: 0.9,  bodyColor: '#ffc880', bodyType: 'moon' },
+        night:     { top: '#0a0a1a', mid: '#0f0f1a', bot: '#1a1a2a', starAlpha: 1.0,  bodyAlpha: 0.95, bodyColor: '#e8e8f0', bodyType: 'moon' }
+    };
+
+    function lerpColor(c1, c2, t) {
+        var r1 = parseInt(c1.substr(1, 2), 16);
+        var g1 = parseInt(c1.substr(3, 2), 16);
+        var b1 = parseInt(c1.substr(5, 2), 16);
+        var r2 = parseInt(c2.substr(1, 2), 16);
+        var g2 = parseInt(c2.substr(3, 2), 16);
+        var b2 = parseInt(c2.substr(5, 2), 16);
+        var r = Math.round(r1 + (r2 - r1) * t);
+        var g = Math.round(g1 + (g2 - g1) * t);
+        var b = Math.round(b1 + (b2 - b1) * t);
+        return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    }
+
+    function getCurrentPalette() {
+        var now = new Date();
+        var info = getTimePhase(now);
+        var phase = info.phase;
+        var prog = info.progress;
+        var order = ['deepnight', 'dawn', 'day', 'sunset', 'dusk', 'night', 'deepnight'];
+        var idx = order.indexOf(phase);
+        var nextPhase = order[idx + 1] || 'deepnight';
+        var cur = PHASE_PALETTES[phase];
+        var next = PHASE_PALETTES[nextPhase];
+        var blend = 0;
+        if (prog > 0.7) blend = (prog - 0.7) / 0.3;
+        return {
+            top: lerpColor(cur.top, next.top, blend),
+            mid: lerpColor(cur.mid, next.mid, blend),
+            bot: lerpColor(cur.bot, next.bot, blend),
+            starAlpha: cur.starAlpha + (next.starAlpha - cur.starAlpha) * blend,
+            bodyAlpha: cur.bodyAlpha + (next.bodyAlpha - cur.bodyAlpha) * blend,
+            bodyColor: lerpColor(cur.bodyColor, next.bodyColor, blend),
+            bodyType: prog > 0.5 ? next.bodyType : cur.bodyType,
+            phase: phase
+        };
+    }
+
+    // ============================================================
+    //  배경 모드 설정 (localStorage 저장)
+    //  - transparent: 투명 (배경 그리지 않음, 페이지 뒤가 보임)
+    //  - time:        시간대별 낮/밤
+    //  - dark/light/black/navy: 단색
+    // ============================================================
+    var STORAGE_KEY_BG_MODE = 'firework_bg_mode';
+    var BG_COLORS = {
+        dark:    '#0f0f12',
+        light:   '#f5f5f5',
+        black:   '#000000',
+        navy:    '#1a1a3a'
+    };
+    // 기본값: transparent (투명)
+    var bgMode = 'transparent';
+    try {
+        var savedBg = localStorage.getItem(STORAGE_KEY_BG_MODE);
+        if (savedBg && (savedBg === 'transparent' || savedBg === 'time' ||
+                        BG_COLORS.hasOwnProperty(savedBg))) {
+            bgMode = savedBg;
+        }
+    } catch(e) {}
+
+    // body 배경색 설정 (canvas clear 시 투명하면 body 색이 보임)
+    function applyBodyBackground() {
+        if (bgMode === 'transparent') {
+            document.body.style.background = 'transparent';
+        } else if (bgMode === 'time') {
+            // 시간대별: body는 검정으로 두고 canvas에서 그라디언트 그림
+            document.body.style.background = '#0a0a1a';
+        } else {
+            document.body.style.background = BG_COLORS[bgMode] || '#0f0f12';
+        }
+    }
+    applyBodyBackground();
+
+    function drawBackground(dt) {
+        // 투명 모드: 배경 그리지 않음 (canvas clear 만)
+        if (bgMode === 'transparent') {
+            ctx.clearRect(0, 0, W, H);
+            return;
+        }
+        // 단색 모드: 단색으로 채우기
+        if (bgMode !== 'time') {
+            ctx.fillStyle = BG_COLORS[bgMode] || '#0f0f12';
+            ctx.fillRect(0, 0, W, H);
+            return;
+        }
+        // 시간대별 모드: 기존 로직
+        var palette = getCurrentPalette();
+        var grad = ctx.createLinearGradient(0, 0, 0, H);
+        grad.addColorStop(0, palette.top);
+        grad.addColorStop(0.6, palette.mid);
+        grad.addColorStop(1, palette.bot);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+
+        if (palette.starAlpha > 0.01) {
+            ctx.save();
+            ctx.globalAlpha = palette.starAlpha;
+            for (var i = 0; i < stars.length; i++) {
+                var s = stars[i];
+                s.twinklePhase += s.twinkleSpeed * dt;
+                var alpha = 0.4 + Math.sin(s.twinklePhase) * 0.3 + 0.3;
+                ctx.fillStyle = 'rgba(255,255,255,' + alpha.toFixed(2) + ')';
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+        // 태양/달
+        drawSunMoon(palette);
+    }
+
+    function drawSunMoon(palette) {
+        var now = new Date();
+        var h = now.getHours() + now.getMinutes() / 60;
+        var skyHeight = H * 0.7;
+        var horizonY = H - 10;
+        var dayProgress;
+        if (h >= 6 && h < 18) {
+            dayProgress = (h - 6) / 12;
+        } else {
+            if (h >= 18) dayProgress = (h - 18) / 12;
+            else dayProgress = (h + 6) / 12;
+        }
+        var bodyX = dayProgress * W;
+        var bodyY = horizonY - 4 * skyHeight * dayProgress * (1 - dayProgress);
+        if (bodyY < 30) bodyY = 30;
+
+        ctx.save();
+        ctx.globalAlpha = palette.bodyAlpha;
+        if (palette.bodyType === 'sun') {
+            var sunR = 24;
+            ctx.strokeStyle = palette.bodyColor;
+            ctx.lineWidth = 2;
+            for (var i = 0; i < 8; i++) {
+                var ang = (i / 8) * Math.PI * 2;
+                ctx.beginPath();
+                ctx.moveTo(bodyX + Math.cos(ang) * (sunR + 6), bodyY + Math.sin(ang) * (sunR + 6));
+                ctx.lineTo(bodyX + Math.cos(ang) * (sunR + 14), bodyY + Math.sin(ang) * (sunR + 14));
+                ctx.stroke();
+            }
+            ctx.beginPath();
+            ctx.arc(bodyX, bodyY, sunR, 0, Math.PI * 2);
+            ctx.fillStyle = palette.bodyColor;
+            ctx.fill();
+            var glow = ctx.createRadialGradient(bodyX, bodyY, sunR, bodyX, bodyY, sunR + 30);
+            glow.addColorStop(0, 'rgba(255, 240, 120, 0.4)');
+            glow.addColorStop(1, 'rgba(255, 240, 120, 0)');
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(bodyX, bodyY, sunR + 30, 0, Math.PI * 2);
+            ctx.fill();
+        } else {
+            var moonR = 20;
+            var moonGlow = ctx.createRadialGradient(bodyX, bodyY, moonR, bodyX, bodyY, moonR + 24);
+            moonGlow.addColorStop(0, 'rgba(232, 232, 240, 0.3)');
+            moonGlow.addColorStop(1, 'rgba(232, 232, 240, 0)');
+            ctx.fillStyle = moonGlow;
+            ctx.beginPath();
+            ctx.arc(bodyX, bodyY, moonR + 24, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(bodyX, bodyY, moonR, 0, Math.PI * 2);
+            ctx.fillStyle = palette.bodyColor;
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(bodyX - moonR * 0.3, bodyY - moonR * 0.2, moonR * 0.85, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 0, 20, 0.35)';
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+
+    // ============================================================
+    //  색상 유틸리티
+    // ============================================================
+    // hex → rgb 객체
+    function hexToRgb(hex) {
+        // 기본값: 골드 (닉네임 색상이 없을 때)
+        if (!hex || hex.indexOf('rgba') !== -1 || hex.indexOf('rgb') !== -1) {
+            // rgb()/rgba() 형식이면 파싱
+            var m = hex && hex.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+            if (m) return { r: +m[1], g: +m[2], b: +m[3] };
+            return { r: 240, g: 168, b: 48 };   // #f0a830
+        }
+        var m = hex.match(/^#?([0-9a-f]{6})$/i);
+        if (!m) return { r: 240, g: 168, b: 48 };
+        var n = parseInt(m[1], 16);
+        return { r: (n >> 16) & 0xff, g: (n >> 8) & 0xff, b: n & 0xff };
+    }
+    function rgbToHex(rgb) {
+        return '#' + ((1 << 24) + (rgb.r << 16) + (rgb.g << 8) + rgb.b).toString(16).slice(1);
+    }
+    function lightenRgb(rgb, amount) {
+        return {
+            r: Math.min(255, rgb.r + amount),
+            g: Math.min(255, rgb.g + amount),
+            b: Math.min(255, rgb.b + amount)
+        };
+    }
+
+    // ============================================================
+    //  Firework 클래스 (발사체 + 터짐)
+    // ============================================================
+    function Firework(x, y, targetY, color, nickname, text) {
+        this.x = x;
+        this.y = y;
+        this.targetY = targetY;
+        this.color = color;          // { r, g, b } 객체
+        this.nickname = nickname;
+        this.text = text;
+
+        // 초기 속도 (위로 발사)
+        this.vx = (Math.random() - 0.5) * 0.4;   // 약간의 좌우 흔들림
+        this.vy = -(8 + Math.random() * 3);       // 위쪽으로 강하게
+
+        // 꼬리 파티클
+        this.trail = [];
+
+        // 터짐 상태
+        this.exploded = false;
+        this.particles = [];
+
+        // 텍스트 표시 (발사 중에는 따라다님)
+        this.showText = true;
+        this.textAlpha = 1;
+    }
+
+    Firework.prototype.update = function(dt) {
+        if (!this.exploded) {
+            // 발사 중
+            var scale = dt / 16.67;   // 60fps 기준
+            this.x += this.vx * scale;
+            this.y += this.vy * scale;
+            this.vy += 0.15 * scale;   // 중력 (감속)
+
+            // 꼬리 추가
+            this.trail.push({ x: this.x, y: this.y, life: 1 });
+            if (this.trail.length > 12) this.trail.shift();
+            // 꼬리 생명 감소
+            for (var i = 0; i < this.trail.length; i++) {
+                this.trail[i].life -= 0.08 * scale;
+            }
+
+            // 터짐 조건: 목표 높이 도달 OR 속도 역전 (정점)
+            if (this.y <= this.targetY || this.vy >= 0) {
+                this.explode();
+            }
+        } else {
+            // 터진 후 파티클 업데이트
+            var scale = dt / 16.67;
+            for (var j = 0; j < this.particles.length; j++) {
+                var p = this.particles[j];
+                p.x += p.vx * scale;
+                p.y += p.vy * scale;
+                p.vy += 0.08 * scale;   // 중력
+                p.vx *= Math.pow(0.99, scale);   // 공기 저항
+                p.life -= p.decay * scale;
+            }
+            // 죽은 파티클 제거
+            this.particles = this.particles.filter(function(p){ return p.life > 0; });
+
+            // 텍스트 페이드 아웃
+            this.textAlpha -= 0.008 * scale;
+            if (this.textAlpha < 0) this.textAlpha = 0;
+        }
+    };
+
+    Firework.prototype.explode = function() {
+        this.exploded = true;
+        // 터지는 파티클 수
+        var count = 40 + Math.floor(Math.random() * 20);
+        // 닉네임 아이콘 (작은 원) 파티클 생성
+        for (var i = 0; i < count; i++) {
+            var angle = (i / count) * Math.PI * 2 + Math.random() * 0.3;
+            var speed = 2 + Math.random() * 4;
+            var colorVariation = Math.random() * 40 - 20;
+            this.particles.push({
+                x: this.x,
+                y: this.y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                life: 1,
+                decay: 0.008 + Math.random() * 0.006,
+                size: 2 + Math.random() * 2.5,
+                color: lightenRgb(this.color, colorVariation),
+                sparkle: Math.random() < 0.2   // 일부는 반짝임
+            });
+        }
+        // 중심 플래시 효과용 큰 파티클 1개
+        this.particles.push({
+            x: this.x, y: this.y,
+            vx: 0, vy: 0,
+            life: 1, decay: 0.05,
+            size: 30,
+            color: lightenRgb(this.color, 60),
+            sparkle: false,
+            isFlash: true
+        });
+    };
+
+    Firework.prototype.draw = function(ctx) {
+        if (!this.exploded) {
+            // 꼬리 그리기
+            for (var i = 0; i < this.trail.length; i++) {
+                var t = this.trail[i];
+                if (t.life <= 0) continue;
+                var alpha = t.life * 0.6;
+                ctx.fillStyle = 'rgba(' + this.color.r + ',' + this.color.g + ',' + this.color.b + ',' + alpha.toFixed(2) + ')';
+                ctx.beginPath();
+                ctx.arc(t.x, t.y, 2 * t.life, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            // 발사체 본체 (밝은 점)
+            ctx.fillStyle = 'rgb(' + this.color.r + ',' + this.color.g + ',' + this.color.b + ')';
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, 4, 0, Math.PI * 2);
+            ctx.fill();
+            // 외곽 광채
+            var glow = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, 12);
+            glow.addColorStop(0, 'rgba(' + this.color.r + ',' + this.color.g + ',' + this.color.b + ',0.6)');
+            glow.addColorStop(1, 'rgba(' + this.color.r + ',' + this.color.g + ',' + this.color.b + ',0)');
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, 12, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 닉네임/텍스트 (발사체 위에 표시)
+            if (this.textAlpha > 0) {
+                ctx.save();
+                ctx.globalAlpha = this.textAlpha;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                // 닉네임 (위)
+                ctx.font = '700 12px "Noto Sans KR", sans-serif';
+                ctx.fillStyle = 'rgb(' + this.color.r + ',' + this.color.g + ',' + this.color.b + ')';
+                ctx.fillText(this.nickname, this.x, this.y - 12);
+                // 텍스트 (아래, 작게)
+                if (this.text) {
+                    ctx.font = '500 11px "Noto Sans KR", sans-serif';
+                    ctx.fillStyle = '#e8ecf5';
+                    ctx.fillText(this.text, this.x, this.y - 26);
+                }
+                ctx.restore();
+            }
+        } else {
+            // 터진 파티클들 그리기
+            for (var j = 0; j < this.particles.length; j++) {
+                var p = this.particles[j];
+                if (p.life <= 0) continue;
+
+                if (p.isFlash) {
+                    // 중심 플래시 (반투명 큰 원)
+                    var flashAlpha = p.life * 0.5;
+                    var flashGrad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+                    flashGrad.addColorStop(0, 'rgba(' + p.color.r + ',' + p.color.g + ',' + p.color.b + ',' + flashAlpha.toFixed(2) + ')');
+                    flashGrad.addColorStop(1, 'rgba(' + p.color.r + ',' + p.color.g + ',' + p.color.b + ',0)');
+                    ctx.fillStyle = flashGrad;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    // 일반 파티클
+                    var alpha = p.life;
+                    if (p.sparkle) {
+                        // 반짝이는 파티클 (십자형)
+                        var sparkleAlpha = alpha * (0.5 + Math.random() * 0.5);
+                        ctx.fillStyle = 'rgba(' + p.color.r + ',' + p.color.g + ',' + p.color.b + ',' + sparkleAlpha.toFixed(2) + ')';
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                        ctx.fill();
+                        // 십자 광선
+                        ctx.strokeStyle = 'rgba(' + p.color.r + ',' + p.color.g + ',' + p.color.b + ',' + (sparkleAlpha * 0.6).toFixed(2) + ')';
+                        ctx.lineWidth = 0.5;
+                        ctx.beginPath();
+                        ctx.moveTo(p.x - p.size * 2, p.y);
+                        ctx.lineTo(p.x + p.size * 2, p.y);
+                        ctx.moveTo(p.x, p.y - p.size * 2);
+                        ctx.lineTo(p.x, p.y + p.size * 2);
+                        ctx.stroke();
+                    } else {
+                        // 일반 원형 파티클 + 광채
+                        var glow2 = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2);
+                        glow2.addColorStop(0, 'rgba(' + p.color.r + ',' + p.color.g + ',' + p.color.b + ',' + (alpha * 0.6).toFixed(2) + ')');
+                        glow2.addColorStop(1, 'rgba(' + p.color.r + ',' + p.color.g + ',' + p.color.b + ',0)');
+                        ctx.fillStyle = glow2;
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
+                        ctx.fill();
+                        // 본체
+                        ctx.fillStyle = 'rgba(' + p.color.r + ',' + p.color.g + ',' + p.color.b + ',' + alpha.toFixed(2) + ')';
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            }
+
+            // 터진 위치에 닉네임/텍스트 표시 (천천히 사라짐)
+            if (this.textAlpha > 0) {
+                ctx.save();
+                ctx.globalAlpha = this.textAlpha;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                // 닉네임 (큰 글씨)
+                ctx.font = '700 16px "Noto Sans KR", sans-serif';
+                ctx.fillStyle = 'rgb(' + this.color.r + ',' + this.color.g + ',' + this.color.b + ')';
+                // 닉네임 외곽선 (가독성)
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+                ctx.lineWidth = 3;
+                ctx.strokeText(this.nickname, this.x, this.y);
+                ctx.fillText(this.nickname, this.x, this.y);
+                // 텍스트 (아래)
+                if (this.text) {
+                    ctx.font = '500 12px "Noto Sans KR", sans-serif';
+                    ctx.fillStyle = '#e8ecf5';
+                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+                    ctx.lineWidth = 3;
+                    ctx.strokeText(this.text, this.x, this.y + 22);
+                    ctx.fillText(this.text, this.x, this.y + 22);
+                }
+                ctx.restore();
+            }
+        }
+    };
+
+    Firework.prototype.isDead = function() {
+        // 터진 후 모든 파티클이 죽고 텍스트도 사라지면 제거
+        return this.exploded && this.particles.length === 0 && this.textAlpha <= 0;
+    };
+
+    // ============================================================
+    //  폭죽 관리자
+    // ============================================================
+    var fireworks = [];
+    var fireCount = 0;
+    var MAX_FIREWORKS = 30;
+
+    function launchFirework(msg) {
+        // 동시에 너무 많으면 가장 오래된 것 제거
+        if (fireworks.length >= MAX_FIREWORKS) {
+            fireworks.shift();
+        }
+
+        // 발사 위치: 화면 하단, x는 살짝 랜덤
+        var launchX = W * 0.2 + Math.random() * W * 0.6;
+        var launchY = H + 20;
+
+        // 터질 높이: 화면 상단 20%~50%
+        var targetY = H * 0.2 + Math.random() * H * 0.3;
+
+        // 색상 파싱
+        var rgb = hexToRgb(msg.color);
+
+        var fw = new Firework(launchX, launchY, targetY, rgb, msg.nickname, msg.text);
+        fireworks.push(fw);
+        fireCount++;
+    }
+
+    // ============================================================
+    //  메인 루프
+    // ============================================================
+    var lastTime = performance.now();
+    var $fireCount = document.getElementById('fire-count');
+    var $particleCount = document.getElementById('particle-count');
+    var $header = document.getElementById('header');
+    var lastCountUpdate = 0;
+
+    function loop(now) {
+        var dt = now - lastTime;
+        lastTime = now;
+        if (dt > 100) dt = 100;
+
+        // 배경
+        drawBackground(dt);
+
+        // 폭죽 업데이트 + 그리기 (발사체 순서대로)
+        for (var i = 0; i < fireworks.length; i++) {
+            fireworks[i].update(dt);
+        }
+        // dead 정리
+        fireworks = fireworks.filter(function(f){ return !f.isDead(); });
+        // 그리기
+        for (var j = 0; j < fireworks.length; j++) {
+            fireworks[j].draw(ctx);
+        }
+
+        // 카운터 갱신 (10fps)
+        if (now - lastCountUpdate > 100) {
+            $fireCount.textContent = fireCount;
+            var totalParticles = 0;
+            for (var k = 0; k < fireworks.length; k++) {
+                totalParticles += fireworks[k].particles.length;
+            }
+            $particleCount.textContent = totalParticles;
+            lastCountUpdate = now;
+        }
+
+        requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+
+    // ============================================================
+    //  헤더 자동 숨김
+    // ============================================================
+    var HEADER_TRIGGER_ZONE = 80;
+    var HEADER_HIDE_DELAY = 2000;
+    var headerTimer = null;
+
+    function showHeader() {
+        $header.classList.add('visible');
+        if (headerTimer) clearTimeout(headerTimer);
+        headerTimer = setTimeout(function(){
+            $header.classList.remove('visible');
+        }, HEADER_HIDE_DELAY);
+    }
+    document.addEventListener('mousemove', function(e){
+        if (e.clientY < HEADER_TRIGGER_ZONE) showHeader();
+    });
+    document.addEventListener('keydown', showHeader);
+
+    // ============================================================
+    //  배경 모드 선택 핸들러
+    // ============================================================
+    var $bgSelect = document.getElementById('bg-select');
+    $bgSelect.value = bgMode;   // 초기값 반영
+    $bgSelect.addEventListener('change', function(){
+        bgMode = $bgSelect.value;
+        try {
+            localStorage.setItem(STORAGE_KEY_BG_MODE, bgMode);
+        } catch(e) {}
+        applyBodyBackground();
+        // 헤더에 알림 (토스트 대신 제목 옆에 잠깐 표시)
+        // 여기서는 별도 토스트 없이 select 값으로 즉시 반영
+    });
+
+    // ============================================================
+    //  WebSocket 메시지 파싱
+    // ============================================================
+    var SPAN_NICKNAME = 'span._nickname_1mc5x_80';
+    var SPAN_CHAT = 'span._text_w9pvh_1';
+
+    function extractNickname(chatline) {
+        var $nick = chatline.find(SPAN_NICKNAME);
+        if (!$nick || !$nick.length) return null;
+        var color = $nick.css('color');
+        if (color && color.indexOf('rgba') !== -1) color = '';
+        $nick.css('background-image', '');
+        var name = $nick.text().trim();
+        if (!name) return null;
+        return { name: name, color: color };
+    }
+
+    function extractChatText(eventData) {
+        var $chat = $(eventData).find(SPAN_CHAT);
+        if ($chat && $chat.length && $chat.text().trim()) {
+            return $chat.text().trim();
+        }
+        var $p = $(eventData).find('p._text_gb6rb_36, p');
+        if ($p && $p.length && $p.text().trim()) {
+            return $p.text().trim();
+        }
+        return '';
+    }
+
+    // ============================================================
+    //  모드 결정
+    // ============================================================
+    var params = new URLSearchParams(window.location.search);
+    var isDemoMode = params.get('demo') === '1';
+
+    if (!isDemoMode) {
+        // ===== WebSocket 모드 =====
+        var chatsock = new ReconnectingWebSocket('ws://localhost:65002', 'chat');
+        chatsock.reconnectInterval = 2000;
+        chatsock.onmessage = function(event) {
+            try {
+                var $data = $(event.data);
+                var nickInfo = extractNickname($data);
+                if (!nickInfo) return;
+                var text = extractChatText(event.data);
+                launchFirework({
+                    nickname: nickInfo.name,
+                    text: text,
+                    color: nickInfo.color || '#f0a830'
+                });
+            } catch(e) {
+                console.warn('메시지 파싱 실패:', e);
+            }
+        };
+    } else {
+        // ===== 데모 모드 =====
+        var demoNicks = ['Alice', 'Bob', 'Charlie', 'Dave', 'Eve', 'Frank', 'Grace', 'Heidi'];
+        var demoColors = ['#f0a830', '#5ec8f0', '#a8e85e', '#f06e8a', '#b78af0', '#f0d76e', '#6ee8c8', '#f08e6e'];
+        var demoTexts = [
+            '안녕하세요!',
+            '반갑습니다~',
+            '오늘 날씨 좋네요',
+            '폭죽이 펑펑!',
+            '신기하다 ㅋㅋ',
+            '잘가요~',
+            '좀 더 긴 메시지를 보내봅니다. 채팅 텍스트도 함께 표시돼요.',
+            '귀여워요',
+            '축하해요!',
+            '화이팅!'
+        ];
+        // 즉시 첫 발사
+        setTimeout(function(){
+            launchFirework({
+                nickname: demoNicks[0],
+                text: demoTexts[0],
+                color: demoColors[0]
+            });
+        }, 300);
+        // 이후 1.5초 간격
+        setInterval(function(){
+            var idx = Math.floor(Math.random() * demoNicks.length);
+            launchFirework({
+                nickname: demoNicks[idx],
+                text: demoTexts[Math.floor(Math.random() * demoTexts.length)],
+                color: demoColors[idx]
+            });
+        }, 1500);
+        console.log('🎆 데모 모드 활성화 — WebSocket 없이 동작합니다.');
+    }
+})();
+</script>
+</body>
+</html>
